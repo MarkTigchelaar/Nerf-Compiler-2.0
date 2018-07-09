@@ -1,3 +1,4 @@
+module lexing_errors;
 import core.sys.posix.stdlib: exit;
 import std.stdio: writeln, write;
 
@@ -13,5 +14,10 @@ void empty_file() {
 
 void file_not_found() {
     writeln("ERROR: file not found.");
+    exit(-1);
+}
+
+void multiple_files() {
+    writeln("ERROR: language only supports single files.");
     exit(-1);
 }

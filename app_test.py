@@ -43,12 +43,16 @@ def run_lexing_tests():
     file = 'bad_extension.txt'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    err = 'ERROR: source file is empty.'
-    file = 'empty.nerf'
+    err = 'ERROR: language only supports single files.'
+    file = 'empty.nerf doesnt_exist.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     err = 'ERROR: file not found.'
-    file = 'doesnt_exists.nerf'
+    file = 'doesnt_exist.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: source file is empty.'
+    file = 'empty.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     return tests
