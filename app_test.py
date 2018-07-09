@@ -44,11 +44,11 @@ def run_lexing_tests():
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     err = 'ERROR: source file is empty.'
-    file = ''
+    file = 'empty.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     err = 'ERROR: file not found.'
-    file = ''
+    file = 'doesnt_exists.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     return tests
