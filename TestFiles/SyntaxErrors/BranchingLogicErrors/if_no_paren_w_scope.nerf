@@ -1,0 +1,5 @@
+fn main() void {
+  if True {
+   bool ok := True;
+  }
+}

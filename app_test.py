@@ -60,7 +60,8 @@ def run_lexing_tests():
 def run_syntax_tests():
     tests = list()
     tests.extend(fn_declaration_tests())
-
+    tests.extend(fn_assignments_tests())
+    tests.extend(fn_branching_logic_tests())
     return tests
 
 
@@ -92,5 +93,63 @@ def fn_declaration_tests():
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     return tests
+
+def fn_assignments_tests():
+    dir_name = 'TestFiles/SyntaxErrors/AssignmentStatementErrors/'
+    preamble = 'Testing file '
+    fail = ', \nExpecting '
+
+    err = 'ERROR: function body is missing.'
+    file = 'noFnBody.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: variable not assigned a type.'
+    file = 'noTypeOnInstantiation.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: new variables must be instantiated with values.'
+    file = 'noValueAssignedOnNew.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: missing assignment operator.'
+    file = 'missing_assignment_operator.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: assignment statement missing R value'
+    file = 'missing_r_value.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+def fn_branching_logic_tests():
+    dir_name = 'TestFiles/SyntaxErrors/BranchingLogicErrors/'
+    preamble = 'Testing file '
+    fail = ', \nExpecting '
+
+    err = 'ERROR: else (if) statement must appear after if statement'
+    file = 'orphaned_else_statement.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: malformed branching logic'
+    file = 'if_stub.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: malformed branching logic'
+    file = 'if_no_paren_w_scope.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: malformed branching logic'
+    file = 'if_no_paren_w_scope_no_condition.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: malformed branching logic'
+    file = 'if_no_scope_body.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: malformed branching logic'
+    file = 'if_no_body.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: malformed branching logic'
+    file = 'conditional_no_branching_type.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
 
 run_tests()
