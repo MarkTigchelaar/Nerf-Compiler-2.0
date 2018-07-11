@@ -23,6 +23,10 @@ def test_loop(get_files):
         error_text = error_text.rstrip('\n')
 
         if error_text != file[error]:
+            if error_text != '':
+                print('Error Generated: ' + error_text)
+            else:
+                print('Did not generate error.')
             print("Test failed.")
             os.system('rm printout.txt')
             sys.exit()
@@ -99,6 +103,8 @@ def fn_assignments_tests():
     preamble = 'Testing file '
     fail = ', \nExpecting '
 
+    tests = list()
+
     err = 'ERROR: function body is missing.'
     file = 'noFnBody.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
@@ -119,10 +125,14 @@ def fn_assignments_tests():
     file = 'missing_r_value.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
+    return tests
+
 def fn_branching_logic_tests():
     dir_name = 'TestFiles/SyntaxErrors/BranchingLogicErrors/'
     preamble = 'Testing file '
     fail = ', \nExpecting '
+
+    tests = list()
 
     err = 'ERROR: else (if) statement must appear after if statement'
     file = 'orphaned_else_statement.nerf'
@@ -151,5 +161,27 @@ def fn_branching_logic_tests():
     err = 'ERROR: malformed branching logic'
     file = 'conditional_no_branching_type.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: malformed branching logic'
+    file = 'while_stub.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: malformed branching logic'
+    file = 'while_no_paren_w_scope.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: malformed branching logic'
+    file = 'while_no_paren_w_scope_no_condition.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: malformed branching logic'
+    file = 'while_no_scope_body.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: malformed branching logic'
+    file = 'while_no_body.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    return tests
 
 run_tests()

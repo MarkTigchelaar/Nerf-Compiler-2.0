@@ -1,0 +1,5 @@
+fn main() void {
+  while True {
+   bool ok := True;
+  }
+}
