@@ -1,8 +1,10 @@
 import os, sys
 
 def run_tests():
+    print('running lexing tests...\n')
     test_loop(run_lexing_tests)
-    print('lexer tests complete')
+    print('lexer tests complete.')
+    print('running syntax analysis tests...\n')
     test_loop(run_syntax_tests)
     print('All Syntax tests complete')
     #test_loop(run_semantics_tests)

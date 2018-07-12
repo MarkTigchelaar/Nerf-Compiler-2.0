@@ -10,13 +10,4 @@ def build():
     command += ' -w -m64 -inline'
     os.system(command)
 
-
-
-
-
-
-
-
-
-
 build()
