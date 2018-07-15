@@ -1,10 +1,6 @@
 module lexing_tools;
 
-import core.sys.posix.stdlib: exit;
 import lexing_errors;
-import std.algorithm: endsWith;
-import std.stdio: File;
-import std.string: chomp;
 import symbol_table: SymbolTable;
 import stack: Stack;
 
@@ -17,6 +13,7 @@ class Lexer {
     private Stack stk;
 
     this(SymbolTable table) {
+        index = 0;
         this.table = table;
         this.stk = new Stack;
     }
@@ -26,7 +23,28 @@ class Lexer {
         process_file(arguments[1]);
     }
 
+    public string get_token() {
+        return tokens[index];
+    }
+
+    public void increment_stream_index() {
+        index++;
+        if(index > tokens.length) {
+            throw new Exception("Lexer went passed tokens length.");
+        }
+    }
+
+    public bool not_complete() {
+        return index < tokens.length;
+    }
+
+    final SymbolTable get_table() {
+        return table;
+    }
+
     private void check_files(string[] arguments) {
+        import std.algorithm: endsWith;
+        import core.sys.posix.stdlib: exit;
         if(arguments.length < 2) {
             exit(-1);
         } else if(arguments.length > 2) {
@@ -38,10 +56,12 @@ class Lexer {
     }
 
     private void process_file(string file_name) {
+        import std.stdio: File;
+        import std.string: chomp, strip;
+        import lexing_errors: mismatched_tokens;
         File file;
         string rawline;
         string stream;
-        import std.string: strip;
         try {
             file  = File(file_name, "r");
         } catch(Exception exc) {
@@ -55,7 +75,9 @@ class Lexer {
             if(stream.length < 1) {
                 empty_file();
             }
-            check_seperators(stream);
+            if(!check_seperators(stream)) {
+                mismatched_tokens();
+            }
             tokenize(stream);
         }
     }
@@ -155,9 +177,45 @@ class Lexer {
     }
 
     public void print_tokens() {
-        import std.stdio: writeln;
+        import std.stdio: writeln, write;
+        int indent_val = 0;
+        string indent;
+        if(!table.is_seperator("{") ||
+           !table.is_seperator("{") ||
+           !table.is_terminator(";")) {
+               throw new Exception(
+            "Indentation using tokens that are no longer part of language.");
+           }
         foreach(string tok; tokens) {
-            writeln("\'" ~ tok ~ "\'");
+
+            
+            if(tok == "{") {
+                indent = "";
+                write("\'" ~ tok ~ "\' ");
+                indent_val += 2;
+                writeln();
+                for(int i = 0; i < indent_val; i++) {
+                    indent ~= " ";
+                }
+                write(indent);
+            } else if(tok == "}") {
+                indent_val -= 2;
+                indent = "";
+                for(int i = 0; i < indent_val; i++) {
+                    indent ~= " ";
+                }
+                writeln();
+                writeln(indent ~ "\'" ~ tok ~ "\' ");
+                
+            } else if(tok == ";") {
+                writeln("\'" ~ tok ~ "\' ");
+                for(int i = 0; i < indent_val; i++) {
+                    indent ~= " ";
+                }
+            } else {
+                write(indent ~ "\'" ~ tok ~ "\' ");
+                indent = "";
+            }
         }
     }
 }

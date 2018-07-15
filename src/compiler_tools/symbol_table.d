@@ -4,7 +4,7 @@ module symbol_table;
     Symbol Table:
     Defines the tokens for the language.
     Everything is hard coded here, so that method calls can be used instead of raw string
-    comparisons. This prevents technical debt in terms of comparison 
+    comparisons. This prevents technical debt from duplication
     of hard coded strings during syntax, and semantic analysis.
     It also serves to keep the workings of each phase of compilation abstract enough 
     to be though about as types and process steps, not specific strings.
@@ -24,7 +24,8 @@ class SymbolTable {
         string[string] variable_table;
         string[][int] variables_at_scope_level;
         int scope_level;
-        string[][string] function_table;
+        string[][string] function_fn_args_table;
+        string[string] function_return_types;
 
     public:
     this() {
@@ -131,6 +132,24 @@ class SymbolTable {
         }
     }
 
+    // arg types in order from left to right (for semantic analysis).
+    final void add_fn_args_return_type(string fn_name, string[] arg_types, string return_type) {
+        import syntax_errors: duplicate_fn_name;
+        if(fn_name in function_fn_args_table) {
+            duplicate_fn_name();
+        } else {
+            function_fn_args_table[fn_name] = arg_types;
+            function_return_types[fn_name] = return_type;
+        }
+    }
+
+    final bool is_function_name(string fn_name) {
+        if(fn_name in function_fn_args_table) {
+            return true;
+        }
+        return false;
+    }
+
     final bool regex_helper(string variable, string expression) {
         import std.regex;
         auto m = matchFirst(variable, regex(expression));
@@ -210,6 +229,10 @@ class SymbolTable {
 
     final bool is_continue(string token) {
         return token == "continue";
+    }
+
+    final bool is_fn_identifier(string token) {
+        return token == "fn";
     }
 
     final int token_precedence(string token) {

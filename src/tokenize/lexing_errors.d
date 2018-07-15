@@ -21,3 +21,8 @@ void multiple_files() {
     writeln("ERROR: language only supports single files.");
     exit(1);
 }
+
+void mismatched_tokens() {
+    writeln("ERROR: parenthesis or curly brackets are not correctly matched");
+    exit(-1);
+}
