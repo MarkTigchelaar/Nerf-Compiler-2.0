@@ -11,7 +11,6 @@ def run_tests():
     print('All tests passed')
     os.system('rm printout.txt')
 
-
 def test_loop(get_files):
     preamble = 0
     actual = 1
@@ -20,6 +19,7 @@ def test_loop(get_files):
     for file in get_files():
         print(file[preamble])
         os.system(exe + file[actual] + ' > printout.txt')
+        os.system(exe + file[actual])
         with open('printout.txt', 'r') as err_file:
             error_text = err_file.readline()
         error_text = error_text.rstrip('\n')

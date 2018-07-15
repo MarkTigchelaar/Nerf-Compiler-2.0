@@ -1,10 +1,11 @@
 import lexing_tools;
 import symbol_table;
+import std.stdio: writeln;
 
 void main(string[] arguments) {
-    check_files(arguments);
     SymbolTable table = new SymbolTable;
-    string[] source = lex(arguments[1], table);
-
+    Lexer lexer = new Lexer(table);
+    lexer.process_source(arguments);
+    //lexer.print_tokens();
 
 }

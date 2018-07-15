@@ -1,0 +1,12 @@
+fn main() void {
+    if(1<2) {
+        return;
+    }
+
+    int a:=6;
+    bool c:=(a+b)<f|False;
+
+    while(True){
+        a := c+d^f/j;
+    }
+}

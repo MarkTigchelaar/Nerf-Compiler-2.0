@@ -2,12 +2,17 @@ module syntax_errors;
 import core.sys.posix.stdlib: exit;
 import std.stdio: writeln;
 
-void no_void_keyword() {
+void mismatched_tokens() {
+    writeln("ERROR: parenthesis or curly brackets are not correctly matched");
+    exit(-1);
+}
+
+void no_fn_keyword() {
     writeln("ERROR: function declaration invalid.");
     exit(1);
 }
 
-void no_void_name() {
+void no_fn_name() {
     writeln("ERROR: function missing name.");
     exit(1);
 }
