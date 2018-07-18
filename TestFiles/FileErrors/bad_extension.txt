@@ -1,1 +1,3 @@
-will never parse
+fn main() void {
+    return;
+}

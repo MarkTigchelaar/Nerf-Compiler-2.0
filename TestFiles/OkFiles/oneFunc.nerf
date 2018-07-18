@@ -1,4 +1,4 @@
-fn main() void {
+fn main(int a, int b) void {
     if(1<2) {
         return;
     }

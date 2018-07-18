@@ -9,6 +9,7 @@ def build():
     command += utilities_path + 'stack.d '
     command += utilities_path + 'symbol_table.d '
     command += utilities_path + 'structures.d '
+    command += utilities_path + 'scoped_token_collector.d '
     command += tok_path + 'lexing_tools.d '
     command += tok_path + 'lexing_errors.d '
     command += syntax_path + 'syntax_errors.d '

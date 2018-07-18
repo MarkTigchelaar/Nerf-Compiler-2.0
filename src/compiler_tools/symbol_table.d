@@ -110,7 +110,7 @@ class SymbolTable {
 
     final bool is_number(string variable) {
         return is_variable_integer(variable) ||
-        is_variable_float(variable);
+            is_variable_float(variable);
     }
 
     final bool is_variable_integer(string variable) {
@@ -133,12 +133,20 @@ class SymbolTable {
     }
 
     // arg types in order from left to right (for semantic analysis).
-    final void add_fn_args_return_type(string fn_name, string[] arg_types, string return_type) {
+    final void add_fn_args(string fn_name, string[] arg_types) {
         import syntax_errors: duplicate_fn_name;
         if(fn_name in function_fn_args_table) {
             duplicate_fn_name();
         } else {
             function_fn_args_table[fn_name] = arg_types;
+        }
+    }
+
+    final void add_fn_return_type(string fn_name, string return_type) {
+        import syntax_errors: duplicate_fn_name;
+        if(fn_name in function_return_types) {
+            duplicate_fn_name();
+        } else {
             function_return_types[fn_name] = return_type;
         }
     }
@@ -163,6 +171,10 @@ class SymbolTable {
             }
         }
         return false;
+    }
+
+    final bool is_comma(string token) {
+        return token == ",";
     }
 
     final bool is_terminator(string token) {
@@ -219,6 +231,16 @@ class SymbolTable {
         return false;
     }
 
+    final bool is_primitive_type(string token) {
+        string[] pt =["int", "float", "bool", "void"];
+        foreach(string str; pt) {
+            if(token == str) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     final bool is_return(string token) {
         return token == "return";
     }
@@ -235,6 +257,10 @@ class SymbolTable {
         return token == "fn";
     }
 
+    final bool is_open_curly_brace(string token) {
+        return token == "{";
+    }
+
     final int token_precedence(string token) {
         if(is_declared_variable(token) || is_keyword(token)) {
             return 0;
@@ -248,8 +274,11 @@ class SymbolTable {
             throw new Exception("unknown token type.");
         }
     }
-
 }
+
+
+
+
 
 private:
 
@@ -309,6 +338,10 @@ string[string] get_close_seperators() {
     seperators[")"] = "(";
     return seperators;
 }
+
+
+
+
 
 unittest {
     SymbolTable s = new SymbolTable;

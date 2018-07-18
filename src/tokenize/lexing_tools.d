@@ -18,6 +18,11 @@ class Lexer {
         this.stk = new Stack;
     }
 
+    this(SymbolTable table, string[] test_tokens) {
+        this(table);
+        tokens = test_tokens;
+    }
+
     public void process_source(string[] arguments) {
         check_files(arguments);
         process_file(arguments[1]);
@@ -181,7 +186,7 @@ class Lexer {
         int indent_val = 0;
         string indent;
         if(!table.is_seperator("{") ||
-           !table.is_seperator("{") ||
+           !table.is_seperator("}") ||
            !table.is_terminator(";")) {
                throw new Exception(
             "Indentation using tokens that are no longer part of language.");
@@ -220,6 +225,10 @@ class Lexer {
     }
 }
 
+
+
+
+
 unittest {
     SymbolTable s = new SymbolTable;
     Lexer l = new Lexer(s);
@@ -236,6 +245,7 @@ unittest {
     assert(!l.check_seperators("{{{{ }}}"));
     assert(l.check_seperators("(){}a"));
     assert(l.check_seperators("{ { {} () test {} }}"));
+    assert(!l.check_seperators("}{"));
 }
 
 unittest {

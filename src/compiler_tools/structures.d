@@ -7,6 +7,7 @@ struct Program {
 
 struct Function {
     immutable string name;
+    immutable string[] arg_names;
     Statement*[] stmts;
 }
 
@@ -26,12 +27,12 @@ struct Expression {
 
 enum StatementTypes {
     assign_statement,
+    re_assign_statement,
     break_statement,
     return_statement,
     if_statement,
     else_statement,
     else_if_statement,
     while_statement,
-    re_assign_statement,
     continue_statement
 }

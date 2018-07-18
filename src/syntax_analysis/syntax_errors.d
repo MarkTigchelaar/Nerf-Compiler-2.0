@@ -17,6 +17,21 @@ void invalid_identifier_name() {
     exit(1);
 }
 
+void function_missing_arg_parens() {
+    writeln("ERROR: function missing parentheses for arguments.");
+    exit(1);
+}
+
+void fn_args_missing_or_invalid_type() {
+    writeln("ERROR: function arguments(s) contain missing or invalid type(s).");
+    exit(1);
+}
+
+void malformed_args() {
+    writeln("ERROR: function arguments malformed");
+    exit(1);
+}
+
 void no_type_for_new_variable() {
     writeln("ERROR: variable not assigned a type.");
     exit(1);
@@ -44,5 +59,20 @@ void orphaned_else_statement() {
 
 void duplicate_fn_name() {
     writeln("ERROR: functions must have unique names.");
+    exit(1);
+}
+
+void missing_or_invalid_return_type() {
+    writeln("ERROR: missing or invalid return type.");
+    exit(1);
+}
+
+void missing_or_invalid_function_body_start_token() {
+    writeln("ERROR: function body begins with invalid token.");
+    exit(1);
+}
+
+void empty_func_body() {
+    writeln("ERROR: function body is missing.");
     exit(1);
 }
