@@ -173,6 +173,10 @@ class SymbolTable {
         return false;
     }
 
+    final bool is_assignment(string token) {
+        return token == ":=";
+    }
+
     final bool is_comma(string token) {
         return token == ",";
     }
@@ -297,8 +301,7 @@ string[] key_words() {
         "break",
         "continue",
         "if",
-        "else",
-        ":="
+        "else"
     ];
     return kw;
 }
@@ -367,7 +370,6 @@ unittest {
     assert(s.is_keyword("continue"));
     assert(s.is_keyword("if"));
     assert(s.is_keyword("else"));
-    assert(s.is_keyword(":="));
     assert(!s.is_keyword("2"));
     assert(!s.is_keyword("+"));
     assert(!s.is_keyword("<="));

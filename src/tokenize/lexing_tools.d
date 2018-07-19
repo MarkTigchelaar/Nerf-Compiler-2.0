@@ -3,7 +3,7 @@ module lexing_tools;
 import lexing_errors;
 import symbol_table: SymbolTable;
 import stack: Stack;
-
+import std.ascii: isWhite;
 
 class Lexer {
     private string[] tokens;
@@ -69,7 +69,6 @@ class Lexer {
         import lexing_errors: mismatched_tokens;
         File file;
         string rawline;
-        string stream;
         try {
             file  = File(file_name, "r");
         } catch(Exception exc) {
@@ -79,21 +78,15 @@ class Lexer {
                 rawline ~= chomp(file.readln());
             }
             file.close();
-            stream = streamlines(strip(rawline));
-            if(stream.length < 1) {
+            rawline = strip(rawline);
+            if(rawline.length < 1) {
                 empty_file();
             }
-            if(!check_seperators(stream)) {
+            if(!check_seperators(rawline)) {
                 mismatched_tokens();
             }
-            tokenize(stream);
+            tokenize(rawline);
         }
-    }
-
-    private string streamlines(string rawline) {
-        import std.regex;
-        auto re = regex(`\s\s+`);
-        return replaceAll(rawline, re, " ");
     }
 
     private bool check_seperators(string tokstream) {
@@ -118,9 +111,10 @@ class Lexer {
     }
 
     private void tokenize(string stream) {
-        import std.ascii: isWhite;
         string check;
+        
         foreach(char ch; stream) {
+            
             if(isWhite(ch)) {
                 check = "";
                 add_candidate();
@@ -136,6 +130,7 @@ class Lexer {
             }
             check = "";
         }
+        add_candidate();
     }
 
     private bool check_runthrough(string check, char ch) {
@@ -151,19 +146,19 @@ class Lexer {
             add_candidate();
         } else if(table.is_math_op(check)) {
             add_candidate();
-        }
-        if(table.is_bool_compare(candidate)) {
+        } else if(table.is_bool_compare(candidate)) {
             add_candidate();
         }
         return false;
     }
 
     private bool check_candidate() {
-        if(table.is_keyword(candidate)) {
+        bool should_continue = false;
+        
+        if(table.is_assignment(candidate)) {
             add_candidate();
-            return true;
-        }
-        if(table.is_seperator(candidate)) {
+            should_continue = true;
+        } else if(table.is_seperator(candidate)) {
             add_candidate();
         } else if(table.is_bool_compare(candidate)) {
             add_candidate();
@@ -174,8 +169,9 @@ class Lexer {
         } else if(table.is_math_op(candidate)) {
             add_candidate();
         }
-        return false;
+        return should_continue;
     }
+
 
     private void add_candidate() {
         if(candidate !is null) {
@@ -235,14 +231,6 @@ class Lexer {
 unittest {
     SymbolTable s = new SymbolTable;
     Lexer l = new Lexer(s);
-    string expect = "fn main ( )";
-    string arg = "fn    main    (   )";
-    assert(l.streamlines(arg) == expect);
-}
-
-unittest {
-    SymbolTable s = new SymbolTable;
-    Lexer l = new Lexer(s);
     assert(!l.check_seperators("{{{ }}} )"));
     assert(!l.check_seperators("{(})"));
     assert(!l.check_seperators("{{{{ }}}"));
@@ -290,4 +278,22 @@ unittest {
     for(int i = 0; i < expect.length; i++) {
         assert(l.tokens[i] == expect[i]);
     }
+}
+
+unittest {
+    SymbolTable s = new SymbolTable;
+    Lexer l = new Lexer(s);
+    string test;
+    string[] expect;
+
+    test = "inty booly floaty fny breakr 
+             returnn whiley continueo";
+    expect = ["inty", "booly", "floaty", "fny",
+              "breakr", "returnn", "whiley","continueo"];
+    
+    l.tokenize(test);
+    assert(l.tokens.length == expect.length);
+    for(int i = 0; i < l.tokens.length; i++) {
+        assert(l.tokens[i] == expect[i]);
+    } 
 }

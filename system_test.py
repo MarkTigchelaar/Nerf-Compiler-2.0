@@ -137,6 +137,14 @@ def fn_declaration_tests():
     file = 'noReturnType2.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
+    err = 'ERROR: missing or invalid return type.'
+    file = 'invalidReturnType.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: missing or invalid return type.'
+    file = 'invalidReturnType2.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
     err = 'ERROR: function body is missing.'
     file = 'noFnBody.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
