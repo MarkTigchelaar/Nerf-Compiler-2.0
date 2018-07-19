@@ -1,0 +1,4 @@
+fn main() void {
+    int test := 6;
+    return;
+}

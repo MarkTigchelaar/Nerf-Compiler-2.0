@@ -134,7 +134,7 @@ class SymbolTable {
 
     // arg types in order from left to right (for semantic analysis).
     final void add_fn_args(string fn_name, string[] arg_types) {
-        import syntax_errors: duplicate_fn_name;
+        import fn_header_syntax_errors: duplicate_fn_name;
         if(fn_name in function_fn_args_table) {
             duplicate_fn_name();
         } else {
@@ -143,7 +143,7 @@ class SymbolTable {
     }
 
     final void add_fn_return_type(string fn_name, string return_type) {
-        import syntax_errors: duplicate_fn_name;
+        import fn_header_syntax_errors: duplicate_fn_name;
         if(fn_name in function_return_types) {
             duplicate_fn_name();
         } else {

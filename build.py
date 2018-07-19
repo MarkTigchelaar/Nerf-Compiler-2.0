@@ -12,8 +12,9 @@ def build():
     command += utilities_path + 'scoped_token_collector.d '
     command += tok_path + 'lexing_tools.d '
     command += tok_path + 'lexing_errors.d '
-    command += syntax_path + 'syntax_errors.d '
+    command += syntax_path + 'fn_header_syntax_errors.d '
     command += syntax_path + 'function_parsers.d '
+    command += syntax_path + 'statement_parsers.d '
     
     command += ' -w -m64 -inline -unittest'
     os.system(command)

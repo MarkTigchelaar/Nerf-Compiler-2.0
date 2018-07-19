@@ -18,11 +18,11 @@ def run_tests():
     print('running lexing tests...\n')
     test_loop(run_lexing_tests)
     print('lexer tests complete.')
-    print('running syntax analysis tests...\n')
+    print('running syntax analysis tests...\n\n\n\n\n')
     test_loop(run_syntax_tests)
     print('syntax tests complete')
     #test_loop(run_semantics_tests)
-    print('running compiler on correct source files...\n')
+    print('running compiler on correct source files...\n\n\n\n\n')
     test_loop(happy_path)
     print('final tests on correct files complete')
     print('All tests passed')
@@ -107,6 +107,14 @@ def fn_declaration_tests():
 
     err = 'ERROR: function missing name.'
     file = 'noFnName.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: variable or function name has invalid characters.'
+    file = 'nonNumericFuncname.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: variable or function name has invalid characters.'
+    file = 'keywordFunctionName.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     err = 'ERROR: function missing name.'
@@ -232,15 +240,24 @@ def fn_branching_logic_tests():
     return tests
 
 def happy_path():
-    dir_name = 'TestFiles/OkFiles/return_nothing.nerf'
+    dir_name = 'TestFiles/OkFiles/'
     preamble = 'Testing file '
     success = 'Compilation Successful'
     good = ', \nExpecting '
 
     tests = list()
+
     file = 'return_nothing.nerf'
     tests.append((preamble + file + good + success, dir_name+file, success,))
 
+    file = 'single_assignment.nerf'
+    tests.append((preamble + file + good + success, dir_name+file, success,))
+
+    file = 'assign_with_two_variables.nerf'
+    tests.append((preamble + file + good + success, dir_name+file, success,))
+
+    file = 'conditional_re_assignment.nerf'
+    tests.append((preamble + file + good + success, dir_name+file, success,))
 
     return tests
 

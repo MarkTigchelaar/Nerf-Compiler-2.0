@@ -1,9 +1,11 @@
 module function_parsers;
 
 import symbol_table;
-import structures;
+import fn_header_syntax_errors;
+import structures: Program, Function, Statement;
 import lexing_tools;
 import scoped_token_collector;
+import statement_parsers: parse_statements;
 import std.stdio;
 
 Program* parse_tokens(Lexer lexer, string prog_name) {
@@ -13,16 +15,14 @@ Program* parse_tokens(Lexer lexer, string prog_name) {
     Function* func;
     while(lexer.not_complete()) {
         parse_function_header(lexer, func, collector);
-        parse_function_body(lexer, &func, collector);
+        parse_function_body(lexer, func, collector);
         program.functions ~= func;
-        assert(program.functions[$-1] !is null);
     }
     return program;
 }
 
 void parse_function_header(Lexer lexer, out Function* func,
         ScopedTokenCollector collector) {
-    import syntax_errors: no_fn_keyword;
     auto table = lexer.get_table();
     if(table.is_fn_identifier(lexer.get_token())) {
         string name = get_function_name(lexer);
@@ -35,7 +35,6 @@ void parse_function_header(Lexer lexer, out Function* func,
 }
 
 string get_function_name(ref Lexer lexer) {
-    import syntax_errors: no_fn_name, invalid_identifier_name;
     auto table = lexer.get_table();
     lexer.increment_stream_index();
     string name = lexer.get_token();
@@ -51,7 +50,6 @@ string get_function_name(ref Lexer lexer) {
 
 string[] get_parsed_function_args(ref Lexer lexer,
         ref ScopedTokenCollector collector) {
-    import syntax_errors: function_missing_arg_parens;
     auto table = lexer.get_table();
     string name = lexer.get_token();
     lexer.increment_stream_index();
@@ -75,10 +73,6 @@ string[] collect_tokens(ref Lexer lexer,
 
 string[] parse_arguments(string[] raw_args,
         ref SymbolTable table, string func_name) {
-    import syntax_errors:
-        invalid_identifier_name,
-        malformed_args;
-
     string[] arg_types;
     string[] arg_names;
     
@@ -106,9 +100,6 @@ string[] parse_arguments(string[] raw_args,
 
 void check_first_and_last_positions(string[] raw_args,
         ref SymbolTable table) {
-    import syntax_errors:
-        fn_args_missing_or_invalid_type,
-        invalid_identifier_name;
     string last_item = raw_args[raw_args.length -1];
     if(raw_args.length == 1) {
         fn_args_missing_or_invalid_type();
@@ -123,7 +114,6 @@ int get_position_of_arg(int index) {
 }
 
 string enforce_key_word(string arg_member, ref SymbolTable table) {
-    import syntax_errors: malformed_args;
     if(table.is_primitive_type(arg_member)) {
         return arg_member;
     } else {
@@ -133,7 +123,6 @@ string enforce_key_word(string arg_member, ref SymbolTable table) {
 }
 
 string enforce_variable(string arg_member, ref SymbolTable table) {
-    import syntax_errors: invalid_identifier_name;
     if(table.is_valid_variable(arg_member)) {
         return arg_member;
     } else {
@@ -143,14 +132,12 @@ string enforce_variable(string arg_member, ref SymbolTable table) {
 }
 
 void enforce_comma(string arg_member, ref SymbolTable table) {
-    import syntax_errors:malformed_args;
     if(!table.is_comma(arg_member)) {
         malformed_args();
     }
 }
 
 void set_function_return_type(ref Lexer lexer, string func_name) {
-    import syntax_errors: missing_or_invalid_return_type;
     SymbolTable table = lexer.get_table();
     lexer.increment_stream_index();
     string return_type = lexer.get_token();
@@ -162,11 +149,8 @@ void set_function_return_type(ref Lexer lexer, string func_name) {
 }
 
 
-void parse_function_body(ref Lexer lexer,   Function** func,
+void parse_function_body(ref Lexer lexer,   Function* func,
         ref ScopedTokenCollector collector) {
-    import syntax_errors: 
-        missing_or_invalid_function_body_start_token,
-        empty_func_body;
     SymbolTable table = lexer.get_table();
     lexer.increment_stream_index();
     string token = lexer.get_token();
@@ -177,9 +161,9 @@ void parse_function_body(ref Lexer lexer,   Function** func,
     lexer.increment_stream_index();
     if(func_body.length == 0) {
         empty_func_body();
-    } /*else {
+    } else {
         func.stmts = parse_statements(func_body);
-    }*/
+    }
 }
 
 
