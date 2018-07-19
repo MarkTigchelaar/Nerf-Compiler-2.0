@@ -13,9 +13,9 @@ Program* parse_tokens(Lexer lexer, string prog_name) {
     Function* func;
     while(lexer.not_complete()) {
         parse_function_header(lexer, func, collector);
-        parse_function_body(lexer, func, collector);
+        parse_function_body(lexer, &func, collector);
         program.functions ~= func;
-        func = null;
+        assert(program.functions[$-1] !is null);
     }
     return program;
 }
@@ -107,8 +107,8 @@ string[] parse_arguments(string[] raw_args,
 void check_first_and_last_positions(string[] raw_args,
         ref SymbolTable table) {
     import syntax_errors:
-    fn_args_missing_or_invalid_type,
-    invalid_identifier_name;
+        fn_args_missing_or_invalid_type,
+        invalid_identifier_name;
     string last_item = raw_args[raw_args.length -1];
     if(raw_args.length == 1) {
         fn_args_missing_or_invalid_type();
@@ -162,7 +162,7 @@ void set_function_return_type(ref Lexer lexer, string func_name) {
 }
 
 
-void parse_function_body(ref Lexer lexer,  out Function* func,
+void parse_function_body(ref Lexer lexer,   Function** func,
         ref ScopedTokenCollector collector) {
     import syntax_errors: 
         missing_or_invalid_function_body_start_token,
@@ -182,16 +182,35 @@ void parse_function_body(ref Lexer lexer,  out Function* func,
     }*/
 }
 
-/*
+
+// See system_test.py for unhappy path testing.
 unittest {
-    string[] test = ["fn", "func", "(", "int", "i", ")", "void"];
+    string[] test = ["fn", "func", "(", ")", "void", "{", "return", ";","}"];
     SymbolTable table = new SymbolTable;
     Lexer lexer = new Lexer(table, test.dup);
     ScopedTokenCollector collector = new ScopedTokenCollector(table);
-    Function* func;
-    Program* p = parse_tokens(lexer, "testing");
-    assert(p.name is "testing");
+    Program* p = parse_tokens(lexer, "test");
+    assert(p.name == "test");
     assert(p.functions.length == 1);
-    func = p.functions[0];
-    assert(func.arg_names[0] == "i");
-}*/
+    assert(p.functions[0] !is null);
+    assert(p.functions[0].name == "func");
+    assert(p.functions[0].arg_names.length == 0);
+}
+
+unittest {
+    string[] test = ["fn", "func", "(", ")", "void", "{", "return", ";","}",
+                     "fn", "funcb", "(", "int", "a", ",", "float", "b",
+                     ")", "void", "{", "return", ";","}"];
+    SymbolTable table = new SymbolTable;
+    Lexer lexer = new Lexer(table, test.dup);
+    ScopedTokenCollector collector = new ScopedTokenCollector(table);
+    Program* p = parse_tokens(lexer, "test");
+    Function*[] funcs = p.functions;
+    assert(p.name == "test");
+    assert(funcs.length == 2);
+    assert(funcs[1] !is null);
+    assert(funcs[1].name == "funcb");
+    assert(funcs[1].arg_names.length == 2);
+    assert(funcs[1].arg_names[0] == "a");
+    assert(funcs[1].arg_names[1] == "b");
+}

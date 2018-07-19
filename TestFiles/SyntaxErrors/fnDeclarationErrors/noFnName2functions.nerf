@@ -1,0 +1,7 @@
+fn main() void {
+    return;
+}
+
+fn (int a, int b) void {
+    return a + b;
+}

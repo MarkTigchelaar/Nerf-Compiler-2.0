@@ -1,0 +1,7 @@
+fn main() void {
+    return;
+}
+
+second() void {
+    return;
+}

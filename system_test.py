@@ -1,4 +1,18 @@
 import os, sys
+"""
+    System Test
+      This script runs source code files (in TestFiles folder) into the compiler.
+      Each file has a specific part of the source code that is erronous.
+      The compiler should raise an error that is specific to each of these type of errors.
+      Only if it does raise the correct type of error does the system test pass.
+      There are system tests for each phase of compilation, in order to deal with all types of
+      issues that a developer might mistakenly create.
+
+      The system tests also run correct files into the compiler to ensure that correct source
+      code successfully compiles.
+      These files are have various levels of complexity, to ensure the compiler can handle arbitrary
+      nesting of loops, branching logic, large numbers of function calls, large amounts of variables etc.
+"""
 
 def run_tests():
     print('running lexing tests...\n')
@@ -25,9 +39,9 @@ def test_loop(get_files):
         error_text = error_text.rstrip('\n')
 
         if error_text != file[error]:
-            if error_text == '':
-                #print('Error Generated: ' + error_text)
-            #else:
+            if error_text != '':
+                print('Error Generated: ' + error_text)
+            else:
                 print('Did not generate error.')
             print("Test failed.")
             os.system('rm printout.txt')
@@ -82,21 +96,50 @@ def fn_declaration_tests():
     file = 'noFnError.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
+    err = 'ERROR: function declaration invalid.'
+    file = 'noFnError2functions.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
     err = 'ERROR: function missing name.'
     file = 'noFnName.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: function missing name.'
+    file = 'noFnName2functions.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     err = 'ERROR: function missing parentheses for arguments.'
     file = 'noFnArgParen.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
+    err = 'ERROR: function missing parentheses for arguments.'
+    file = 'noFnArgParen2.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
     err = 'ERROR: missing or invalid return type.'
     file = 'noReturnType.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: missing or invalid return type.'
+    file = 'noReturnType2.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     err = 'ERROR: function body is missing.'
     file = 'noFnBody.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: function body is missing.'
+    file = 'noFnBody2.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: function body begins with invalid token.'
+    file = 'badFnBodyScopeToken.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: function body begins with invalid token.'
+    file = 'missingFnBodyScopeToken.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
 
     return tests
 

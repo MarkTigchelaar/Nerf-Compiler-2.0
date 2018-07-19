@@ -29,6 +29,9 @@ class Lexer {
     }
 
     public string get_token() {
+        if(index >= tokens.length) {
+            return null;
+        }
         return tokens[index];
     }
 

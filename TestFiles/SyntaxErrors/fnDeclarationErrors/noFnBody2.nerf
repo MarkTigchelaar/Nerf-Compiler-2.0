@@ -1,0 +1,5 @@
+fn main() void {
+    return;
+}
+
+fn second( int j, bool k, int e) void {}
