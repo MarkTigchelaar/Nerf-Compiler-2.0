@@ -13,4 +13,5 @@ void main(string[] arguments) {
     Program* program = parse_tokens(lexer, arguments[1]);
     // analyze_semantics(program, table);
     // generate_assembly(program);
+    writeln("Compilation Successful");
 }

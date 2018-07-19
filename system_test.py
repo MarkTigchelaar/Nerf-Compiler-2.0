@@ -20,8 +20,11 @@ def run_tests():
     print('lexer tests complete.')
     print('running syntax analysis tests...\n')
     test_loop(run_syntax_tests)
-    print('All Syntax tests complete')
+    print('syntax tests complete')
     #test_loop(run_semantics_tests)
+    print('running compiler on correct source files...\n')
+    test_loop(happy_path)
+    print('final tests on correct files complete')
     print('All tests passed')
     os.system('rm printout.txt')
 
@@ -33,22 +36,24 @@ def test_loop(get_files):
     for file in get_files():
         print(file[preamble])
         os.system(exe + file[actual] + ' > printout.txt')
-        os.system(exe + file[actual])
+
         with open('printout.txt', 'r') as err_file:
             error_text = err_file.readline()
         error_text = error_text.rstrip('\n')
 
         if error_text != file[error]:
-            if error_text != '':
+            if error_text != '' and error_text != "Compilation Successful":
                 print('Error Generated: ' + error_text)
             else:
                 print('Did not generate error.')
             print("Test failed.")
+            err_file.close()
             os.system('rm printout.txt')
             sys.exit()
         else:
             print("Test passed")
         print('\n')
+    err_file.close()
 
 
 def run_lexing_tests():
@@ -225,5 +230,20 @@ def fn_branching_logic_tests():
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     return tests
+
+def happy_path():
+    dir_name = 'TestFiles/OkFiles/return_nothing.nerf'
+    preamble = 'Testing file '
+    success = 'Compilation Successful'
+    good = ', \nExpecting '
+
+    tests = list()
+    file = 'return_nothing.nerf'
+    tests.append((preamble + file + good + success, dir_name+file, success,))
+
+
+    return tests
+
+
 
 run_tests()
