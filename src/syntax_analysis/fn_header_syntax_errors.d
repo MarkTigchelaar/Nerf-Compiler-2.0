@@ -1,4 +1,5 @@
 module fn_header_syntax_errors;
+
 import core.sys.posix.stdlib: exit;
 import std.stdio: writeln;
 

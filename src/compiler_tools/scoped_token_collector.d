@@ -43,7 +43,7 @@ class ScopedTokenCollector {
 
     public string[] get_scoped_tokens() {
         skip_token = true;
-        string[] temp = scoped_tokens;
+        string[] temp = scoped_tokens.dup;
         scoped_tokens = null;
         return temp;
     }

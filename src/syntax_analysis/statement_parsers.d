@@ -5,7 +5,9 @@ import symbol_table;
 import variable_assign_errors;
 import expression_parsers;
 import general_syntax_errors;
+import branching_logic_errors;
 import scoped_token_collector;
+import get_token: get_token;
 import std.stdio: writeln;
 
 Statement*[] parse_statements(string[] func_body, ref SymbolTable table) {
@@ -74,16 +76,59 @@ Statement* parse_re_assign_statement(ref SymbolTable table, string[] func_body,
     return statement;
 }
 
-Statement* parse_if_statement(ref SymbolTable table, string[] func_body, int* index) {
-    return null;
+Statement* parse_else_statement(ref SymbolTable table, string[] func_body, int* index) {
+    (*index)++;
+    string if_or_curly_bracket = get_token(func_body, index);
+    Statement* else_stmt;
+    if(table.is_if(if_or_curly_bracket)) {
+        else_stmt = new Statement(StatementTypes.else_if_statement, false);
+        else_stmt.stmts ~= parse_if_statement(table, func_body, index);
+    } else if(table.is_open_curly_brace(if_or_curly_bracket)) {
+        (*index)--;
+        string[] stmt_body = collect_scoped_tokens(table, func_body, index);
+        if(stmt_body.length == 0) {
+            empty_statement_body();
+        }
+        else_stmt.stmts = parse_statements(stmt_body, table);
+    } else {
+        invalid_branching_logic_scope_token();
+    }
+    return else_stmt;
 }
 
-Statement* parse_else_statement(ref SymbolTable table, string[] func_body, int* index) {
-    return null;
+Statement* parse_if_statement(ref SymbolTable table, string[] func_body, int* index) {
+    return parse_branch_logic(table, func_body,index, StatementTypes.if_statement);
 }
 
 Statement* parse_while_statement(ref SymbolTable table, string[] func_body, int* index) {
-    return null;
+    return parse_branch_logic(table, func_body,index, StatementTypes.while_statement);
+}
+
+Statement* parse_branch_logic(ref SymbolTable table, string[] func_body, int* index, int type) {
+    (*index)++;
+    string[] args;
+    string[] stmt_body;
+    if(table.is_open_paren(func_body[*index])) {
+        args = collect_scoped_tokens(table, func_body, index);
+    } else {
+        invalid_args_token();
+    }
+    string curly_bracket = get_token(func_body, index);
+    if(table.is_open_curly_brace(curly_bracket)) {
+        (*index)--;
+        stmt_body = collect_scoped_tokens(table, func_body, index);
+    } else {
+        invalid_branching_logic_scope_token();
+    }
+    if(args.length == 0) {
+        empty_conditional();
+    } else if(stmt_body.length == 0) {
+        empty_statement_body();
+    }
+    Statement* branch = new Statement(type, true);
+    branch.syntax_tree = parse_expressions(table, args);
+    branch.stmts = parse_statements(func_body, table);
+    return branch;
 }
 
 Statement* parse_break_statement(ref SymbolTable table, string[] func_body, int* index) {
@@ -113,13 +158,13 @@ Statement* parse_return_statement(ref SymbolTable table, string[] func_body, int
     return ret_statement;
 }
 
-string get_token(string[] func_body, int* index)  {
-    if(*index >= func_body.length) {
-        invalid_statement();
-    }
-    string token = func_body[*index];
-    (*index)++;
-    return token;
+string[] collect_scoped_tokens(SymbolTable table, string[] func_body, int* index) {
+    ScopedTokenCollector collector = new ScopedTokenCollector(table);
+    collector.add_token(get_token(func_body, index));
+    do {
+        collector.add_token(get_token(func_body, index));
+    } while(collector.not_done_collecting());
+    return collector.get_scoped_tokens();
 }
 
 string[] get_r_value_tokens(ref SymbolTable table, string[] func_body, int* index) {

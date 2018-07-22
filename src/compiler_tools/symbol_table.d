@@ -287,6 +287,10 @@ class SymbolTable {
         return token == "{";
     }
 
+    final bool is_open_paren(string token) {
+        return token == "(";
+    }
+
     final int token_precedence(string token) {
         if(is_declared_variable(token) || is_keyword(token)) {
             return 0;

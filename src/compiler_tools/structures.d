@@ -15,14 +15,14 @@ struct Statement {
     immutable int stmt_type;
     immutable bool has_args;
     immutable string var_type;
-    immutable string name;
-    Expression*[] args;
+    string name;
     Expression* syntax_tree;
     Statement*[] stmts;
 }
 
 struct Expression {
     immutable string var_name;
+    Expression*[] args;
     Expression* left;
     Expression* right;
 }
