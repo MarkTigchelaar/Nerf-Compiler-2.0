@@ -21,6 +21,7 @@ Program* parse_tokens(Lexer lexer, string prog_name) {
     return program;
 }
 
+private:
 void parse_function_header(Lexer lexer, out Function* func,
         ScopedTokenCollector collector) {
     auto table = lexer.get_table();
@@ -162,7 +163,7 @@ void parse_function_body(ref Lexer lexer,   Function* func,
     if(func_body.length == 0) {
         empty_func_body();
     } else {
-        func.stmts = parse_statements(func_body);
+        func.stmts = parse_statements(func_body, table);
     }
 }
 
@@ -189,6 +190,15 @@ unittest {
     Lexer lexer = new Lexer(table, test.dup);
     ScopedTokenCollector collector = new ScopedTokenCollector(table);
     Program* p = parse_tokens(lexer, "test");
+    string[] func_arg_types = table.get_function_args("func");
+    assert(func_arg_types is null);
+
+    string[] funcb_arg_types = table.get_function_args("funcb");
+    assert(funcb_arg_types !is null);
+    assert(funcb_arg_types.length == 2);
+    assert(funcb_arg_types[0] == "int");
+    assert(funcb_arg_types[1] == "float");
+    
     Function*[] funcs = p.functions;
     assert(p.name == "test");
     assert(funcs.length == 2);

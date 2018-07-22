@@ -85,8 +85,9 @@ def run_lexing_tests():
 def run_syntax_tests():
     tests = list()
     tests.extend(fn_declaration_tests())
-    #tests.extend(fn_assignments_tests())
+    tests.extend(fn_assignments_tests())
     #tests.extend(fn_branching_logic_tests())
+    tests.extend(fn_statement_tests())
     return tests
 
 
@@ -171,21 +172,48 @@ def fn_assignments_tests():
 
     tests = list()
 
-
-    err = 'ERROR: variable not assigned a type.'
-    file = 'noTypeOnInstantiation.nerf'
+    err = 'ERROR: statement is not valid.'
+    file = 'primitive_type_only.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    err = 'ERROR: new variables must be instantiated with values.'
-    file = 'noValueAssignedOnNew.nerf'
+    err = 'ERROR: statement is not valid.'
+    file = 'primitive_type_only_no_semicolon.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: statement is not valid.'
+    file = 'variable_only.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: statement is not valid.'
+    file = 'variable_only_no_semicolon.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     err = 'ERROR: missing assignment operator.'
-    file = 'missing_assignment_operator.nerf'
+    file = 'new_var_missing_assignment_operator.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    err = 'ERROR: assignment statement missing R value'
-    file = 'missing_r_value.nerf'
+    err = 'ERROR: missing assignment operator.'
+    file = 'var_reassign_missing_assignment_operator.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: assignment statement is missing identifier (L value).'
+    file = 'new_var_assign_no_identifier.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: assignment statement is missing identifier (L value).'
+    file = 'var_reassign_no_identifier.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: invalid or misspelt type in assignment statement.'
+    file = 'misspelt_type_on_assignment.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: identifier cannot be a keyword or contain non alphbetical characters (underscore is exception).'
+    file = 'invalid_identifier_on_new_assignment.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: identifier cannot be a keyword or contain non alphbetical characters (underscore is exception).'
+    file = 'invalid_identifier_on_re_assignment.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     return tests
@@ -247,6 +275,16 @@ def fn_branching_logic_tests():
 
     return tests
 
+def fn_statement_tests():
+    dir_name = 'TestFiles/SyntaxErrors/AssignmentStatementErrors/'
+    preamble = 'Testing file '
+    fail = ', \nExpecting '
+    tests = list()
+
+
+    return tests
+
+
 def happy_path():
     dir_name = 'TestFiles/OkFiles/'
     preamble = 'Testing file '
@@ -264,8 +302,8 @@ def happy_path():
     file = 'assign_with_two_variables.nerf'
     tests.append((preamble + file + good + success, dir_name+file, success,))
 
-    file = 'conditional_re_assignment.nerf'
-    tests.append((preamble + file + good + success, dir_name+file, success,))
+    #file = 'conditional_re_assignment.nerf'
+    #tests.append((preamble + file + good + success, dir_name+file, success,))
 
     return tests
 

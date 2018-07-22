@@ -53,6 +53,7 @@ class Lexer {
     private void check_files(string[] arguments) {
         import std.algorithm: endsWith;
         import core.sys.posix.stdlib: exit;
+        import std.stdio;
         if(arguments.length < 2) {
             exit(-1);
         } else if(arguments.length > 2) {

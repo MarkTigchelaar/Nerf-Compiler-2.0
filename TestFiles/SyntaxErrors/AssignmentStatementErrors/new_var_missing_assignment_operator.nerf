@@ -1,0 +1,3 @@
+fn main() void {
+    float t 11.6;
+}

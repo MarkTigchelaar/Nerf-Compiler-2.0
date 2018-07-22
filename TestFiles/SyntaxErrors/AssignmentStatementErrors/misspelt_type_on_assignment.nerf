@@ -1,0 +1,3 @@
+fn main() void {
+    floort a := 2.66;
+}

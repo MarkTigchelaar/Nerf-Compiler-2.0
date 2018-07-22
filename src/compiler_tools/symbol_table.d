@@ -135,7 +135,7 @@ class SymbolTable {
     // arg types in order from left to right (for semantic analysis).
     final void add_fn_args(string fn_name, string[] arg_types) {
         import fn_header_syntax_errors: duplicate_fn_name;
-        if(fn_name in function_fn_args_table) {
+        if(is_function_name(fn_name)) {
             duplicate_fn_name();
         } else {
             function_fn_args_table[fn_name] = arg_types;
@@ -156,6 +156,16 @@ class SymbolTable {
             return true;
         }
         return false;
+    }
+
+    final string[] get_function_args(string func_name) {
+        import semantic_errors: invalid_func_call;
+        if(is_function_name(func_name)) {
+            return function_fn_args_table[func_name];
+        } else {
+            invalid_func_call();
+        }
+        return null;
     }
 
     final bool regex_helper(string variable, string expression) {
@@ -255,6 +265,18 @@ class SymbolTable {
 
     final bool is_continue(string token) {
         return token == "continue";
+    }
+
+    final bool is_if(string token) {
+        return token == "if";
+    }
+
+    final bool is_else(string token) {
+        return token == "else";
+    }
+
+    final bool is_while(string token) {
+        return token == "while";
     }
 
     final bool is_fn_identifier(string token) {

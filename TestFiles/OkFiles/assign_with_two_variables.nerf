@@ -2,5 +2,4 @@ fn main() void {
     int a := 12;
     int b := -42;
     int c := a * b;
-    return;
 }

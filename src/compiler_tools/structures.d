@@ -12,8 +12,10 @@ struct Function {
 }
 
 struct Statement {
-    immutable int type;
+    immutable int stmt_type;
     immutable bool has_args;
+    immutable string var_type;
+    immutable string name;
     Expression*[] args;
     Expression* syntax_tree;
     Statement*[] stmts;
