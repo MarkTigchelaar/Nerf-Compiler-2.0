@@ -105,7 +105,8 @@ class SymbolTable {
     }
 
     final is_valid_variable(string variable) {
-        return regex_helper(variable, `^[a-zA-Z_]+$`);
+        return regex_helper(variable, `^[a-zA-Z_]+$`) &&
+                !is_keyword(variable);
     }
 
     final bool is_number(string variable) {
@@ -202,6 +203,10 @@ class SymbolTable {
         return false; 
     }
 
+    final bool is_minus(string token) {
+        return token == "-";
+    }
+
     final bool is_bool_compare(string token) {
         if(token in bool_comparison) {
             return true;
@@ -255,6 +260,10 @@ class SymbolTable {
         return false;
     }
 
+    final bool is_right_associative(string token) {
+        return token == "^";
+    }
+
     final bool is_return(string token) {
         return token == "return";
     }
@@ -283,6 +292,10 @@ class SymbolTable {
         return token == "fn";
     }
 
+    final bool is_print(string token) {
+        return token == "print";
+    }
+
     final bool is_open_curly_brace(string token) {
         return token == "{";
     }
@@ -291,8 +304,12 @@ class SymbolTable {
         return token == "(";
     }
 
+    final bool is_close_paren(string token) {
+        return token == ")";
+    }
+
     final int token_precedence(string token) {
-        if(is_declared_variable(token) || is_keyword(token)) {
+        if(is_valid_variable(token) || is_keyword(token) || is_number(token)) {
             return 0;
         } else if(is_bool_compare(token)) {
             return bool_comparison[token];
@@ -456,4 +473,6 @@ unittest {
     assert(s.is_valid_variable("_abc_defg"));
     assert(s.is_valid_variable("ab_cd"));
     assert(s.is_valid_variable("_"));
+    assert(!s.is_valid_variable("True"));
+    assert(s.is_valid_variable("Truthy"));
 }

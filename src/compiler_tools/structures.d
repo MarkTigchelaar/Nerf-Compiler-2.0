@@ -36,5 +36,6 @@ enum StatementTypes {
     else_statement,
     else_if_statement,
     while_statement,
-    continue_statement
+    continue_statement,
+    print_statement
 }

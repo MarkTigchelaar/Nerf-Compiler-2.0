@@ -86,8 +86,7 @@ def run_syntax_tests():
     tests = list()
     tests.extend(fn_declaration_tests())
     tests.extend(fn_assignments_tests())
-    #tests.extend(fn_branching_logic_tests())
-    tests.extend(fn_statement_tests())
+    tests.extend(fn_branching_logic_tests())
     return tests
 
 
@@ -225,62 +224,57 @@ def fn_branching_logic_tests():
 
     tests = list()
 
-    err = 'ERROR: else (if) statement must appear after if statement'
-    file = 'orphaned_else_statement.nerf'
-    tests.append((preamble + file + fail + err, dir_name+file, err,))
-
-    err = 'ERROR: malformed branching logic'
+    err = 'ERROR: branching logic has malformed argument.'
     file = 'if_stub.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    err = 'ERROR: malformed branching logic'
-    file = 'if_no_paren_w_scope.nerf'
-    tests.append((preamble + file + fail + err, dir_name+file, err,))
-
-    err = 'ERROR: malformed branching logic'
-    file = 'if_no_paren_w_scope_no_condition.nerf'
-    tests.append((preamble + file + fail + err, dir_name+file, err,))
-
-    err = 'ERROR: malformed branching logic'
-    file = 'if_no_scope_body.nerf'
-    tests.append((preamble + file + fail + err, dir_name+file, err,))
-
-    err = 'ERROR: malformed branching logic'
-    file = 'if_no_body.nerf'
-    tests.append((preamble + file + fail + err, dir_name+file, err,))
-
-    err = 'ERROR: malformed branching logic'
-    file = 'conditional_no_branching_type.nerf'
-    tests.append((preamble + file + fail + err, dir_name+file, err,))
-
-    err = 'ERROR: malformed branching logic'
+    err = 'ERROR: branching logic has malformed argument.'
     file = 'while_stub.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    err = 'ERROR: malformed branching logic'
+    err = 'ERROR: branching logic has malformed argument.'
+    file = 'if_no_paren_w_scope.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: branching logic has malformed argument.'
+    file = 'if_no_paren_w_scope_no_condition.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: branching logic has malformed argument.'
     file = 'while_no_paren_w_scope.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    err = 'ERROR: malformed branching logic'
+    err = 'ERROR: branching logic has malformed argument.'
     file = 'while_no_paren_w_scope_no_condition.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    err = 'ERROR: malformed branching logic'
+    err = 'ERROR: body of branching logic statement begins with invalid token.'
+    file = 'if_no_scope_body.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: body of branching logic statement begins with invalid token.'
     file = 'while_no_scope_body.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    err = 'ERROR: malformed branching logic'
+    err = 'ERROR: no statements in branching logic body.'
+    file = 'if_no_body.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: no statements in branching logic body.'
     file = 'while_no_body.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    return tests
+    err = 'ERROR: statement is not valid.'
+    file = 'conditional_no_branching_type.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-def fn_statement_tests():
-    dir_name = 'TestFiles/SyntaxErrors/AssignmentStatementErrors/'
-    preamble = 'Testing file '
-    fail = ', \nExpecting '
-    tests = list()
+    err = 'ERROR: argument for branching logic is empty.'
+    file = 'if_conditional_no_args.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
 
+    err = 'ERROR: argument for branching logic is empty.'
+    file = 'while_conditional_no_args.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     return tests
 

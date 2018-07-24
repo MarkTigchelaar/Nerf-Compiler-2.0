@@ -9,5 +9,7 @@ void main(string[] arguments) {
     Lexer lexer = new Lexer(table);
     lexer.process_source(arguments);
     Program* program = parse_tokens(lexer, arguments[1]);
+    //analyze_semantics(program, table);
+    //generate_assembly(program);
     writeln("Compilation Successful");
 }

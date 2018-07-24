@@ -7,13 +7,14 @@ import expression_parsers;
 import general_syntax_errors;
 import branching_logic_errors;
 import scoped_token_collector;
-import get_token: get_token;
+import get_token: get_token, collect_scoped_tokens;
 import std.stdio: writeln;
 
 Statement*[] parse_statements(string[] func_body, ref SymbolTable table) {
     Statement*[] fn_statements;
     for(int mutating_index = 0; mutating_index < func_body.length; mutating_index++) {
         fn_statements ~= parse_statement_type(table, func_body, &mutating_index);
+        
     } return fn_statements;
 }
 
@@ -43,10 +44,16 @@ Statement* parse_statement_type(ref SymbolTable table, string[] func_body, int* 
     if(table.is_valid_variable(func_body[*index])) {
         return parse_re_assign_statement(table, func_body, index, null);
     }
+    if(table.is_print(func_body[*index])) {
+        return parse_print_statement(table, func_body, index);
+    }
     if(table.is_assignment(func_body[*index])) {
         missing_identifier();
     }
     if(!table.is_valid_variable(func_body[*index])) {
+        if(table.is_seperator(func_body[*index])) {
+            invalid_statement();
+        }
         invalid_l_value();
     }
     invalid_statement();
@@ -62,14 +69,10 @@ Statement* parse_re_assign_statement(ref SymbolTable table, string[] func_body,
                                      int* index, string type) {
     string identifier = get_token(func_body, index);
     check_identifier(table, identifier);
-    string assign = get_token(func_body, index);
-    if(!table.is_assignment(assign)) {
-        string possible_assign = get_token(func_body, index);
-        check_assignment(table, possible_assign);
-    }
+    check_assignment(table, func_body, index);
     string[] rvalues = get_r_value_tokens(table,func_body, index);
-    Statement* statement = new Statement(StatementTypes.assign_statement,
-                                         false, type, identifier);
+    
+    Statement* statement = new Statement(get_statement_type(type), false, type, identifier);
     if(rvalues !is null) {
         statement.syntax_tree = parse_expressions(table, rvalues.dup);
     }
@@ -79,12 +82,13 @@ Statement* parse_re_assign_statement(ref SymbolTable table, string[] func_body,
 Statement* parse_else_statement(ref SymbolTable table, string[] func_body, int* index) {
     (*index)++;
     string if_or_curly_bracket = get_token(func_body, index);
+    (*index)--;
     Statement* else_stmt;
     if(table.is_if(if_or_curly_bracket)) {
-        else_stmt = new Statement(StatementTypes.else_if_statement, false);
+        else_stmt = new Statement(StatementTypes.else_if_statement, true);
         else_stmt.stmts ~= parse_if_statement(table, func_body, index);
     } else if(table.is_open_curly_brace(if_or_curly_bracket)) {
-        (*index)--;
+        else_stmt = new Statement(StatementTypes.else_if_statement, false);
         string[] stmt_body = collect_scoped_tokens(table, func_body, index);
         if(stmt_body.length == 0) {
             empty_statement_body();
@@ -106,29 +110,42 @@ Statement* parse_while_statement(ref SymbolTable table, string[] func_body, int*
 
 Statement* parse_branch_logic(ref SymbolTable table, string[] func_body, int* index, int type) {
     (*index)++;
-    string[] args;
-    string[] stmt_body;
+    string[] args = get_statement_args(table, func_body, index);
+    string[] stmt_body = get_statment_body(table, func_body, index);
+    check_lengths(args, stmt_body);
+    Statement* branch = new Statement(type, true);
+    branch.syntax_tree = parse_expressions(table, args);
+    branch.stmts = parse_statements(stmt_body, table);
+    (*index)--;
+    return branch;
+}
+
+string[] get_statement_args(ref SymbolTable table, string[] func_body, int* index) {
     if(table.is_open_paren(func_body[*index])) {
-        args = collect_scoped_tokens(table, func_body, index);
+        return collect_scoped_tokens(table, func_body, index);
     } else {
         invalid_args_token();
     }
+    return null;
+}
+
+string[] get_statment_body(ref SymbolTable table, string[] func_body, int* index) {
     string curly_bracket = get_token(func_body, index);
     if(table.is_open_curly_brace(curly_bracket)) {
         (*index)--;
-        stmt_body = collect_scoped_tokens(table, func_body, index);
+        return collect_scoped_tokens(table, func_body, index);
     } else {
         invalid_branching_logic_scope_token();
     }
-    if(args.length == 0) {
+    return null;
+}
+
+void check_lengths(string[] args, string[] stmt_body) {
+    if(args is null || args.length == 0) {
         empty_conditional();
-    } else if(stmt_body.length == 0) {
+    } else if(stmt_body is null || stmt_body.length == 0) {
         empty_statement_body();
     }
-    Statement* branch = new Statement(type, true);
-    branch.syntax_tree = parse_expressions(table, args);
-    branch.stmts = parse_statements(func_body, table);
-    return branch;
 }
 
 Statement* parse_break_statement(ref SymbolTable table, string[] func_body, int* index) {
@@ -150,21 +167,31 @@ Statement* break_continue_statement(ref SymbolTable table, string[] func_body,
 
 Statement* parse_return_statement(ref SymbolTable table, string[] func_body, int* index) {
     (*index)++;
+    bool has_args = false;
     string[] return_results = get_r_value_tokens(table,func_body, index);
-    auto ret_statement = new Statement(StatementTypes.return_statement, false);
     if(return_results !is null) {
-        ret_statement.syntax_tree = parse_expressions(table, return_results.dup);
+        has_args = true;
     }
+    auto ret_statement = new Statement(StatementTypes.return_statement, has_args);
+    ret_statement.syntax_tree = parse_expressions(table, return_results.dup);
     return ret_statement;
 }
 
-string[] collect_scoped_tokens(SymbolTable table, string[] func_body, int* index) {
-    ScopedTokenCollector collector = new ScopedTokenCollector(table);
-    collector.add_token(get_token(func_body, index));
-    do {
-        collector.add_token(get_token(func_body, index));
-    } while(collector.not_done_collecting());
-    return collector.get_scoped_tokens();
+Statement* parse_print_statement(ref SymbolTable table, string[] func_body, int* index) {
+    (*index)++;
+    bool has_args = false;
+    string[] args = get_statement_args(table, func_body, index);
+    if(args !is null) {
+        has_args = true;
+    }
+    Statement* print_statement = new Statement(StatementTypes.print_statement, has_args);
+    Expression* arg_tree = new Expression(null);
+    arg_tree.args = parse_func_call_arg_expressions(table, args.dup);
+    print_statement.syntax_tree = arg_tree;
+    if(!table.is_terminator(get_token(func_body, index))) {
+        statement_not_terminated();
+    }
+    return print_statement;
 }
 
 string[] get_r_value_tokens(ref SymbolTable table, string[] func_body, int* index) {
@@ -184,7 +211,7 @@ string[] get_r_value_tokens(ref SymbolTable table, string[] func_body, int* inde
     return rvalues;
 }
 
-void check_identifier(SymbolTable table, string identifier) {
+void check_identifier(ref SymbolTable table, string identifier) {
     if(!table.is_valid_variable(identifier)) {
         if(table.is_assignment(identifier)) {
             missing_identifier();
@@ -198,13 +225,30 @@ void check_identifier(SymbolTable table, string identifier) {
     }
 }
 
-void check_assignment(SymbolTable table, string possible_assign) {
+void check_assignment(ref SymbolTable table, string[] func_body, int* index) {
+    string assign = get_token(func_body, index);
+    if(table.is_assignment(assign)) {
+        return;
+    }
+    string possible_assign = get_token(func_body, index);
     if(table.is_assignment(possible_assign)) {
         invalid_misspelt_type();
     } else {
         missing_assignment_operator();
     }
 }
+
+int get_statement_type(string type) {
+    if(type !is null) {
+        return StatementTypes.assign_statement;
+    } else {
+        return StatementTypes.re_assign_statement;
+    }
+}
+
+
+
+
 
 unittest {
     SymbolTable table = new SymbolTable;
@@ -268,4 +312,70 @@ unittest {
     assert(s[0].has_args == false);
     assert(s[1].stmt_type == StatementTypes.return_statement);
     assert(s[1].has_args == false);
+}
+
+unittest {
+    SymbolTable table = new SymbolTable;
+    string[] statement = ["test", ":=", "a", "+", "b",
+                           "==", "c", ";"];
+    Statement*[] s = parse_statements(statement, table);
+    assert(s !is null);
+    assert(s.length == 1);
+    assert(s[0].stmt_type == StatementTypes.re_assign_statement);
+    assert(s[0].var_type is null);
+    assert(s[0].has_args == false);
+}
+
+unittest {
+    SymbolTable table = new SymbolTable;
+    string[] statement = ["if", "(","a", "+", "b",
+                           "==", "c", ")", "{", "return", ";", "}"];
+    Statement*[] s = parse_statements(statement, table);
+    assert(s !is null);
+    assert(s.length == 1);
+    assert(s[0].stmt_type == StatementTypes.if_statement);
+    assert(s[0].var_type is null);
+    assert(s[0].has_args == true);
+    assert(s[0].stmts !is null);
+    assert(s[0].stmts.length == 1);
+    assert(s[0].stmts[0].stmt_type == StatementTypes.return_statement);
+    assert(s[0].stmts[0].has_args == false);
+}
+
+unittest {
+    SymbolTable table = new SymbolTable;
+    string[] statement = ["while","(", "True",")", "{","if", "(","a", "+", "b",
+                           "==", "c", ")", "{", "return", ";", "}","}"];
+    Statement*[] s = parse_statements(statement, table);
+    assert(s !is null);
+    assert(s.length == 1);
+    assert(s[0].stmt_type == StatementTypes.while_statement);
+    assert(s[0].var_type is null);
+    assert(s[0].has_args == true);
+    assert(s[0].stmts !is null);
+    assert(s[0].stmts.length == 1);
+    assert(s[0].stmts[0].stmt_type == StatementTypes.if_statement);
+    assert(s[0].stmts[0].has_args == true);
+    assert(s[0].stmts[0].stmts !is null);
+    assert(s[0].stmts[0].stmts.length == 1);
+    assert(s[0].stmts[0].stmts[0].has_args == false);
+    assert(s[0].stmts[0].stmts[0].stmt_type == StatementTypes.return_statement);
+}
+
+unittest {
+    SymbolTable table = new SymbolTable;
+    string[] statement = ["else", "if", "(","a", "+", "b",
+                           "==", "c", ")", "{", "return", ";", "}"];
+    Statement*[] s = parse_statements(statement, table);
+    assert(s !is null);
+    assert(s.length == 1);
+    assert(s[0].stmt_type == StatementTypes.else_if_statement);
+    assert(s[0].var_type is null);
+    assert(s[0].has_args == true);
+    assert(s[0].stmts !is null);
+    assert(s[0].stmts.length == 1);
+    assert(s[0].stmts[0].stmt_type == StatementTypes.if_statement);
+    assert(s[0].stmts[0].has_args == true);
+    assert(s[0].stmts[0].stmts[0] !is null);
+    assert(s[0].stmts[0].stmts[0].stmt_type == StatementTypes.return_statement);
 }

@@ -9,7 +9,7 @@ void invalid_branching_logic_scope_token() {
 }
 
 void invalid_args_token() {
-    writeln("ERROR: branching logic arguments must be enclosed by parentheses.");
+    writeln("ERROR: branching logic has malformed argument.");
     exit(1);
 }
 
@@ -18,6 +18,6 @@ void empty_statement_body() {
 }
 
 void empty_conditional() {
-    writeln("ERROR: conditional is empty.");
+    writeln("ERROR: argument for branching logic is empty.");
     exit(1);
 }
