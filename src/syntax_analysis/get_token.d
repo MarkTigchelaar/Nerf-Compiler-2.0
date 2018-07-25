@@ -11,7 +11,7 @@ string get_token(string[] func_body, int* index)  {
 
 string current_token(string[] func_body, int* index)  {
     if(*index >= func_body.length) {
-        invalid_statement();
+        return null;
     }
     string token = func_body[*index];
     return token;
