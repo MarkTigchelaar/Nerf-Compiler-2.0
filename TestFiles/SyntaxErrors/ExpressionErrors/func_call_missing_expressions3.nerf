@@ -1,0 +1,7 @@
+fn main() void {
+    float a :=  23 * funcE(3.6,, 8.11);
+}
+
+fn funcE(float a, float b, float c) float {
+    return 2.7 + (a * b) / c;
+}

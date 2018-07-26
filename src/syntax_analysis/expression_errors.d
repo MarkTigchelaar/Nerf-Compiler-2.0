@@ -19,11 +19,21 @@ void invalid_expression_token() {
 }
 
 void multiple_minus_signs() {
-    writeln("ERROR: expression has multiple - operators in sequence.");
+    writeln("ERROR: cannot use double negatives for prefix expressions.");
     exit(1);
 }
 
 void invalid_expression() {
     writeln("ERROR: expression is invalid.");
+    exit(1);
+}
+
+void missing_operator() {
+    writeln("ERROR: expression is missing operator.");
+    exit(1);
+}
+
+void missing_variable_or_constant() {
+    writeln("ERROR: expression is missing variable or constant.");
     exit(1);
 }

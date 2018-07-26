@@ -223,6 +223,18 @@ class SymbolTable {
         return false;
     }
 
+    final bool is_operator(string token) {
+        if(is_bool_compare(token)) {
+            return true;
+        }
+        if(is_bool_operator(token)) {
+            return true;
+        }
+        if(is_math_op(token)) {
+            return true;
+        }
+        return false;
+    }
 
     final int bool_op_precedence(string token) {
         if(token == "!") {
@@ -234,6 +246,10 @@ class SymbolTable {
         } else {
             throw new Exception("Not a bool.");
         }
+    }
+
+    final int fn_call_precedence() {
+        return 8;
     }
 
     final bool is_boolean(string token) {
@@ -309,6 +325,8 @@ class SymbolTable {
     }
 
     final int token_precedence(string token) {
+        import std.stdio: writeln;
+        
         if(is_valid_variable(token) || is_keyword(token) || is_number(token)) {
             return 0;
         } else if(is_bool_compare(token)) {
@@ -317,7 +335,10 @@ class SymbolTable {
             return bool_op_precedence(token);
         } else if(is_math_op(token)) {
             return math_operators[token];
+        } else if(is_open_paren(token)) {
+            return fn_call_precedence();
         } else {
+            writeln(token);
             throw new Exception("unknown token type.");
         }
     }

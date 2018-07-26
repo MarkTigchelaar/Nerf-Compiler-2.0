@@ -22,9 +22,9 @@ def run_tests():
     test_loop(run_syntax_tests)
     print('syntax tests complete')
     #test_loop(run_semantics_tests)
-    print('running compiler on correct source files...\n\n\n\n\n')
-    test_loop(happy_path)
-    print('final tests on correct files complete')
+    #print('running compiler on correct source files...\n\n\n\n\n')
+    #test_loop(happy_path)
+    #print('final tests on correct files complete')
     print('All tests passed')
     os.system('rm printout.txt')
 
@@ -87,6 +87,7 @@ def run_syntax_tests():
     tests.extend(fn_declaration_tests())
     tests.extend(fn_assignments_tests())
     tests.extend(fn_branching_logic_tests())
+    tests.extend(statement_expression_tests())
     return tests
 
 
@@ -274,6 +275,59 @@ def fn_branching_logic_tests():
 
     err = 'ERROR: argument for branching logic is empty.'
     file = 'while_conditional_no_args.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    return tests
+
+def statement_expression_tests():
+    dir_name = 'TestFiles/SyntaxErrors/ExpressionErrors/'
+    preamble = 'Testing file '
+    fail = ', \nExpecting '
+
+    tests = list()
+
+    err = 'ERROR: expression is invalid.'
+    file = 'operator_only.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: cannot use double negatives for prefix expressions.'
+    file = 'double_negative1.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: cannot use double negatives for prefix expressions.'
+    file = 'double_negative2.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: cannot use double negatives for prefix expressions.'
+    file = 'double_negative3.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: parenthesis contains no epressions.'
+    file = 'empty_parens1.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: expression is missing variable or constant.'
+    file = 'double_operators1.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: expression is missing variable or constant.'
+    file = 'double_operators2.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: function call missing argument(s).'
+    file = 'func_call_missing_expressions1.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: function call missing argument(s).'
+    file = 'func_call_missing_expressions2.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: function call missing argument(s).'
+    file = 'func_call_missing_expressions3.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: expression is missing operator.'
+    file = 'missing_operator1.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     return tests

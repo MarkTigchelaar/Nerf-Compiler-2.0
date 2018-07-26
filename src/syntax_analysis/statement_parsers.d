@@ -173,7 +173,9 @@ Statement* parse_return_statement(ref SymbolTable table, string[] func_body, int
         has_args = true;
     }
     auto ret_statement = new Statement(StatementTypes.return_statement, has_args);
-    ret_statement.syntax_tree = parse_expressions(table, return_results.dup);
+    if(has_args) {
+        ret_statement.syntax_tree = parse_expressions(table, return_results.dup);
+    }
     return ret_statement;
 }
 
@@ -212,7 +214,9 @@ string[] get_r_value_tokens(ref SymbolTable table, string[] func_body, int* inde
 }
 
 void check_identifier(ref SymbolTable table, string identifier) {
-    if(!table.is_valid_variable(identifier)) {
+    if(identifier is null) {
+        invalid_statement();
+    } else if(!table.is_valid_variable(identifier)) {
         if(table.is_assignment(identifier)) {
             missing_identifier();
         } else if(table.is_number(identifier)) {
@@ -231,7 +235,9 @@ void check_assignment(ref SymbolTable table, string[] func_body, int* index) {
         return;
     }
     string possible_assign = get_token(func_body, index);
-    if(table.is_assignment(possible_assign)) {
+    if(possible_assign is null) {
+        invalid_statement();
+    } else if(table.is_assignment(possible_assign)) {
         invalid_misspelt_type();
     } else {
         missing_assignment_operator();
