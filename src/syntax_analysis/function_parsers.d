@@ -8,7 +8,7 @@ import scoped_token_collector;
 import statement_parsers: parse_statements;
 import std.stdio;
 
-Program* parse_tokens(Lexer lexer, string prog_name) {
+Program* parse_program(Lexer lexer, string prog_name) {
     Program* program = new Program(prog_name);
     auto table = lexer.get_table();
     auto collector = new ScopedTokenCollector(table);
@@ -174,7 +174,7 @@ unittest {
     SymbolTable table = new SymbolTable;
     Lexer lexer = new Lexer(table, test.dup);
     ScopedTokenCollector collector = new ScopedTokenCollector(table);
-    Program* p = parse_tokens(lexer, "test");
+    Program* p = parse_program(lexer, "test");
     assert(p.name == "test");
     assert(p.functions.length == 1);
     assert(p.functions[0] !is null);
@@ -189,7 +189,7 @@ unittest {
     SymbolTable table = new SymbolTable;
     Lexer lexer = new Lexer(table, test.dup);
     ScopedTokenCollector collector = new ScopedTokenCollector(table);
-    Program* p = parse_tokens(lexer, "test");
+    Program* p = parse_program(lexer, "test");
     string[] func_arg_types = table.get_function_args("func");
     assert(func_arg_types is null);
 

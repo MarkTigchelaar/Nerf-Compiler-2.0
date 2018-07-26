@@ -23,6 +23,7 @@ def build():
     command += syntax_path + 'expression_errors.d '
     command += syntax_path + 'get_token.d '
     command += semantics_path + 'semantic_errors.d '
+    command += semantics_path + 'analyze_semantics.d '
     command += ' -w -m64 -inline -unittest'
     os.system(command)
 

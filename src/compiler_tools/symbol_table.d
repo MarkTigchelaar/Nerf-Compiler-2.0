@@ -126,7 +126,7 @@ class SymbolTable {
         return variables_at_scope_level[scope_level];
     }
 
-    final void add_variable(string variable, string type) {
+    final void add_local_variable(string variable, string type) {
         if(!is_declared_variable(variable)) {
             variable_table[variable] = type;
             variables_at_scope_level[scope_level] ~= variable;
