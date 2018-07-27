@@ -1,0 +1,18 @@
+fn main() void {
+    while(True) {
+        if(True) {
+            if(1 < 2) {
+                if(True | False) {
+                    int number := 1;
+                    while(10 > 1) {
+                        if(66 == 66) {
+                            continue;
+                            int orphan := 0;
+                        }
+                    }
+                    return;
+                }
+            }
+        }
+    }
+}

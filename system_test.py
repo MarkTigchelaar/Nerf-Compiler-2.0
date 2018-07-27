@@ -21,10 +21,12 @@ def run_tests():
     print('running syntax analysis tests...\n\n\n\n\n')
     test_loop(run_syntax_tests)
     print('syntax tests complete')
-    #test_loop(run_semantics_tests)
-    #print('running compiler on correct source files...\n\n\n\n\n')
-    #test_loop(happy_path)
-    #print('final tests on correct files complete')
+    print('running semantic analysis tests...\n\n\n\n\n')
+    test_loop(run_semantics_tests)
+    print('semantic tests complete')
+    print('running compiler on correct source files...\n\n\n\n\n')
+    test_loop(happy_path)
+    print('final tests on correct files complete')
     print('All tests passed')
     os.system('rm printout.txt')
 
@@ -129,6 +131,10 @@ def fn_declaration_tests():
     err = 'ERROR: function missing parentheses for arguments.'
     file = 'noFnArgParen2.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    #err = 'ERROR: function has duplicate argument variable names.'
+    #file = 'fnDupArgs.nerf'
+    #tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     err = 'ERROR: missing or invalid return type.'
     file = 'noReturnType.nerf'
@@ -331,6 +337,53 @@ def statement_expression_tests():
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     return tests
+
+def run_semantics_tests():
+    dir_name = 'TestFiles/SemanticErrors/'
+    preamble = 'Testing file '
+    fail = ', \nExpecting '
+
+    tests = list()
+
+    err = 'ERROR: functions must have unique names.'
+    file = 'duplicate_main.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: program must have exactly one entry function named main.'
+    file = 'missing_main.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: return statement creates unreachable code.'
+    file = 'return_not_last_stmt_in_scope1.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: return statement creates unreachable code.'
+    file = 'return_not_last_stmt_in_scope2.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: break or continue statement creates unreachable code.'
+    file = 'break_not_last_stmt_in_scope1.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: break or continue statement creates unreachable code.'
+    file = 'continue_not_last_stmt_in_scope.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: else (if) statements must be preceded by an (else) if statement.'
+    file = 'orphaned_else_statement1.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: else (if) statements must be preceded by an (else) if statement.'
+    file = 'orphaned_else_statement2.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: else (if) statements must be preceded by an (else) if statement.'
+    file = 'orphaned_else_statement3.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    return tests
+
+
 
 
 def happy_path():

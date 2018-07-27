@@ -8,20 +8,21 @@ import semantic_errors;
 void semantic_analysis(Program* program, ref SymbolTable table) {
     int count_main = 0;
     foreach(Function* func; program.functions) {
-        if(func.name == "main") {
+        if(table.is_program_entry_point(func.name)) {
             count_main++;
         }
         analyze(func, table);
     }
     if(count_main != 1) {
-        duplicate_or_missing_main();
+        missing_main();
     }
 }
 
 void analyze(Function* func, ref SymbolTable table) {
     add_func_args_to_local_variable_table(func, table);
     check_for_order_of_statements(func.stmts);
-
+    match_existing_scoped_variables(func.stmts, table);
+    //remove_func_local_variables(func.name,table);
 }
 
 void add_func_args_to_local_variable_table(Function* func, ref SymbolTable table) {
@@ -38,7 +39,7 @@ void add_func_args_to_local_variable_table(Function* func, ref SymbolTable table
 
 void check_for_order_of_statements(Statement*[] statements) {
     for(int i = 0; i < statements.length; i++) {
-        final switch(statements[i].stmt_type) {
+        switch(statements[i].stmt_type) {
             case StatementTypes.else_statement:
             case StatementTypes.else_if_statement:
                 halt_if_orphaned_else(statements, i);
@@ -51,7 +52,10 @@ void check_for_order_of_statements(Statement*[] statements) {
                 break;
             case StatementTypes.return_statement:
                 check_return_statement(statements, i);
-                break;    
+                break; 
+            default:
+                check_for_order_of_statements(statements[i].stmts);  
+                break;
         }
     }
 }
@@ -60,7 +64,10 @@ void halt_if_orphaned_else(Statement*[] statements, int index) {
     if(index == 0) {
         orphaned_else_statement();
     }
-    if(statements[index-1].stmt_type == StatementTypes.else_statement) {
+    if(statements[index-1].stmt_type != StatementTypes.if_statement) {
+        orphaned_else_statement();
+    }
+    if(statements[index-1].stmt_type != StatementTypes.else_if_statement) {
         orphaned_else_statement();
     }
 }
@@ -71,4 +78,10 @@ void check_return_statement(Statement*[] statements, int index) {
     } else if(statements[index].stmts.length > 0) {
         check_for_order_of_statements(statements[index].stmts);
     }
+}
+
+void match_existing_scoped_variables(Statement*[] statements, ref SymbolTable table) {
+    //foreach(Statement* stmt; statements) {
+        return;
+   // }
 }

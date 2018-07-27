@@ -1,0 +1,9 @@
+fn main() void {
+    if(True) {
+        float do_stuff := 0.0;
+    }
+    int k := 0;
+    else {
+        return;
+    }
+}

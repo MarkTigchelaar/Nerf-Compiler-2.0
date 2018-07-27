@@ -7,7 +7,12 @@ void invalid_func_call() {
     exit(1);
 }
 
-void duplicate_or_missing_main() {
+void calling_main() {
+    writeln("ERROR: function \"main\" cannot be called by another function.");
+    exit(1);
+}
+
+void missing_main() {
     writeln("ERROR: program must have exactly one entry function named main.");
     exit(1);
 }

@@ -1,0 +1,6 @@
+fn main() void {
+    while(True) {
+        break;
+        int jk := 10;
+    }
+}

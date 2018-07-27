@@ -1,0 +1,7 @@
+fn main() void {
+    int k := 0;
+    if(k > -1) {
+        return;
+        float f := 2.7;
+    }
+}

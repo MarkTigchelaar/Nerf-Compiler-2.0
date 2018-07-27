@@ -72,7 +72,7 @@ Statement* parse_re_assign_statement(ref SymbolTable table, string[] func_body,
     check_assignment(table, func_body, index);
     string[] rvalues = get_r_value_tokens(table,func_body, index);
     
-    Statement* statement = new Statement(get_statement_type(type), false, type, identifier);
+    Statement* statement = new Statement(get_statement_type(type),type, identifier);
     if(rvalues !is null) {
         statement.syntax_tree = parse_expressions(table, rvalues.dup);
     }
@@ -85,10 +85,10 @@ Statement* parse_else_statement(ref SymbolTable table, string[] func_body, int* 
     (*index)--;
     Statement* else_stmt;
     if(table.is_if(if_or_curly_bracket)) {
-        else_stmt = new Statement(StatementTypes.else_if_statement, true);
+        else_stmt = new Statement(StatementTypes.else_if_statement);
         else_stmt.stmts ~= parse_if_statement(table, func_body, index);
     } else if(table.is_open_curly_brace(if_or_curly_bracket)) {
-        else_stmt = new Statement(StatementTypes.else_if_statement, false);
+        else_stmt = new Statement(StatementTypes.else_if_statement);
         string[] stmt_body = collect_scoped_tokens(table, func_body, index);
         if(stmt_body.length == 0) {
             empty_statement_body();
@@ -113,7 +113,7 @@ Statement* parse_branch_logic(ref SymbolTable table, string[] func_body, int* in
     string[] args = get_statement_args(table, func_body, index);
     string[] stmt_body = get_statment_body(table, func_body, index);
     check_lengths(args, stmt_body);
-    Statement* branch = new Statement(type, true);
+    Statement* branch = new Statement(type);
     branch.syntax_tree = parse_expressions(table, args);
     branch.stmts = parse_statements(stmt_body, table);
     (*index)--;
@@ -162,18 +162,14 @@ Statement* break_continue_statement(ref SymbolTable table, string[] func_body,
     if(!table.is_terminator(func_body[*index])) {
         statement_not_terminated();
     }
-    return new Statement(type, false, null, null);
+    return new Statement(type, null, null);
 }
 
 Statement* parse_return_statement(ref SymbolTable table, string[] func_body, int* index) {
     (*index)++;
-    bool has_args = false;
     string[] return_results = get_r_value_tokens(table,func_body, index);
+    auto ret_statement = new Statement(StatementTypes.return_statement);
     if(return_results !is null) {
-        has_args = true;
-    }
-    auto ret_statement = new Statement(StatementTypes.return_statement, has_args);
-    if(has_args) {
         ret_statement.syntax_tree = parse_expressions(table, return_results.dup);
     }
     return ret_statement;
@@ -181,12 +177,8 @@ Statement* parse_return_statement(ref SymbolTable table, string[] func_body, int
 
 Statement* parse_print_statement(ref SymbolTable table, string[] func_body, int* index) {
     (*index)++;
-    bool has_args = false;
     string[] args = get_statement_args(table, func_body, index);
-    if(args !is null) {
-        has_args = true;
-    }
-    Statement* print_statement = new Statement(StatementTypes.print_statement, has_args);
+    Statement* print_statement = new Statement(StatementTypes.print_statement);
     Expression* arg_tree = new Expression(null);
     arg_tree.args = parse_func_call_arg_expressions(table, args.dup);
     print_statement.syntax_tree = arg_tree;
@@ -273,7 +265,6 @@ unittest {
     assert(s !is null);
     assert(s.stmt_type == StatementTypes.assign_statement);
     assert(s.var_type == "bool");
-    assert(s.has_args == false);
 }
 
 unittest {
@@ -283,7 +274,6 @@ unittest {
     Statement* s = parse_statement_type(table, expression, &index);
     assert(s !is null);
     assert(s.stmt_type == StatementTypes.return_statement);
-    assert(s.has_args == false);    
 }
 
 unittest {
@@ -293,7 +283,6 @@ unittest {
     Statement* s = parse_statement_type(table, expression, &index);
     assert(s !is null);
     assert(s.stmt_type == StatementTypes.break_statement);
-    assert(s.has_args == false);    
 }
 
 unittest {
@@ -303,7 +292,6 @@ unittest {
     Statement* s = parse_statement_type(table, expression, &index);
     assert(s !is null);
     assert(s.stmt_type == StatementTypes.continue_statement);
-    assert(s.has_args == false);    
 }
 
 unittest {
@@ -315,9 +303,7 @@ unittest {
     assert(s.length == 2);
     assert(s[0].stmt_type == StatementTypes.assign_statement);
     assert(s[0].var_type == "bool");
-    assert(s[0].has_args == false);
     assert(s[1].stmt_type == StatementTypes.return_statement);
-    assert(s[1].has_args == false);
 }
 
 unittest {
@@ -329,7 +315,6 @@ unittest {
     assert(s.length == 1);
     assert(s[0].stmt_type == StatementTypes.re_assign_statement);
     assert(s[0].var_type is null);
-    assert(s[0].has_args == false);
 }
 
 unittest {
@@ -341,11 +326,9 @@ unittest {
     assert(s.length == 1);
     assert(s[0].stmt_type == StatementTypes.if_statement);
     assert(s[0].var_type is null);
-    assert(s[0].has_args == true);
     assert(s[0].stmts !is null);
     assert(s[0].stmts.length == 1);
     assert(s[0].stmts[0].stmt_type == StatementTypes.return_statement);
-    assert(s[0].stmts[0].has_args == false);
 }
 
 unittest {
@@ -357,14 +340,11 @@ unittest {
     assert(s.length == 1);
     assert(s[0].stmt_type == StatementTypes.while_statement);
     assert(s[0].var_type is null);
-    assert(s[0].has_args == true);
     assert(s[0].stmts !is null);
     assert(s[0].stmts.length == 1);
     assert(s[0].stmts[0].stmt_type == StatementTypes.if_statement);
-    assert(s[0].stmts[0].has_args == true);
     assert(s[0].stmts[0].stmts !is null);
     assert(s[0].stmts[0].stmts.length == 1);
-    assert(s[0].stmts[0].stmts[0].has_args == false);
     assert(s[0].stmts[0].stmts[0].stmt_type == StatementTypes.return_statement);
 }
 
@@ -377,11 +357,9 @@ unittest {
     assert(s.length == 1);
     assert(s[0].stmt_type == StatementTypes.else_if_statement);
     assert(s[0].var_type is null);
-    assert(s[0].has_args == true);
     assert(s[0].stmts !is null);
     assert(s[0].stmts.length == 1);
     assert(s[0].stmts[0].stmt_type == StatementTypes.if_statement);
-    assert(s[0].stmts[0].has_args == true);
     assert(s[0].stmts[0].stmts[0] !is null);
     assert(s[0].stmts[0].stmts[0].stmt_type == StatementTypes.return_statement);
 }

@@ -1,0 +1,7 @@
+fn main() void {
+    int q := 0;
+}
+
+fn main() void {
+    return;
+}

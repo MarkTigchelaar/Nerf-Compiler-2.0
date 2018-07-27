@@ -1,0 +1,7 @@
+fn main() void {
+    print(secondary(5,6,7,8));
+}
+
+fn secondary(int five, int six, int five, int eight) int {
+    return five + six + five + eight;
+}

@@ -127,9 +127,12 @@ class SymbolTable {
     }
 
     final void add_local_variable(string variable, string type) {
+        import fn_header_syntax_errors: duplicate_fn_args;
         if(!is_declared_variable(variable)) {
             variable_table[variable] = type;
             variables_at_scope_level[scope_level] ~= variable;
+        } else {
+            duplicate_fn_args();
         }
     }
 
@@ -322,6 +325,10 @@ class SymbolTable {
 
     final bool is_close_paren(string token) {
         return token == ")";
+    }
+
+    final bool is_program_entry_point(string token) {
+        return token == "main";
     }
 
     final int token_precedence(string token) {

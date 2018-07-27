@@ -28,6 +28,11 @@ void fn_args_missing_or_invalid_type() {
     exit(1);
 }
 
+void duplicate_fn_args() {
+    writeln("ERROR: function has duplicate argument variable names.");
+    exit(1);
+}
+
 void malformed_args() {
     writeln("ERROR: function arguments malformed");
     exit(1);

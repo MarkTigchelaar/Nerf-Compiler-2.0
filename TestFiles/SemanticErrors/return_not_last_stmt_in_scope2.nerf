@@ -1,0 +1,8 @@
+fn main() void {
+    if(True | False) {
+        if(1 < 2) {
+            return;
+            int K := 0;
+        }
+    }
+}

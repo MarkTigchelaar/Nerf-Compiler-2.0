@@ -1,0 +1,11 @@
+fn main() void {
+    if(True) {
+        float do_stuff := 0.0;
+    } else if(True) {
+        print(9 + 1 == 11);
+    }
+    int k := 0;
+    else {
+        return;
+    }
+}
