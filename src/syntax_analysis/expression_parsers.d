@@ -10,8 +10,10 @@ import std.stdio;
 Expression*[] parse_func_call_arg_expressions(SymbolTable table, string[] rvalues) {
     Expression*[] func_args;
     string[] expressions;
-    foreach(int i, string str; rvalues) {
-        if(table.is_comma(str)) {
+    for(int i = 0; i < rvalues.length; i++) {
+        if(table.is_open_paren(rvalues[i])) {
+            expressions ~= "(" ~ collect_scoped_tokens(table, rvalues, &i) ~ ")";
+        } else if(table.is_comma(rvalues[i])) {
             if(i == rvalues.length -1) {
                 missing_arg_from_call();
             } else if(expressions.length == 0) {
@@ -20,7 +22,7 @@ Expression*[] parse_func_call_arg_expressions(SymbolTable table, string[] rvalue
             func_args ~= parse_expressions(table, expressions.dup);
             expressions = null;
         } else {
-            expressions ~= str;
+            expressions ~= rvalues[i];
         }
     }
     func_args ~= parse_expressions(table, expressions.dup);

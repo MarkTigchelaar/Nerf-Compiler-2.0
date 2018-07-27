@@ -3,6 +3,7 @@ module analyze_semantics;
 import structures;
 import symbol_table;
 import semantic_errors;
+import std.stdio: writeln;
 
 
 void semantic_analysis(Program* program, ref SymbolTable table) {
@@ -22,7 +23,6 @@ void analyze(Function* func, ref SymbolTable table) {
     add_func_args_to_local_variable_table(func, table);
     check_for_order_of_statements(func.stmts);
     match_existing_scoped_variables(func.stmts, table);
-    //remove_func_local_variables(func.name,table);
 }
 
 void add_func_args_to_local_variable_table(Function* func, ref SymbolTable table) {
@@ -81,7 +81,5 @@ void check_return_statement(Statement*[] statements, int index) {
 }
 
 void match_existing_scoped_variables(Statement*[] statements, ref SymbolTable table) {
-    //foreach(Statement* stmt; statements) {
         return;
-   // }
 }

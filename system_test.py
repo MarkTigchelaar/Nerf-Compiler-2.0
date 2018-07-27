@@ -132,9 +132,9 @@ def fn_declaration_tests():
     file = 'noFnArgParen2.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    #err = 'ERROR: function has duplicate argument variable names.'
-    #file = 'fnDupArgs.nerf'
-    #tests.append((preamble + file + fail + err, dir_name+file, err,))
+    err = 'ERROR: function has duplicate argument variable names.'
+    file = 'fnDupArgs.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     err = 'ERROR: missing or invalid return type.'
     file = 'noReturnType.nerf'
