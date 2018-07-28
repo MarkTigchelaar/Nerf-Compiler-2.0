@@ -14,11 +14,8 @@ Program* parse_program(Lexer lexer, string prog_name) {
     auto collector = new ScopedTokenCollector(table);
     Function* func;
     while(lexer.not_complete()) {
-        //writeln("parsing...");
         parse_function_header(lexer, func, collector);
-        //writeln("Parsing function body");
         parse_function_body(lexer, func, collector);
-        //writeln("have function body");
         program.functions ~= func;
     }
     return program;
@@ -30,9 +27,7 @@ void parse_function_header(Lexer lexer, out Function* func,
     auto table = lexer.get_table();
     if(table.is_fn_identifier(lexer.get_token())) {
         string name = get_function_name(lexer);
-        //writeln("getting function args");
         string[] args = get_parsed_function_args(lexer, collector);
-        //writeln("have function args");
         set_function_return_type(lexer, name);
         func = new Function(name, args.dup);
     } else {
@@ -168,8 +163,6 @@ void parse_function_body(ref Lexer lexer,   Function* func,
     if(func_body.length == 0) {
         empty_func_body();
     } else {
-        //writeln("parse statements");
-        //writeln(func_body);
         func.stmts = parse_statements(func_body, table);
     }
 }
