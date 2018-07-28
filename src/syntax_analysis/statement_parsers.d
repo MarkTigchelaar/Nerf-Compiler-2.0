@@ -90,9 +90,7 @@ Statement* parse_else_statement(ref SymbolTable table, string[] func_body, int* 
     } else if(table.is_open_curly_brace(if_or_curly_bracket)) {
         else_stmt = new Statement(StatementTypes.else_if_statement);
         string[] stmt_body = collect_scoped_tokens(table, func_body, index);
-        if(stmt_body.length == 0) {
-            empty_statement_body();
-        }
+        check_lengths([","], stmt_body);
         else_stmt.stmts = parse_statements(stmt_body, table);
     } else {
         invalid_branching_logic_scope_token();

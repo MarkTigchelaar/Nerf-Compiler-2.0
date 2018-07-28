@@ -22,7 +22,7 @@ class SymbolTable {
         string[string] open_seperators;
         string[string] close_seperators;
         string[string] variable_table;
-        string[][int] variables_at_scope_level;
+        string[][int] variables_declared_at_scope_level;
         int scope_level;
         string[][string] function_fn_args_table;
         string[string] function_return_types;
@@ -46,6 +46,19 @@ class SymbolTable {
         scope_level--;
         if(scope_level < 1) {
             throw new Exception("Scope is less than one.");
+        }
+        remove_variables_at_deeper_scope_levels();
+    }
+
+    final void remove_variables_at_deeper_scope_levels() {
+        foreach(int key; variables_declared_at_scope_level.keys) {
+            if(key <= scope_level) {
+                continue;
+            }
+            foreach(string var_key; variables_declared_at_scope_level[key]) {
+                variable_table.remove(var_key);
+            }
+            variables_declared_at_scope_level.remove(key);
         }
     }
 
@@ -97,6 +110,11 @@ class SymbolTable {
         }
     }
 
+    final void clear_local_variables() {
+        variable_table.clear();
+        variables_declared_at_scope_level.clear();
+    }
+
     final bool is_declared_variable(string token) {
         if(token in variable_table) {
             return true;
@@ -122,15 +140,11 @@ class SymbolTable {
         return regex_helper(variable, `^[0-9]+[.][0-9]+$`);
     }
 
-    final string[] variables_at_this_level() {
-        return variables_at_scope_level[scope_level];
-    }
-
     final void add_local_variable(string variable, string type) {
         import fn_header_syntax_errors: duplicate_fn_args;
         if(!is_declared_variable(variable)) {
             variable_table[variable] = type;
-            variables_at_scope_level[scope_level] ~= variable;
+            variables_declared_at_scope_level[scope_level] ~= variable;
         } else {
             duplicate_fn_args();
         }
@@ -153,6 +167,10 @@ class SymbolTable {
         } else {
             function_return_types[fn_name] = return_type;
         }
+    }
+
+    final string get_return_type(string fn_name) {
+        return function_return_types[fn_name];
     }
 
     final bool is_function_name(string fn_name) {
@@ -327,6 +345,10 @@ class SymbolTable {
         return token == ")";
     }
 
+    final bool is_void(string token) {
+        return token == "void";
+    }
+
     final bool is_program_entry_point(string token) {
         return token == "main";
     }
@@ -348,6 +370,22 @@ class SymbolTable {
             writeln(token);
             throw new Exception("unknown token type.");
         }
+    }
+
+    final bool resolves_to_bool_value(string ast_type) {
+        return true;
+    }
+
+    final bool resolves_to_int(string ast_type) {
+        return true;
+    }
+
+    final bool resolves_to_float(string ast_type) {
+        return true;
+    }
+
+    final bool resolves_to_void(string ast_type) {
+        return true;
     }
 }
 
