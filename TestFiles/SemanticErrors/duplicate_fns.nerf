@@ -1,0 +1,15 @@
+fn main() void {
+    print(some_func());
+}
+
+fn some_func() int {
+    return another_func(5);
+}
+
+fn another_func(int arg) int {
+    return arg * 2;
+}
+
+fn another_func(int arrg) int {
+    return 5 + arrg;
+}

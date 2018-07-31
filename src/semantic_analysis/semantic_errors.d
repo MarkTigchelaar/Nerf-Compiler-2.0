@@ -3,7 +3,7 @@ import core.sys.posix.stdlib: exit;
 import std.stdio: writeln;
 
 void invalid_func_call() {
-    writeln("ERROR: call to non existant function.");
+    writeln("ERROR: invalid function call.");
     exit(1);
 }
 
@@ -14,6 +14,11 @@ void calling_main() {
 
 void missing_main() {
     writeln("ERROR: program must have exactly one entry function named main.");
+    exit(1);
+}
+
+void main_has_args() {
+    writeln("ERROR: program entry point \"main\" cannot have arguments.");
     exit(1);
 }
 
@@ -77,6 +82,11 @@ void returning_values_in_void_function() {
     exit(1);
 }
 
+void non_void_func_missing_returns() {
+    writeln("ERROR: non void function does not return value along all return paths.");
+    exit(1);
+}
+
 void if_stmt_args_do_not_resolve_to_bool_value() {
     writeln("ERROR: branching logics argument does not resolve to bool value.");
     exit(1);
@@ -84,5 +94,30 @@ void if_stmt_args_do_not_resolve_to_bool_value() {
 
 void loop_args_do_not_resolve_to_bool_value() {
     writeln("ERROR: loop logic argument does not resolve to bool value.");
+    exit(1);
+}
+
+void call_to_non_existant_function() {
+    writeln("ERROR: call to non existant function.");
+    exit(1);
+}
+
+void incorrect_number_of_args_to_function() {
+    writeln("ERROR: number of arguments in function call does not match function declaration.");
+    exit(1);
+}
+
+void mismatching_function_argument() {
+    writeln("ERROR: function call has mismatched arguments to function declaration.");
+    exit(1);
+}
+
+void expressions_have_mismatching_types() {
+    writeln("ERROR: assignment or return expression has type that does not match expected.");
+    exit(1);
+}
+
+void undeclared_variables_in_expression() {
+    writeln("ERROR: undeclared variable found in expression.");
     exit(1);
 }

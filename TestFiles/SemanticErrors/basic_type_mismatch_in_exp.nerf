@@ -1,0 +1,5 @@
+fn main() void {
+    int a := 3;
+    float b := 3.0;
+    int c := a + b;
+}

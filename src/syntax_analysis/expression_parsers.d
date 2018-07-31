@@ -19,13 +19,19 @@ Expression*[] parse_func_call_arg_expressions(SymbolTable table, string[] rvalue
             } else if(expressions.length == 0) {
                 missing_arg_from_call();
             }
-            func_args ~= parse_expressions(table, expressions.dup);
+            Expression* result = parse_expressions(table, expressions.dup);
+            if(result !is null) {
+                func_args ~= result;
+            }
             expressions = null;
         } else {
             expressions ~= rvalues[i];
         }
     }
-    func_args ~= parse_expressions(table, expressions.dup);
+    Expression* result = parse_expressions(table, expressions.dup);
+    if(result !is null) {
+        func_args ~= result;
+    }
     return func_args;
 }
 
@@ -71,7 +77,7 @@ Expression* prefix_func_switchboard(ref SymbolTable table, string[] exptokens, i
         prefix = variable_or_const_parser(table, exptokens, index);
     } else if(table.is_operator(current_token(exptokens, index))) {
         missing_variable_or_constant();
-    } else { 
+    } else {
         invalid_expression_token();
     }
     return prefix;

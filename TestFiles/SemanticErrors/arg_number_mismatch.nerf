@@ -1,0 +1,7 @@
+fn main() void {
+    int c := func(1, 2, 3);
+}
+
+fn func(int a, int b, int c, int d) int {
+    return a + b + c + d;
+}

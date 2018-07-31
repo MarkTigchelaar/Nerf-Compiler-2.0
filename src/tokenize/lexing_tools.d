@@ -112,67 +112,46 @@ class Lexer {
     }
 
     private void tokenize(string stream) {
-        string check;
-        
-        foreach(char ch; stream) {
-            
-            if(isWhite(ch)) {
-                check = "";
+        string trailing;
+        string leading;
+        for(int i = 1; i < stream.length; i++) {
+            trailing = "" ~ stream[i-1];
+            leading = "" ~ stream[i];
+            if(isWhite(stream[i-1])) {
                 add_candidate();
-                continue;
+            } else if(table.is_terminator(trailing)) {
+                add_twice(trailing);
+            } else if(table.is_partial_op(trailing)
+                && table.is_operator(trailing ~ leading)) {
+                    add_twice(trailing ~ leading);
+                    i++;
+            } else if(table.is_partial_op(trailing)
+                && table.is_assignment(trailing ~ leading)) {
+                    add_twice(trailing ~ leading);
+                    i++;
+            } else if(table.is_operator(trailing)) {
+                add_twice(trailing);
+            } else if(table.is_seperator(trailing)) {
+                add_twice(trailing);
+            } else {
+                candidate ~= trailing;
             }
-            check ~= ch;
-            if(check_runthrough(check, ch)) {
-                continue;
+            if(i == stream.length - 1) {
+                if(table.is_seperator(leading) || table.is_terminator(leading)) {
+                    add_twice(leading);
+                } else {
+                    candidate ~= leading;
+                    add_candidate();
+                }
             }
-            candidate ~= ch;
-            if(check_candidate()) {
-                continue;
-            }
-            check = "";
         }
+    }
+
+    private void add_twice(string added_chars) {
+        add_candidate();
+        candidate = "" ~ added_chars;
         add_candidate();
     }
-
-    private bool check_runthrough(string check, char ch) {
-        if(table.is_seperator(check)) {
-            add_candidate();
-        } else if(table.is_partial_op(check)) {
-            add_candidate();
-            candidate ~= ch;
-            return true;
-        } else if(table.is_bool_operator(check)) {
-            add_candidate();
-        } else if(table.is_terminator(check)) {
-            add_candidate();
-        } else if(table.is_math_op(check)) {
-            add_candidate();
-        } else if(table.is_bool_compare(candidate)) {
-            add_candidate();
-        }
-        return false;
-    }
-
-    private bool check_candidate() {
-        bool should_continue = false;
-        
-        if(table.is_assignment(candidate)) {
-            add_candidate();
-            should_continue = true;
-        } else if(table.is_seperator(candidate)) {
-            add_candidate();
-        } else if(table.is_bool_compare(candidate)) {
-            add_candidate();
-        } else if(table.is_bool_operator(candidate)) {
-            add_candidate();
-        } else if(table.is_terminator(candidate)) {
-            add_candidate();
-        } else if(table.is_math_op(candidate)) {
-            add_candidate();
-        }
-        return should_continue;
-    }
-
 
     private void add_candidate() {
         if(candidate !is null) {
@@ -241,18 +220,19 @@ unittest {
 }
 
 unittest {
+    
     SymbolTable s = new SymbolTable;
     Lexer l = new Lexer(s);
     string test;
     string[] expect;
 
     test = "fn main() void { \n
-              if(i<j) { \n
+              if(i<=j) { \n
                 int k:=12; \n
               } \n
             }";
     expect = ["fn","main","(",")","void",
-              "{","if","(","i","<","j",")",
+              "{","if","(","i","<=","j",")",
               "{","int","k",":=","12",";","}",
               "}"];
     l.tokenize(test);
@@ -262,6 +242,19 @@ unittest {
     }
 }
 
+unittest {
+    SymbolTable s = new SymbolTable;
+    Lexer l = new Lexer(s);
+    string test = "<= c:=d a<b d>=e != f==g;";
+    string[] expect = ["<=", "c", ":=", "d", "a",
+                       "<", "b", "d", ">=", "e",
+                       "!=", "f", "==", "g", ";"];
+    l.tokenize(test);
+    assert(l.tokens.length == expect.length);
+    for(int i = 0; i < expect.length; i++) {
+        assert(l.tokens[i] == expect[i]);
+    }
+}
 
 unittest {
     SymbolTable s = new SymbolTable;

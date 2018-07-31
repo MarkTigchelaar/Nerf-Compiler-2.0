@@ -1,0 +1,15 @@
+fn main() void {
+    print(non_void(7));
+}
+
+fn non_void(int seven) int {
+    if(seven != 7) {
+        return 8;
+    } else if(seven > 94) {
+        return 11;
+    } else if(2 == 8) {
+        return 18;
+    }
+        return 10;
+    
+}

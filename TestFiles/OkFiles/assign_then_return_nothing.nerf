@@ -1,0 +1,7 @@
+fn main() void {
+    int y := 2;
+    if(1 < 2) {
+        int t := 3;
+    }
+    return;
+}

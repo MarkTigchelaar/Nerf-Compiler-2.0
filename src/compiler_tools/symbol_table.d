@@ -24,7 +24,7 @@ class SymbolTable {
         string[string] variable_table;
         string[][int] variables_declared_at_scope_level;
         int scope_level;
-        string[][string] function_fn_args_table;
+        string[][string] function_fn_arg_types_table;
         string[string] function_return_types;
 
     public:
@@ -150,13 +150,20 @@ class SymbolTable {
         }
     }
 
+    final string get_local_variable_type(string variable) {
+        if(variable !in variable_table) {
+            return null;
+        }
+        return variable_table[variable];
+    }
+
     // arg types in order from left to right (for semantic analysis).
     final void add_fn_args(string fn_name, string[] arg_types) {
         import fn_header_syntax_errors: duplicate_fn_name;
         if(is_function_name(fn_name)) {
             duplicate_fn_name();
         } else {
-            function_fn_args_table[fn_name] = arg_types;
+            function_fn_arg_types_table[fn_name] = arg_types;
         }
     }
 
@@ -174,7 +181,7 @@ class SymbolTable {
     }
 
     final bool is_function_name(string fn_name) {
-        if(fn_name in function_fn_args_table) {
+        if(fn_name in function_fn_arg_types_table) {
             return true;
         }
         return false;
@@ -183,7 +190,7 @@ class SymbolTable {
     final string[] get_function_args(string func_name) {
         import semantic_errors: invalid_func_call;
         if(is_function_name(func_name)) {
-            return function_fn_args_table[func_name];
+            return function_fn_arg_types_table[func_name];
         } else {
             invalid_func_call();
         }
@@ -281,7 +288,9 @@ class SymbolTable {
     }
 
     final bool is_partial_op(string token) {
-        if(token == ":" || token == "<" || token == ">") {
+        if(token == ":" || token == "<" || 
+           token == ">" || token == "=" || 
+           token == "!") {
             return true;
         }
         return false;
@@ -354,8 +363,6 @@ class SymbolTable {
     }
 
     final int token_precedence(string token) {
-        import std.stdio: writeln;
-        
         if(is_valid_variable(token) || is_keyword(token) || is_number(token)) {
             return 0;
         } else if(is_bool_compare(token)) {
@@ -367,25 +374,65 @@ class SymbolTable {
         } else if(is_open_paren(token)) {
             return fn_call_precedence();
         } else {
-            writeln(token);
             throw new Exception("unknown token type.");
         }
     }
 
     final bool resolves_to_bool_value(string ast_type) {
-        return true;
+        if(is_bool_operator(ast_type)) {
+            return true;
+        } else if(is_bool_compare(ast_type)) {
+            return true;
+        } else if(is_boolean(ast_type)) {
+            return true;
+        } else if(is_declared_variable(ast_type)) {
+            return is_boolean(get_local_variable_type(ast_type));
+        } else if(ast_type == "bool") {
+            return true;
+        }
+        return false;
+    }
+
+    final string get_bool() {
+        return "bool";
     }
 
     final bool resolves_to_int(string ast_type) {
-        return true;
+        if(is_math_op(ast_type)) {
+            return true;
+        } else if(is_variable_integer(ast_type)) {
+            return true;
+        } else if(ast_type == "int") {
+            return true;
+        } else if(is_declared_variable(ast_type)) {
+            if(variable_table[ast_type] == "int") {
+                return true;
+            } 
+        }
+        return false;
+    }
+
+    final string get_int() {
+        return "int";
     }
 
     final bool resolves_to_float(string ast_type) {
-        return true;
+        if(is_math_op(ast_type)) {
+            return true;
+        } else if(is_variable_float(ast_type)) {
+            return true;
+        } else if(ast_type == "float") {
+            return true;
+        } else if(is_declared_variable(ast_type)) {
+            if(variable_table[ast_type] == "float") {
+                return true;
+            } 
+        }
+        return false;
     }
 
-    final bool resolves_to_void(string ast_type) {
-        return true;
+    final string get_float() {
+        return "float";
     }
 }
 

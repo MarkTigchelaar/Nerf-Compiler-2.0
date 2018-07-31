@@ -168,6 +168,9 @@ def fn_declaration_tests():
     file = 'missingFnBodyScopeToken.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
+    err = 'ERROR: function missing parentheses for arguments.'
+    file = 'fn_and_name_only.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     return tests
 
@@ -214,11 +217,11 @@ def fn_assignments_tests():
     file = 'misspelt_type_on_assignment.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    err = 'ERROR: identifier cannot be a keyword or contain non alphbetical characters (underscore is exception).'
+    err = 'ERROR: identifier cannot be a keyword or contain non alphabetical characters (underscore is exception).'
     file = 'invalid_identifier_on_new_assignment.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    err = 'ERROR: identifier cannot be a keyword or contain non alphbetical characters (underscore is exception).'
+    err = 'ERROR: identifier cannot be a keyword or contain non alphabetical characters (underscore is exception).'
     file = 'invalid_identifier_on_re_assignment.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
@@ -349,6 +352,10 @@ def run_semantics_tests():
     file = 'duplicate_main.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
+    err = 'ERROR: functions must have unique names.'
+    file = 'duplicate_fns.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
     err = 'ERROR: program must have exactly one entry function named main.'
     file = 'missing_main.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
@@ -381,7 +388,69 @@ def run_semantics_tests():
     file = 'orphaned_else_statement3.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
+    err = 'ERROR: undeclared variable found in expression.'
+    file = 'invalid_func_call.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: function \"main\" cannot be called by another function.'
+    file = 'main_calling_main.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: program entry point \"main\" cannot have arguments.'
+    file = 'main_with_args.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: function \"main\" cannot be called by another function.'
+    file = 'other_func_calling_main.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: variable has already been declared.'
+    file = 're_instantiate_variable1.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: variable has already been declared.'
+    file = 're_instantiate_variable2.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: assignment or return expression has type that does not match expected.'
+    file = 'basic_type_mismatch_in_exp.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: undeclared variable found in expression.'
+    file = 'undeclared_variables_in_expression.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: r value of variable assignment has mismatching types.'
+    file = 'assignment_type_mismatch1.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: assignment or return expression has type that does not match expected.'
+    file = 'assignment_type_mismatch2.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: number of arguments in function call does not match function declaration.'
+    file = 'arg_number_mismatch.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = 'ERROR: function call has mismatched arguments to function declaration.'
+    file = 'arg_type_mismatch.nerf'
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
     return tests
+"""
+    err = ''
+    file = ''
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = ''
+    file = ''
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+
+    err = ''
+    file = ''
+    tests.append((preamble + file + fail + err, dir_name+file, err,))
+"""
+    
 
 
 
@@ -403,8 +472,20 @@ def happy_path():
     file = 'assign_with_two_variables.nerf'
     tests.append((preamble + file + good + success, dir_name+file, success,))
 
-    #file = 'conditional_re_assignment.nerf'
-    #tests.append((preamble + file + good + success, dir_name+file, success,))
+    file = 'oneFunc.nerf'
+    tests.append((preamble + file + good + success, dir_name+file, success,))
+
+    file = 'conditional_re_assignment.nerf'
+    tests.append((preamble + file + good + success, dir_name+file, success,))
+
+    file = 'float_reassign.nerf'
+    tests.append((preamble + file + good + success, dir_name+file, success,))
+
+    file = 'print_test.nerf'
+    tests.append((preamble + file + good + success, dir_name+file, success,))
+
+    file = 'non_void_return_in_branch_logic.nerf'
+    tests.append((preamble + file + good + success, dir_name+file, success,))
 
     return tests
 

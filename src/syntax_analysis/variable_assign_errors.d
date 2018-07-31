@@ -19,7 +19,7 @@ void missing_identifier() {
 }
 
 void invalid_l_value() {
-    writeln("ERROR: identifier cannot be a keyword or contain non alphbetical characters (underscore is exception).");
+    writeln("ERROR: identifier cannot be a keyword or contain non alphabetical characters (underscore is exception).");
     exit(1);
 }
 

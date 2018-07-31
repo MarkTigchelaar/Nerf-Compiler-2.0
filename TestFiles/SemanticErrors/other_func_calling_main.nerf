@@ -1,0 +1,7 @@
+fn main() void {
+    int k := ok();
+}
+
+fn ok() int {
+    return 5 + main();
+}

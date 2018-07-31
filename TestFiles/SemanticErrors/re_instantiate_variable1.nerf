@@ -1,0 +1,10 @@
+fn main() void {
+    int a := 3;
+    if(True) {
+        if(True) {
+            while(True) {
+                int a := 4;
+            }
+        }
+    }
+}

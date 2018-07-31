@@ -1,0 +1,12 @@
+fn main() void {
+    print(1, 2.9, 11, True);
+    float a := third(17.78);
+}
+
+
+fn third(float number) float {
+    while(11 > 0) {
+        number := number + 67.28;
+    }
+    return number;
+}
