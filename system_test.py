@@ -437,22 +437,9 @@ def run_semantics_tests():
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
     return tests
-"""
-    err = ''
-    file = ''
-    tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    err = ''
-    file = ''
-    tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    err = ''
-    file = ''
-    tests.append((preamble + file + fail + err, dir_name+file, err,))
-"""
     
-
-
 
 
 def happy_path():

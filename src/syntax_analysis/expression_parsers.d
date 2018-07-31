@@ -5,7 +5,6 @@ import structures: Expression;
 import expression_errors;
 import get_token: get_token, collect_scoped_tokens, current_token;
 import scoped_token_collector;
-import std.stdio;
 
 Expression*[] parse_func_call_arg_expressions(SymbolTable table, string[] rvalues) {
     Expression*[] func_args;

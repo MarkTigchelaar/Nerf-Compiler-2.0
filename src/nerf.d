@@ -9,7 +9,6 @@ void main(string[] arguments) {
     SymbolTable table = new SymbolTable;
     Lexer lexer = new Lexer(table);
     lexer.process_source(arguments);
-    //lexer.print_tokens();
     Program* program = parse_program(lexer, arguments[1]);
     semantic_analysis(program, table);
     //generate_assembly(program);
