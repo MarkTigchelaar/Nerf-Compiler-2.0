@@ -474,6 +474,9 @@ def happy_path():
     file = 'non_void_return_in_branch_logic.nerf'
     tests.append((preamble + file + good + success, dir_name+file, success,))
 
+    file = 'test_file.nerf'
+    tests.append((preamble + file + good + success, dir_name+file, success,))
+
     return tests
 
 

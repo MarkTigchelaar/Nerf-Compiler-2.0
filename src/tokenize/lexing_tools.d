@@ -38,7 +38,7 @@ class Lexer {
     public void increment_stream_index() {
         index++;
         if(index > tokens.length) {
-            throw new Exception("Lexer went passed tokens length.");
+            throw new Exception("Lexer exceeded token stream length.");
         }
     }
 

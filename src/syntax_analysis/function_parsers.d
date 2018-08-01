@@ -6,7 +6,6 @@ import structures: Program, Function, Statement;
 import lexing_tools;
 import scoped_token_collector;
 import statement_parsers: parse_statements;
-import std.stdio;
 
 Program* parse_program(Lexer lexer, string prog_name) {
     Program* program = new Program(prog_name);

@@ -1,0 +1,56 @@
+fn main() void {
+    int a := 10 ^ 2;
+    while(True) {
+        int k := 17 + a;
+        if(k < 100) {
+            while(12 > a) {
+                if(a + 17 > k + 23 * a) {
+                    return;
+                } else {
+                    print(a,k,a,a);
+                }
+                a := a + 1;
+            }
+        } else {
+            bool george := get_bool(a,k);
+            if(george) {
+                int j := add_one(add_one(add_one(0)));
+            }
+        }
+    }
+    float f := get_float(2.7) + get_another_float() + 17.8;
+}
+
+fn get_bool(int first, int second) bool {
+    return first > second;
+}
+
+fn add_one(int arg) int {
+    return arg + 1;
+}
+
+fn get_float(float arg) float {
+    if(True) {
+        if(True) {
+            if(True) {
+                int j := 1600;
+                if(True) {
+                    while(True) {
+                        j := j + 10;
+                        if(j > 10000) {
+                            break;
+                        }
+                    }
+                } else {
+                    return 27.0;
+                }
+            }
+        }
+    } else {
+        return arg * 10000.0;
+    }
+}
+
+fn get_another_float() float {
+    return 8.87;
+}

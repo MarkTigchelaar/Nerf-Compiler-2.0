@@ -386,7 +386,7 @@ class SymbolTable {
         } else if(is_boolean(ast_type)) {
             return true;
         } else if(is_declared_variable(ast_type)) {
-            return is_boolean(get_local_variable_type(ast_type));
+            return get_local_variable_type(ast_type) == "bool";
         } else if(ast_type == "bool") {
             return true;
         }

@@ -125,7 +125,7 @@ void type_check_variables
                 check_return_statement(fn_name, statement, table);
                 break;
             case StatementTypes.while_statement:
-                check_loop_statement(fn_name, statement, table, in_loop);
+                check_loop_statement(fn_name, statement, table, true);
                 break;
             case StatementTypes.if_statement:
                 check_if_statement(fn_name, statement, table, in_loop);
@@ -259,7 +259,6 @@ string resolve_ast_value_type(Expression* root, ref Tble table) {
     }
     string left_type = resolve_ast_value_type(root.left, table);
     string right_type = resolve_ast_value_type(root.right, table);
-
 
     if(is_prefix_tree(root, table)) {
         return resolve_normal_tree(root.var_name, right_type, table,false);
