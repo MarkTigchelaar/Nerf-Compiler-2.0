@@ -2,9 +2,11 @@ import os
 
 def build():
     tok_path = './src/tokenize/'
+    utilities_path = './src/compiler_tools/'
     syntax_path = './src/syntax_analysis/'
     semantics_path = './src/semantic_analysis/'
-    utilities_path = './src/compiler_tools/'
+    code_gen_path = './src/code_generation/'
+    
 
     command = 'dmd ./src/nerf.d '
     command += utilities_path + 'stack.d '

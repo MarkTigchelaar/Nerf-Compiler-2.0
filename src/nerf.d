@@ -6,11 +6,10 @@ import std.stdio: writeln;
 import structures: Program;
 
 void main(string[] arguments) {
-    SymbolTable table = new SymbolTable;
-    Lexer lexer = new Lexer(table);
+    auto table = new SymbolTable;
+    auto lexer = new Lexer(table);
     lexer.process_source(arguments);
     Program* program = parse_program(lexer, arguments[1]);
     semantic_analysis(program, table);
-    //generate_assembly(program);
     writeln("Compilation Successful");
 }

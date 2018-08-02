@@ -15,6 +15,7 @@ void invalid_args_token() {
 
 void empty_statement_body() {
     writeln("ERROR: no statements in branching logic body.");
+    exit(1);
 }
 
 void empty_conditional() {
