@@ -17,10 +17,12 @@ class ExecutionUnit {
     private bool current_bool;
     private SymbolTable table;
     private Program* program;
+    private string fn_name;
 
     this(SymbolTable table, Program* program) {
         this.table = table;
         this.program = program;
+        this.fn_name = table.get_entry_point();
     }
 
     private void increase_scope_level() {

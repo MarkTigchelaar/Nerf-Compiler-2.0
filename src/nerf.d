@@ -14,5 +14,5 @@ void main(string[] arguments) {
     semantic_analysis(program, table);
     auto TreeWalker = new ExecutionUnit(table, program);
     TreeWalker.execute();
-    writeln("Program Successful");
+    writeln("Program Successful.");
 }
