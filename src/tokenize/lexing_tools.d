@@ -110,40 +110,71 @@ class Lexer {
         }
         return true;
     }
-
+    import std.stdio: writeln, write;
     private void tokenize(string stream) {
         string trailing;
         string leading;
-        for(int i = 1; i < stream.length; i++) {
-            trailing = "" ~ stream[i-1];
-            leading = "" ~ stream[i];
-            if(isWhite(stream[i-1])) {
-                add_candidate();
-            } else if(table.is_terminator(trailing)) {
-                add_twice(trailing);
-            } else if(table.is_partial_op(trailing)
-                && table.is_operator(trailing ~ leading)) {
-                    add_twice(trailing ~ leading);
-                    i++;
-            } else if(table.is_partial_op(trailing)
-                && table.is_assignment(trailing ~ leading)) {
-                    add_twice(trailing ~ leading);
-                    i++;
-            } else if(table.is_operator(trailing)) {
-                add_twice(trailing);
-            } else if(table.is_seperator(trailing)) {
-                add_twice(trailing);
-            } else {
-                candidate ~= trailing;
-            }
-            if(i == stream.length - 1) {
-                if(table.is_seperator(leading) || table.is_terminator(leading)) {
-                    add_twice(leading);
-                } else {
-                    candidate ~= leading;
+        foreach(char ch; stream) {
+            trailing = "" ~ ch;
+            if(is_part_of_valid_token(trailing)) {
+                if(table.is_partial_op(candidate)) {
                     add_candidate();
                 }
+                candidate ~= trailing;
+            } else if(table.is_partial_op(trailing)) {
+                tokenize_partial_ops(trailing);
+            } else {
+                add_candidate();
+                determine_token_type(trailing);
             }
+        }
+        if(is_part_of_valid_token(candidate)) {
+            add_candidate();
+        }
+    }
+
+    private bool is_part_of_valid_token(string part) {
+        if(table.is_valid_variable(candidate ~ part)) {
+            return true;
+        } else if(table.is_keyword(candidate ~ part)) {
+            return true;
+        } else if(table.is_number(part)) {
+            return true;
+        }  else if(table.is_dot(part)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private void tokenize_partial_ops(string part) {
+        if(candidate.length < 1) {
+            candidate = part;
+        } else if(table.is_operator(candidate ~ part) ) {
+            candidate ~= part;
+            add_candidate();
+        } else if(table.is_assignment(candidate ~ part)) {
+            candidate ~= part;
+            add_candidate();
+        } else if(table.is_partial_op(candidate)) {
+            add_candidate();
+        } else {
+            add_candidate();
+            candidate ~= part;
+        }
+    }
+
+    private void determine_token_type(string type) {
+        if(table.is_terminator(type) ||
+           table.is_operator(type)   ||
+           table.is_seperator(type))
+        {
+            candidate = type;
+            add_candidate();
+        } else if(table.is_partial_op(type)) {
+            candidate = type;
+        } else if(table.is_valid_variable(type)) {
+            candidate = type;
         }
     }
 
@@ -220,7 +251,6 @@ unittest {
 }
 
 unittest {
-    
     SymbolTable s = new SymbolTable;
     Lexer l = new Lexer(s);
     string test;
@@ -291,3 +321,4 @@ unittest {
         assert(l.tokens[i] == expect[i]);
     } 
 }
+

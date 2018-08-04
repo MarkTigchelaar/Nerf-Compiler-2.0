@@ -221,7 +221,7 @@ def fn_assignments_tests():
     file = 'invalid_identifier_on_new_assignment.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    err = 'ERROR: identifier cannot be a keyword or contain non alphabetical characters (underscore is exception).'
+    err = 'ERROR: invalid or misspelt type in assignment statement.'
     file = 'invalid_identifier_on_re_assignment.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 

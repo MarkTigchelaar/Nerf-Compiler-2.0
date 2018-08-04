@@ -38,12 +38,23 @@ class ExecutionUnit {
     }
 
     public void execute() {
+        execute_function(fn_name, []);
+    }
+
+    private void execute_function(string func, string[] args) {
+        Function* current = get_function(func);
+        
+        
+    }
+
+    private Function* get_function(string func) {
         Function* selected;
         foreach(Function* func; program.functions) {
-            if(func.name == fn_name) {
+            if(func.name == func) {
                 selected = func;
                 break;
             }
         }
+        return selected;
     }
 }

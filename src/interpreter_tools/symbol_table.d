@@ -366,6 +366,10 @@ class SymbolTable {
         return "main";
     }
 
+    final bool is_dot(string token) {
+        return token == ".";
+    }
+    
     final int token_precedence(string token) {
         if(is_valid_variable(token) || is_keyword(token) || is_number(token)) {
             return 0;
