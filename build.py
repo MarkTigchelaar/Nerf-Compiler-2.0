@@ -5,8 +5,8 @@ def build():
     utilities_path = './src/compiler_tools/'
     syntax_path = './src/syntax_analysis/'
     semantics_path = './src/semantic_analysis/'
-    code_gen_path = './src/code_generation/'
-    
+    utilities_path = './src/interpreter_tools/'
+    exec_path = './src/executor/'
 
     command = 'dmd ./src/nerf.d '
     command += utilities_path + 'stack.d '
@@ -26,6 +26,7 @@ def build():
     command += syntax_path + 'get_token.d '
     command += semantics_path + 'semantic_errors.d '
     command += semantics_path + 'analyze_semantics.d '
+    command += exec_path + 'executor.d '
     command += ' -w -m64 -inline -unittest'
     os.system(command)
 

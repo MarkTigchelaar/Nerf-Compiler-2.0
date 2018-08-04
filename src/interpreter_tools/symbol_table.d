@@ -362,6 +362,10 @@ class SymbolTable {
         return token == "main";
     }
 
+    final string get_entry_point() {
+        return "main";
+    }
+
     final int token_precedence(string token) {
         if(is_valid_variable(token) || is_keyword(token) || is_number(token)) {
             return 0;

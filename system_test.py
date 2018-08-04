@@ -1,16 +1,16 @@
 import os, sys
 """
     System Test
-      This script runs source code files (in TestFiles folder) into the compiler.
+      This script runs source code files (in TestFiles folder) into the interpreter.
       Each file has a specific part of the source code that is erronous.
-      The compiler should raise an error that is specific to each of these type of errors.
+      The interpreter should raise an error that is specific to each of these type of errors.
       Only if it does raise the correct type of error does the system test pass.
-      There are system tests for each phase of compilation, in order to deal with all types of
+      There are system tests for each phase of the interpreter, in order to deal with all types of
       issues that a developer might mistakenly create.
 
-      The system tests also run correct files into the compiler to ensure that correct source
+      The system tests also run correct files into the interpreter to ensure that correct source
       code successfully compiles.
-      These files are have various levels of complexity, to ensure the compiler can handle arbitrary
+      These files are have various levels of complexity, to ensure the interpreter can handle arbitrary
       nesting of loops, branching logic, large numbers of function calls, large amounts of variables etc.
 """
 
@@ -24,7 +24,7 @@ def run_tests():
     print('running semantic analysis tests...\n\n\n\n\n')
     test_loop(run_semantics_tests)
     print('semantic tests complete')
-    print('running compiler on correct source files...\n\n\n\n\n')
+    print('running interpreter on correct source files...\n\n\n\n\n')
     test_loop(happy_path)
     print('final tests on correct files complete')
     print('All tests passed')
@@ -44,7 +44,7 @@ def test_loop(get_files):
         error_text = error_text.rstrip('\n')
 
         if error_text != file[error]:
-            if error_text != '' and error_text != "Compilation Successful":
+            if error_text != '' and error_text != "Program Successful.":
                 print('Error Generated: ' + error_text)
             else:
                 print('Did not generate error.')
@@ -445,7 +445,7 @@ def run_semantics_tests():
 def happy_path():
     dir_name = 'TestFiles/OkFiles/'
     preamble = 'Testing file '
-    success = 'Compilation Successful'
+    success = 'Program Successful.'
     good = ', \nExpecting '
 
     tests = list()
