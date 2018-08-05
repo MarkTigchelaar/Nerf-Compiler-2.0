@@ -41,16 +41,16 @@ class ExecutionUnit {
         execute_function(fn_name, []);
     }
 
-    private void execute_function(string func, string[] args) {
-        Function* current = get_function(func);
+    private void execute_function(string fn_name, string[] args) {
+        Function* func = get_function(fn_name);
         
         
     }
 
-    private Function* get_function(string func) {
+    private Function* get_function(string fn_name) {
         Function* selected;
         foreach(Function* func; program.functions) {
-            if(func.name == func) {
+            if(func.name == fn_name) {
                 selected = func;
                 break;
             }

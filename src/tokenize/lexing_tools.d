@@ -53,7 +53,6 @@ class Lexer {
     private void check_files(string[] arguments) {
         import std.algorithm: endsWith;
         import core.sys.posix.stdlib: exit;
-        import std.stdio;
         if(arguments.length < 2) {
             exit(-1);
         } else if(arguments.length > 2) {
@@ -110,7 +109,7 @@ class Lexer {
         }
         return true;
     }
-    import std.stdio: writeln, write;
+
     private void tokenize(string stream) {
         string trailing;
         string leading;
