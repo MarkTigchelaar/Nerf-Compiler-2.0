@@ -10,6 +10,7 @@ def build():
 
     command = 'dmd ./src/nerf.d '
     command += utilities_path + 'stack.d '
+    command += utilities_path + 'prog_state_manager.d '
     command += utilities_path + 'symbol_table.d '
     command += utilities_path + 'structures.d '
     command += utilities_path + 'scoped_token_collector.d '
@@ -26,7 +27,7 @@ def build():
     command += syntax_path + 'get_token.d '
     command += semantics_path + 'semantic_errors.d '
     command += semantics_path + 'analyze_semantics.d '
-    command += exec_path + 'executor.d '
+    #command += exec_path + 'executor.d '
     command += ' -w -m64 -inline -unittest'
     os.system(command)
 

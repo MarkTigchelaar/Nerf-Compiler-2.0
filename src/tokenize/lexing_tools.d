@@ -10,12 +10,12 @@ class Lexer {
     private string candidate;
     private ulong index;
     private SymbolTable table;
-    private Stack stk;
+    private Stack!string stk;
 
     this(SymbolTable table) {
         index = 0;
         this.table = table;
-        this.stk = new Stack;
+        this.stk = new Stack!string;
     }
 
     this(SymbolTable table, string[] test_tokens) {

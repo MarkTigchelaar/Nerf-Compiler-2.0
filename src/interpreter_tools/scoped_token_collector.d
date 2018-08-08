@@ -4,13 +4,13 @@ import stack;
 import symbol_table;
 
 class ScopedTokenCollector {
-    private Stack stk;
+    private Stack!string stk;
     private SymbolTable table;
     private string[] scoped_tokens;
     private bool skip_token = true;
 
     this(SymbolTable table) {
-        stk = new Stack;
+        stk = new Stack!string;
         this.table = table;
     }
 
