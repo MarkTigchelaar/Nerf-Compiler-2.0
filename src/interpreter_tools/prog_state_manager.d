@@ -38,6 +38,7 @@ class ProgramStateManager {
             }
             foreach(string var_key; current_func.variables_declared_at_scope_level[key]) {
                 current_func.current_values.remove(var_key);
+                current_func.variable_table.remove(var_key);
             }
             current_func.variables_declared_at_scope_level.remove(key);
         }
@@ -83,7 +84,7 @@ class ProgramStateManager {
         return function_return_types[fn_name];
     }
 
-    public void add_local_variable(string variable, string type) {
+    public void add_local_variable_type(string variable, string type) {
         import fn_header_syntax_errors: duplicate_fn_args;
         if(!is_declared_variable(variable)) {
             current_func.variable_table[variable] = type;
@@ -103,15 +104,35 @@ class ProgramStateManager {
         return current_func.variable_table[variable];
     }
 
-    final void clear_local_variables() {
+    public void clear_local_variables() {
         current_func.variable_table.clear();
         current_func.variables_declared_at_scope_level.clear();
+        current_func.variable_table.clear();
     }
 
-    final bool is_declared_variable(string token) {
+    public bool is_declared_variable(string token) {
         if(token in current_func.variable_table) {
             return true;
         }
         return false;
+    }
+
+    public void add_variables_for_eval(string key, string value) {
+        current_func.variables_declared_at_scope_level[
+            current_func.current_scope_level
+        ] ~= key;
+        current_func.current_values[key] = value;
+    }
+
+    public void save_caller_function_state() {
+        states.push(current_func);
+        current_func = new func_state;
+    }
+
+    public void reinstate_caller_function() {
+        current_func = states.pop();
+        if(current_func is null) {
+            throw new Exception("Func call stack returned null fun state.");
+        }
     }
 }

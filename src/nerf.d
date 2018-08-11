@@ -4,7 +4,7 @@ import symbol_table;
 import analyze_semantics;
 import std.stdio: writeln;
 import structures: Program;
-//import executor;
+import executor;
 
 void main(string[] arguments) {
     auto table = new SymbolTable;
@@ -12,7 +12,7 @@ void main(string[] arguments) {
     lexer.process_source(arguments);
     Program* program = parse_program(lexer, arguments[1]);
     semantic_analysis(program, table);
-    //auto TreeWalker = new ExecutionUnit(table, program);
-    //TreeWalker.execute();
+    auto TreeWalker = new ExecutionUnit(table, program);
+    TreeWalker.execute_program();
     writeln("Program Successful.");
 }

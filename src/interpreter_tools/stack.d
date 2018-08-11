@@ -1,12 +1,10 @@
 module stack;
 
-
 class Stack(T) {
 	struct stkNode(T) {
 		T item;
 		stkNode* next;
 	}
-
 	private stkNode!T* stks;
 	private ulong size;
 
@@ -46,5 +44,4 @@ class Stack(T) {
 		stks = null;
 		size = 0;
 	}
-
 }

@@ -26,7 +26,6 @@ class SymbolTable {
 
     public:
     this() {
-        //scope_level = 1;
         key_word_table = key_words();
         this.math_operators = get_math_operators();
         this.bool_comparison = get_bool_comparison();
@@ -39,7 +38,7 @@ class SymbolTable {
     final ProgramStateManager get_state_mgmt() {
         return state_mgmt;
     }
-    
+
     final void scope_level_one_level_deeper() {
         state_mgmt.inc_scope_level();
     }
@@ -123,7 +122,7 @@ class SymbolTable {
     }
 
     final void add_local_variable(string variable, string type) {
-        state_mgmt.add_local_variable(variable, type);
+        state_mgmt.add_local_variable_type(variable, type);
     }
 
     final string get_local_variable_type(string variable) {
