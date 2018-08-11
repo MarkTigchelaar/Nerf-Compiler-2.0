@@ -22,6 +22,7 @@ class SymbolTable {
         int[string] bool_comparison;
         string[string] open_seperators;
         string[string] close_seperators;
+        string[string] operation_table;
         ProgramStateManager state_mgmt;
 
     public:
@@ -33,6 +34,11 @@ class SymbolTable {
         this.close_seperators = get_close_seperators();
         this.bools = ["&", "|", "!"];
         state_mgmt = new ProgramStateManager;
+        operation_table = make_operation_table();
+    }
+
+    final string[string] get_operation_table() {
+        return operation_table;
     }
 
     final ProgramStateManager get_state_mgmt() {
@@ -238,6 +244,16 @@ class SymbolTable {
             return true;
         }
         return false;
+    }
+
+    final bool get_bool(string arg) {
+        if(arg == "True") {
+            return true;
+        } else if(arg == "False") {
+            return false;
+        } else {
+            throw new Exception("expected bool, got something wrong.");
+        }
     }
 
     final bool is_partial_op(string token) {
@@ -459,7 +475,28 @@ string[string] get_close_seperators() {
     return seperators;
 }
 
-
+// for conversion from user defined types,
+// into unchanging internal versions 
+// used in evaluation stage.
+string[string] make_operation_table() {
+    string[string] op_table;
+    op_table["+"] = "ADD";
+    op_table["-"] = "SUB";
+    op_table["*"] = "MULT";
+    op_table["/"] = "DIV";
+    op_table["^"] = "EXP";
+    op_table["%"] = "MOD";
+    op_table[">"] = "GT";
+    op_table["<"] = "LT";
+    op_table["<="] = "LTEQ";
+    op_table[">="] = "GTEQ";
+    op_table["!="] = "NOTEQ";
+    op_table["=="] = "EQ";
+    op_table["!"] = "NOT";
+    op_table["&"] = "AND";
+    op_table["|"] = "OR";
+    return op_table;
+}
 
 
 
