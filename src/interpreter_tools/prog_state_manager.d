@@ -117,11 +117,15 @@ class ProgramStateManager {
         return false;
     }
 
-    public void add_variables_for_eval(string key, string value) {
+    public void add_variable_for_eval(string key, string value) {
         current_func.variables_declared_at_scope_level[
             current_func.current_scope_level
         ] ~= key;
         current_func.current_values[key] = value;
+    }
+
+    public string get_variable_for_eval(string key) {
+        return current_func.current_values[key];
     }
 
     public void save_caller_function_state() {

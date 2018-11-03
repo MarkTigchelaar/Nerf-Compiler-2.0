@@ -38,7 +38,7 @@ class ExecutionUnit {
 
     private void execute_function(string fn_name, string[] values) {
         Function* func = get_function(fn_name);
-        prepare_function(func.arg_names, values);
+        load_local_variables(func.arg_names, values);
         foreach(Statement* statement; func.stmts) {
             statement_type_switchboard(statement);
         }
@@ -57,10 +57,10 @@ class ExecutionUnit {
         return selected;
     }
 
-    private void prepare_function(immutable string[] var_names, string[] values) {
+    private void load_local_variables(immutable string[] var_names, string[] values) {
         assert(var_names.length == values.length);
         for(ulong i = 0; i < values.length; i++) {
-            variable_mgmt.add_variables_for_eval(var_names[i].dup, values[i]);
+            variable_mgmt.add_variable_for_eval(var_names[i].dup, values[i]);
         }
     }
 
@@ -92,6 +92,8 @@ class ExecutionUnit {
         }
     }
 
+
+
     private void exec_print(Statement* statement) {
         foreach(Expression* exp; statement.syntax_tree.args) {
             write(eval_expression(exp), " ");
@@ -104,23 +106,23 @@ class ExecutionUnit {
     }
 
     private real add(string left, string right) {
-        return to!real(left) + !real(right);
+        return to!real(left) + to!real(right);
     }
 
     private real sub(string left, string right) {
-        return to!real(left) - !real(right);
+        return to!real(left) - to!real(right);
     }
 
     private real mult(string left, string right) {
-        return to!real(left) * !real(right);
+        return to!real(left) * to!real(right);
     }
 
     private real div(string left, string right) {
-        return to!real(left) / !real(right);
+        return to!real(left) / to!real(right);
     }
 
     private real mod(string left, string right) {
-        return floor(to!real(left) / !real(right));
+        return floor(to!real(left) / to!real(right));
     }
 
     private real exp(string left, string right) {
@@ -132,7 +134,7 @@ class ExecutionUnit {
     }
 
     private bool equal(string left, string right) {
-        return to!real(left) < to!real(right);
+        return to!int(to!real(left)) == to!int(to!real(right));
     }
 
     private bool not(string arg) {
