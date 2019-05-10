@@ -14,6 +14,7 @@ module symbol_table;
     All exceptions are used to highlight incorrect runtime behaviour in the compiler itself.
 */
 class SymbolTable {
+    import program_state_manager;
     private:
         string[] key_word_table;
         string[] bools;
@@ -21,45 +22,43 @@ class SymbolTable {
         int[string] bool_comparison;
         string[string] open_seperators;
         string[string] close_seperators;
-        string[string] variable_table;
-        string[][int] variables_declared_at_scope_level;
-        int scope_level;
-        string[][string] function_fn_arg_types_table;
-        string[string] function_return_types;
+        string[string] operation_table;
+        ProgramStateManager state_mgmt;
 
     public:
     this() {
-        scope_level = 1;
         key_word_table = key_words();
         this.math_operators = get_math_operators();
         this.bool_comparison = get_bool_comparison();
         this.open_seperators = get_open_seperators();
         this.close_seperators = get_close_seperators();
         this.bools = ["&", "|", "!"];
+        state_mgmt = new ProgramStateManager;
+        operation_table = make_operation_table();
     }
 
+    final string[string] get_operation_table() {
+        return operation_table;
+    }
+
+    final string get_asm_operator(string op) {
+        return operation_table[op];
+    }
+
+    final ProgramStateManager get_state_mgmt() {
+        return state_mgmt;
+    }
+
+    final int current_scope_level() {
+        return state_mgmt.current_scope_level();
+    }
+    
     final void scope_level_one_level_deeper() {
-        scope_level++;
+        state_mgmt.inc_scope_level();
     }
 
     final void scope_level_one_level_shallower() {
-        scope_level--;
-        if(scope_level < 1) {
-            throw new Exception("Scope is less than one.");
-        }
-        remove_variables_at_deeper_scope_levels();
-    }
-
-    final void remove_variables_at_deeper_scope_levels() {
-        foreach(int key; variables_declared_at_scope_level.keys) {
-            if(key <= scope_level) {
-                continue;
-            }
-            foreach(string var_key; variables_declared_at_scope_level[key]) {
-                variable_table.remove(var_key);
-            }
-            variables_declared_at_scope_level.remove(key);
-        }
+        state_mgmt.dec_scope_level();
     }
 
     final bool is_seperator(string token) {
@@ -111,15 +110,11 @@ class SymbolTable {
     }
 
     final void clear_local_variables() {
-        variable_table.clear();
-        variables_declared_at_scope_level.clear();
+       state_mgmt.clear_local_variables();
     }
 
     final bool is_declared_variable(string token) {
-        if(token in variable_table) {
-            return true;
-        }
-        return false;
+        return state_mgmt.is_declared_variable(token);
     }
 
     final is_valid_variable(string variable) {
@@ -141,60 +136,32 @@ class SymbolTable {
     }
 
     final void add_local_variable(string variable, string type) {
-        import fn_header_syntax_errors: duplicate_fn_args;
-        if(!is_declared_variable(variable)) {
-            variable_table[variable] = type;
-            variables_declared_at_scope_level[scope_level] ~= variable;
-        } else {
-            duplicate_fn_args();
-        }
+        state_mgmt.add_local_variable_type(variable, type);
     }
 
     final string get_local_variable_type(string variable) {
-        if(variable !in variable_table) {
-            return null;
-        }
-        return variable_table[variable];
+        return state_mgmt.get_local_variable_type(variable);
+    }
+
+    final void add_fn_return_type(string fn_name, string return_type) {
+        state_mgmt.add_fn_return_type(fn_name, return_type);
+    }
+
+    final string get_return_type(string fn_name) {
+       return state_mgmt.get_return_type(fn_name);
+    }
+
+    final bool is_function_name(string fn_name) {
+        return state_mgmt.is_function_name(fn_name);
     }
 
     // arg types in order from left to right (for semantic analysis).
     final void add_fn_args(string fn_name, string[] arg_types) {
-        import fn_header_syntax_errors: duplicate_fn_name;
-        if(is_function_name(fn_name)) {
-            duplicate_fn_name();
-        } else {
-            function_fn_arg_types_table[fn_name] = arg_types;
-        }
-    }
-
-    final void add_fn_return_type(string fn_name, string return_type) {
-        import fn_header_syntax_errors: duplicate_fn_name;
-        if(fn_name in function_return_types) {
-            duplicate_fn_name();
-        } else {
-            function_return_types[fn_name] = return_type;
-        }
-    }
-
-    final string get_return_type(string fn_name) {
-        return function_return_types[fn_name];
-    }
-
-    final bool is_function_name(string fn_name) {
-        if(fn_name in function_fn_arg_types_table) {
-            return true;
-        }
-        return false;
+        state_mgmt.add_fn_args(fn_name, arg_types);
     }
 
     final string[] get_function_args(string func_name) {
-        import semantic_errors: invalid_func_call;
-        if(is_function_name(func_name)) {
-            return function_fn_arg_types_table[func_name];
-        } else {
-            invalid_func_call();
-        }
-        return null;
+        return state_mgmt.get_function_args(func_name);
     }
 
     final bool regex_helper(string variable, string expression) {
@@ -287,6 +254,16 @@ class SymbolTable {
         return false;
     }
 
+    final bool get_bool(string arg) {
+        if(arg == "True") {
+            return true;
+        } else if(arg == "False") {
+            return false;
+        } else {
+            throw new Exception("expected bool, got something wrong.");
+        }
+    }
+
     final bool is_partial_op(string token) {
         if(token == ":" || token == "<" || 
            token == ">" || token == "=" || 
@@ -362,6 +339,14 @@ class SymbolTable {
         return token == "main";
     }
 
+    final string get_entry_point() {
+        return "main";
+    }
+
+    final bool is_dot(string token) {
+        return token == ".";
+    }
+    
     final int token_precedence(string token) {
         if(is_valid_variable(token) || is_keyword(token) || is_number(token)) {
             return 0;
@@ -405,7 +390,7 @@ class SymbolTable {
         } else if(ast_type == "int") {
             return true;
         } else if(is_declared_variable(ast_type)) {
-            if(variable_table[ast_type] == "int") {
+            if(state_mgmt.get_local_variable_type(ast_type) == "int") {
                 return true;
             } 
         }
@@ -424,7 +409,7 @@ class SymbolTable {
         } else if(ast_type == "float") {
             return true;
         } else if(is_declared_variable(ast_type)) {
-            if(variable_table[ast_type] == "float") {
+            if(state_mgmt.get_local_variable_type(ast_type) == "float") {
                 return true;
             } 
         }
@@ -498,7 +483,28 @@ string[string] get_close_seperators() {
     return seperators;
 }
 
-
+// for conversion from user defined types,
+// into unchanging internal versions 
+// used in evaluation stage.
+string[string] make_operation_table() {
+    string[string] op_table;
+    op_table["+"] = "ADD";
+    op_table["-"] = "SUB";
+    op_table["*"] = "MULT";
+    op_table["/"] = "DIV";
+    op_table["^"] = "EXP";
+    op_table["%"] = "MOD";
+    op_table[">"] = "GT";
+    op_table["<"] = "LT";
+    op_table["<="] = "LTEQ";
+    op_table[">="] = "GTEQ";
+    op_table["!="] = "NOTEQ";
+    op_table["=="] = "EQ";
+    op_table["!"] = "NOT";
+    op_table["&"] = "AND";
+    op_table["|"] = "OR";
+    return op_table;
+}
 
 
 

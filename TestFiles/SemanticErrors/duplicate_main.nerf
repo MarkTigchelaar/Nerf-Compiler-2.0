@@ -1,7 +1,8 @@
-fn main() void {
+fn main() int {
     int q := 0;
+    return q;
 }
 
-fn main() void {
-    return;
+fn main() int {
+    return 2;
 }

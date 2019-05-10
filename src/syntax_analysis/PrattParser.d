@@ -1,187 +1,251 @@
-module expression_parsers;
+module PrattParser;
 
-import symbol_table;
-import structures: Expression;
+import NewSymbolTable;
+import structures: Expression, Function, ExpTypes, Variable, PrimitiveTypes;
 import expression_errors;
-import get_token: get_token, collect_scoped_tokens, current_token;
 import scoped_token_collector;
+import Lexer;
+import std.stdio;
 
-Expression*[] parse_func_call_arg_expressions(SymbolTable table, string[] rvalues) {
-    Expression*[] func_args;
-    string[] expressions;
-    for(int i = 0; i < rvalues.length; i++) {
-        if(table.is_open_paren(rvalues[i])) {
-            expressions ~= "(" ~ collect_scoped_tokens(table, rvalues, &i) ~ ")";
-        } else if(table.is_comma(rvalues[i])) {
-            if(i == rvalues.length -1) {
-                missing_arg_from_call();
-            } else if(expressions.length == 0) {
-                missing_arg_from_call();
+
+class PrattParser {
+
+    private Lexer lexer;
+    private Function func;
+
+    this() {
+        lexer = null;
+    }
+    this(Lexer lexer) {
+        this.lexer = lexer;
+    }
+
+
+public:
+    Expression*[] parse_func_call_arg_expressions(string[] rvalues) {
+        Expression*[] func_args;
+        string[] expressions;
+        for(int i = 0; i < rvalues.length; i++) {
+            if(is_open_paren(rvalues[i])) {
+                expressions ~= "(" ~ collect_scoped_tokens(rvalues, &i) ~ ")";
+            } else if(is_comma(rvalues[i])) {
+                if(i == rvalues.length -1) {
+                    missing_arg_from_call();
+                } else if(expressions.length == 0) {
+                    missing_arg_from_call();
+                }
+                Expression* result = parse_expressions(expressions.dup);
+                if(result !is null) {
+                    func_args ~= result;
+                }
+                expressions = null;
+            } else {
+                expressions ~= rvalues[i];
             }
-            Expression* result = parse_expressions(table, expressions.dup);
-            if(result !is null) {
-                func_args ~= result;
-            }
-            expressions = null;
-        } else {
-            expressions ~= rvalues[i];
         }
+        Expression* result = parse_expressions(expressions.dup);
+        if(result !is null) {
+            func_args ~= result;
+        }
+        return func_args;
     }
-    Expression* result = parse_expressions(table, expressions.dup);
-    if(result !is null) {
-        func_args ~= result;
+
+    Expression* parse_expressions(string[] rvalues) {
+        if(rvalues is null || rvalues.length == 0) {
+            return null;
+        }
+        check_last_index(rvalues);
+        int index = 0;
+        return build_ast(rvalues, 0, &index);
     }
-    return func_args;
+
+    void set_function(Function func) {
+        this.func = func;
+    }
+
+private: 
+    Expression* build_ast(string[] exptokens, int rank, int* index) {
+        Expression* left = prefix_func_switchboard(exptokens, index);
+        while(rank < precedenceOfNextToken(exptokens, index)) {
+            left = infix_func_switchboard(left, exptokens, index);
+        }   return left;
+    }
+
+    int precedenceOfNextToken(string[] exptokens, int* index) {
+        if(is_valid_variable(current_token(exptokens, index))) {
+            missing_operator();
+        } else if(is_number(current_token(exptokens, index))) {
+            missing_operator();
+        }
+        if((*index) + 1 >= exptokens.length) {
+            return 0;
+        }
+        return token_precedence(current_token(exptokens, index));
+    }
+
+    Expression* prefix_func_switchboard(string[] exptokens, int* index) {
+        Expression* prefix;
+        if(is_open_paren(current_token(exptokens, index))) {
+            prefix = paren_parser(exptokens, index);
+        } else if(is_prefix(current_token(exptokens, index))) {
+            return prefix_ops_parser(exptokens, index);
+        } else if(is_valid_variable(current_token(exptokens, index))) {
+            prefix = variable_or_const_parser(exptokens, index);
+        } else if(is_boolean(current_token(exptokens, index))) {
+            prefix = variable_or_const_parser(exptokens, index);
+        } else if(is_number(current_token(exptokens, index))) {
+            prefix = variable_or_const_parser(exptokens, index);
+        } else if(is_operator(current_token(exptokens, index))) {
+            missing_variable_or_constant();
+        } else {
+            invalid_expression_token();
+        }
+        return prefix;
+    }
+
+
+    Expression* paren_parser(string[] exptokens, int* index) {
+        string[] sub_expression = collect_scoped_tokens(exptokens, index);
+        if(sub_expression.length < 1) {
+            empty_parens();
+        }
+        int new_index;
+        return build_ast(sub_expression, 0, &new_index);
+    }
+
+    Expression* prefix_ops_parser(string[] exptokens, int* index) {
+        Expression* current = new Expression(current_token(exptokens, index));
+        int rank = prefix_precedence(get_token(exptokens, index));
+        Expression* right = build_ast(exptokens, rank, index);
+        if(is_minus(current.var_name) &&
+        is_minus(right.var_name) &&
+        right.left is null) {
+            multiple_minus_signs();
+        }
+        current.right = right;
+        return current;
+    }
+
+    Expression* infix_func_switchboard(Expression* left, string[] exptokens, int* index) {
+        Expression* infix;
+        int var_type;
+        if(is_math_op(current_token(exptokens, index))) {
+            var_type = PrimitiveTypes.Integer;
+            infix = operator_parser(left, exptokens, index, var_type);
+        } else if(is_bool_compare(current_token(exptokens, index))) {
+            var_type = PrimitiveTypes.Bool;
+            infix = operator_parser(left, exptokens, index, var_type);
+        } else if(is_bool_operator(current_token(exptokens, index))) {
+            var_type = PrimitiveTypes.Bool;
+            infix = operator_parser(left, exptokens, index, var_type);
+        } else if(is_open_paren(current_token(exptokens, index))) {
+            infix = func_call_parser(left, exptokens, index);
+        } else {
+            invalid_expression_token();
+        }
+        return infix;
+    }
+
+    Expression* operator_parser(Expression* left, string[] exptokens, int* index, int vartype) {
+        int rank_reduce = 0;
+        if(is_right_associative(current_token(exptokens,index))) {
+            rank_reduce = 1;
+        }
+        int rank = token_precedence(current_token(exptokens,index));
+        Expression* current = new Expression(get_token(exptokens,index));
+        current.var_type = vartype;
+        Expression* right = build_ast(exptokens, rank - rank_reduce, index);
+        if(current.var_name == right.var_name) {
+            multiple_minus_signs();
+        }
+        current.right = right;
+        current.left = left;
+        return current;
+    }
+
+    Expression* func_call_parser(Expression* left, string[] exptokens, int* index) {
+        string[] call_args = collect_scoped_tokens(exptokens, index);
+        //writeln(call_args);
+        left.args = parse_func_call_arg_expressions(call_args);
+        return left;
+    }
+
+    Expression* variable_or_const_parser(string[] exptokens, int* index) {
+        string current = get_token(exptokens, index);
+        Expression* exp = new Expression(current);
+        exp.var_type = func.get_variable_type(current);
+        exp.exp_type = ExpTypes.Variable;
+        return exp;
+    } // return new Expression(get_token(exptokens, index));
+
+
+    void check_last_index(string[] rvalues) {
+        if(is_valid_variable(rvalues[rvalues.length - 1])) {
+            return;
+        }
+        if(is_number(rvalues[rvalues.length - 1])) {
+            return;
+        }
+        if(is_return(rvalues[rvalues.length - 1])) {
+            return;
+        }
+        if(is_break(rvalues[rvalues.length - 1])) {
+            return;
+        }
+        if(is_continue(rvalues[rvalues.length - 1])) {
+            return;
+        }
+        if(is_boolean(rvalues[rvalues.length - 1])) {
+            return;
+        }
+        if(is_close_paren(rvalues[rvalues.length - 1])) {
+            return;
+        }
+        invalid_expression();
+    }
+
+    // This is dog shit code, fix later. Replace all three funcs with lexer.
+    string get_token(string[] func_body, int* index)  {
+        string token = current_token(func_body, index);
+        (*index)++;
+        return token;
+    }
+
+    string current_token(string[] func_body, int* index)  {
+        if(*index >= func_body.length) {
+            return null;
+        }
+        string token = func_body[*index];
+        return token;
+    }
+
+    string[] collect_scoped_tokens(string[] func_body, int* index) {
+        ScopedTokenCollector collector = new ScopedTokenCollector();
+        collector.add_token(get_token(func_body, index));
+        do {
+            collector.add_token(get_token(func_body, index));
+        } while(collector.not_done_collecting());
+        return collector.get_scoped_tokens();
+    }
 }
 
-Expression* parse_expressions(ref SymbolTable table, string[] rvalues) {
-    if(rvalues is null || rvalues.length == 0) {
-        return null;
-    }
-    check_last_index(table, rvalues);
-    int index = 0;
-    return build_ast(table, rvalues, 0, &index);
-}
-
-Expression* build_ast(ref SymbolTable table, string[] exptokens, int rank, int* index) {
-    Expression* left = prefix_func_switchboard(table, exptokens, index);
-    while(rank < precedenceOfNextToken(table,exptokens, index)) {
-        left = infix_func_switchboard(table, left, exptokens, index);
-    }   return left;
-}
-
-int precedenceOfNextToken(ref SymbolTable table, string[] exptokens, int* index) {
-    if(table.is_valid_variable(current_token(exptokens, index))) {
-        missing_operator();
-    } else if(table.is_number(current_token(exptokens, index))) {
-        missing_operator();
-    }
-    if((*index) + 1 >= exptokens.length) {
-        return 0;
-    }
-    return table.token_precedence(current_token(exptokens, index));
-}
-
-Expression* prefix_func_switchboard(ref SymbolTable table, string[] exptokens, int* index) {
-    Expression* prefix;
-    if(table.is_open_paren(current_token(exptokens, index))) {
-        prefix = paren_parser(table, exptokens, index);
-    } else if(table.is_prefix(current_token(exptokens, index))) {
-        return prefix_ops_parser(table, exptokens, index);
-    } else if(table.is_valid_variable(current_token(exptokens, index))) {
-        prefix = variable_or_const_parser(table, exptokens, index);
-    } else if(table.is_boolean(current_token(exptokens, index))) {
-        prefix = variable_or_const_parser(table, exptokens, index);
-    } else if(table.is_number(current_token(exptokens, index))) {
-        prefix = variable_or_const_parser(table, exptokens, index);
-    } else if(table.is_operator(current_token(exptokens, index))) {
-        missing_variable_or_constant();
-    } else {
-        invalid_expression_token();
-    }
-    return prefix;
-}
 
 
-Expression* paren_parser(ref SymbolTable table, string[] exptokens, int* index) {
-    string[] sub_expression = collect_scoped_tokens(table, exptokens, index);
-    if(sub_expression.length < 1) {
-        empty_parens();
-    }
-    int new_index;
-    return build_ast(table, sub_expression, 0, &new_index);
-}
-
-Expression* prefix_ops_parser(ref SymbolTable table, string[] exptokens, int* index) {
-    Expression* current = new Expression(current_token(exptokens, index));
-    int rank = table.prefix_precedence(get_token(exptokens, index));
-    Expression* right = build_ast(table, exptokens, rank, index);
-    if(table.is_minus(current.var_name) &&
-       table.is_minus(right.var_name) &&
-       right.left is null) {
-        multiple_minus_signs();
-    }
-    current.right = right;
-    return current;
-}
-
-Expression* infix_func_switchboard(ref SymbolTable table, Expression* left,
-                                    string[] exptokens, int* index) {
-    Expression* infix;
-    if(table.is_math_op(current_token(exptokens, index))) {
-        infix = operator_parser(table, left, exptokens, index);
-    } else if(table.is_bool_compare(current_token(exptokens, index))) {
-        infix = operator_parser(table, left, exptokens, index);
-    } else if(table.is_bool_operator(current_token(exptokens, index))) {
-        infix = operator_parser(table, left, exptokens, index);
-    } else if(table.is_open_paren(current_token(exptokens, index))) {
-        infix = func_call_parser(table, left, exptokens, index);
-    } else {
-        invalid_expression_token();
-    }
-    return infix;
-}
-
-Expression* operator_parser(ref SymbolTable table, Expression* left, string[] exptokens, int* index) {
-    int rank_reduce = 0;
-    if(table.is_right_associative(current_token(exptokens,index))) {
-        rank_reduce = 1;
-    }
-    int rank = table.token_precedence(current_token(exptokens,index));
-    Expression* current = new Expression(get_token(exptokens,index));
-    Expression* right = build_ast(table, exptokens, rank - rank_reduce, index);
-    if(current.var_name == right.var_name) {
-        multiple_minus_signs();
-    }
-    current.right = right;
-    current.left = left;
-    return current;
-}
-
-Expression* func_call_parser(ref SymbolTable table, Expression* left, string[] exptokens, int* index) {
-    string[] call_args = collect_scoped_tokens(table, exptokens, index);
-    left.args = parse_func_call_arg_expressions(table,call_args);
-    return left;
-}
-
-Expression* variable_or_const_parser(ref SymbolTable table, string[] exptokens, int* index) {
-    return new Expression(get_token(exptokens, index));
-}
 
 
-void check_last_index(ref SymbolTable table, string[] rvalues) {
-    if(table.is_valid_variable(rvalues[rvalues.length - 1])) {
-        return;
-    }
-    if(table.is_number(rvalues[rvalues.length - 1])) {
-        return;
-    }
-    if(table.is_return(rvalues[rvalues.length - 1])) {
-        return;
-    }
-    if(table.is_break(rvalues[rvalues.length - 1])) {
-        return;
-    }
-    if(table.is_continue(rvalues[rvalues.length - 1])) {
-        return;
-    }
-    if(table.is_boolean(rvalues[rvalues.length - 1])) {
-        return;
-    }
-    if(table.is_close_paren(rvalues[rvalues.length - 1])) {
-        return;
-    }
-    invalid_expression();
-}
+
+
+
 
 
 
 
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["True"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.left is null);
     assert(result.right is null);
@@ -189,9 +253,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["False"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.left is null);
     assert(result.right is null);
@@ -199,9 +264,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["3.8"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.left is null);
     assert(result.right is null);
@@ -209,9 +275,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["38"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.left is null);
     assert(result.right is null);
@@ -219,9 +286,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["(", "38", ")"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.left is null);
     assert(result.right is null);
@@ -229,9 +297,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["-", "38"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.left is null);
     assert(result.right !is null);
@@ -240,9 +309,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["(", "-", "38", ")"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.left is null);
     assert(result.right !is null);
@@ -251,9 +321,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["-", "(", "38", ")"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.left is null);
     assert(result.right !is null);
@@ -262,9 +333,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["a", "+", "b"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.var_name == "+");
     assert(result.left !is null);
@@ -274,9 +346,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["a", "+", "b", "==", "c"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.var_name == "==");
     assert(result.left !is null);
@@ -291,9 +364,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["a", "^", "b"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.var_name == "^");
     assert(result.left !is null);
@@ -303,9 +377,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["a", "+", "b", "^", "c"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.var_name == "+");
     assert(result.left !is null);
@@ -320,9 +395,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["(", "a", "+", "b", ")", "^", "c"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.var_name == "^");
     assert(result.left !is null);
@@ -337,9 +413,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["-", "a", "+", "b", "*", "c", "-", "d"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     /* Resulting syntax tree:
             <+>
         ->              <->
@@ -370,9 +447,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["-", "a", "+", "b", "^", "c", "-", "d"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.var_name == "+");
     assert(result.left !is null);
@@ -397,9 +475,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["a", "+", "b", "-", "c"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.var_name == "+");
     assert(result.left !is null);
@@ -414,9 +493,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["a", "+", "b", "==", "c"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.var_name == "==");
     assert(result.left !is null);
@@ -431,9 +511,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["a", "+", "b", ",", "b", "/", "c"];
-    Expression*[] resultlist = parse_func_call_arg_expressions(table, expression);
+    Expression*[] resultlist = pratt.parse_func_call_arg_expressions(expression);
     assert(resultlist !is null);
     assert(resultlist.length == 2);
     Expression* result0 = resultlist[0];
@@ -453,9 +534,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["a", "+", "-", "b"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.var_name == "+");
     assert(result.left !is null);
@@ -468,9 +550,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["(", "(","a", "+", "(","b", ")", ")", "==", "c", ")"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.var_name == "==");
     assert(result.left !is null);
@@ -485,10 +568,11 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["(", "(","-", "a", ")", "+", "(", "(",
                            "b", "^", "c", ")", "-", "d", ")", ")"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.var_name == "+");
     assert(result.left !is null);
@@ -513,10 +597,11 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["-", "(", "(", "(","-", "1", ")", "+", "(",
                            "13", "^", "6", ")", ")", "-", "8", ")"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.var_name == "-");
     assert(result.left is null);
@@ -542,9 +627,10 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = ["func", "(", "True", ")"];
-    Expression* result = parse_expressions(table, expression);
+    Expression* result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.args !is null);
     assert(result.args.length == 1);
@@ -552,7 +638,8 @@ unittest {
 }
 
 unittest {
-    SymbolTable table = new SymbolTable;
+    PrattParser pratt = new PrattParser();
+    pratt.set_function(new Function("test"));
     string[] expression = 
     [
     "func","(",
@@ -560,7 +647,7 @@ unittest {
       "-", "(", "(", "(","-", "1", ")", "+", "(", "13", "^", "6", ")", ")","-", "8", ")",
     ")"
     ];
-    Expression* func = parse_expressions(table, expression);
+    Expression* func = pratt.parse_expressions(expression);
     assert(func !is null);
     assert(func.args !is null);
     assert(func.args.length == 2);
@@ -597,4 +684,27 @@ unittest {
     assert(right_subtree.left.var_name == "13");
     assert(right_subtree.right !is null);
     assert(right_subtree.right.var_name == "6");
+}
+
+unittest {
+    // (a+b)<5
+    PrattParser pratt = new PrattParser();
+    Function test = new Function("test");
+    pratt.set_function(test);
+    Variable* a = new Variable();
+    a.name = "a";
+    a.type = PrimitiveTypes.Integer;
+    test.add_local(a);
+    Variable* b = new Variable();
+    b.name = "b";
+    b.type = PrimitiveTypes.Integer;
+    test.add_local(b);
+    string[] exp = ["(", "a", "+", "b", ")", "<", "5"];
+    Expression* result = pratt.parse_expressions(exp);
+    assert(result !is null);
+    assert(result.var_name == "<");
+    assert(result.exp_type == ExpTypes.Operator);
+    assert(result.var_type == PrimitiveTypes.Bool);
+    assert(result.right !is null);
+    assert(result.left !is null);
 }

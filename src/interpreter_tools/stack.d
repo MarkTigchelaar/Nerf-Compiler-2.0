@@ -1,39 +1,35 @@
 module stack;
 
-
-class Stack {
-	struct stkNode {
-		string str;
+class Stack(T) {
+	struct stkNode(T) {
+		T item;
 		stkNode* next;
 	}
-
-	private stkNode* stks;
+	private stkNode!T* stks;
 	private ulong size;
 
-	this() {
-		stks = null;
-	}
-
-	public void push(string str) {
-		stkNode* Nnode = new stkNode(str);
+	public void push(T item) {
+		stkNode!T* Nnode = new stkNode!T(item);
 		Nnode.next = stks;
 		stks = Nnode;
 		size++;
 	}
 
-	public string pop() {
-		if(size == 0) { return ""; }
-		string sh = stks.str;
+	public T pop() {
+		if(size == 0) {
+			return cast(T) null;
+		}
+		T value = stks.item;
 		stks = stks.next;
 		size--;
-		return sh;
+		return value;
 	}
 
-	public string peek() {
+	public T peek() {
 		if(stks is null) {
-			return "";
+			return cast(T) null;
 		}
-		return stks.str;
+		return stks.item;
 	}
 
 	public ulong getSize() {
@@ -48,5 +44,4 @@ class Stack {
 		stks = null;
 		size = 0;
 	}
-
 }

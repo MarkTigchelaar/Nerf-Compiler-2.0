@@ -1,4 +1,4 @@
-fn main() void {
+fn main() int {
     if(True | False) {
         if(1 < 2) {
             return;

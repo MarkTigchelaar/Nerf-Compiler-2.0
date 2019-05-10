@@ -1,5 +1,6 @@
-fn main() void {
+fn main() int {
     print(some_func());
+    return 0;
 }
 
 fn some_func() int {

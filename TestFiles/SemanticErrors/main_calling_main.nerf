@@ -1,3 +1,4 @@
-fn main() void {
+fn main() int {
     print(main());
+    return 0;
 }

@@ -1,8 +1,8 @@
-fn main() void {
+fn main() int {
     int a := 0;
     int b := 25;
     bool c:=(a+b)<5;
     if(a <= b) {
-        return;
+        return 0;
     }
 }

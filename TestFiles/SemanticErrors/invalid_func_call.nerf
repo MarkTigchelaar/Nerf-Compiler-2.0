@@ -1,3 +1,4 @@
-fn main() void {
+fn main() int {
     int a := secondary();
+    return 0;
 }

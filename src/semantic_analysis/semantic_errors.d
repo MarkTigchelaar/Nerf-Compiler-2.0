@@ -12,7 +12,7 @@ void calling_main() {
     exit(1);
 }
 
-void missing_main() {
+void missing_or_extra_mains() {
     writeln("ERROR: program must have exactly one entry function named main.");
     exit(1);
 }
@@ -107,6 +107,11 @@ void incorrect_number_of_args_to_function() {
     exit(1);
 }
 
+void duplicate_function_names() {
+    writeln("ERROR: functions must have unique names.");
+    exit(1);
+}
+
 void mismatching_function_argument() {
     writeln("ERROR: function call has mismatched arguments to function declaration.");
     exit(1);
@@ -120,4 +125,24 @@ void expressions_have_mismatching_types() {
 void undeclared_variables_in_expression() {
     writeln("ERROR: undeclared variable found in expression.");
     exit(1);
+}
+
+void undeclared_variables_in_reassignment() {
+    writeln("ERROR: undeclared variable found in re assignment statement.");
+    exit(1);
+}
+
+void unsupported_type() {
+    writeln("ERROR: floating point numbers are not supported.");
+    exit(1);  
+}
+
+void invalid_variable_in_expression() {
+    writeln("ERROR: variable in expression has invalid name.");
+    exit(1);  
+}
+
+void variable_in_expression_out_of_scope() {
+    writeln("ERROR: variable in expression is out of scope.");
+    exit(1); 
 }

@@ -1,4 +1,4 @@
-module lexing_errors;
+module LexingErrors;
 import core.sys.posix.stdlib: exit;
 import std.stdio: writeln;
 
@@ -25,4 +25,9 @@ void multiple_files() {
 void mismatched_tokens() {
     writeln("ERROR: parenthesis or curly brackets are not correctly matched");
     exit(-1);
+}
+
+void statement_not_terminated() {
+    writeln("ERROR: assignment statement not correctly terminated.");
+    exit(1);
 }

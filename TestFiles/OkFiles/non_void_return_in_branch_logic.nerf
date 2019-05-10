@@ -1,5 +1,6 @@
-fn main() void {
+fn main() int {
     print(non_void(7));
+    return 0;
 }
 
 fn non_void(int seven) int {

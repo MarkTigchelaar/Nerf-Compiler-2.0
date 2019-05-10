@@ -1,4 +1,4 @@
-fn main() void {
+fn main() int {
   while {
      float ee := 2.9;
   }

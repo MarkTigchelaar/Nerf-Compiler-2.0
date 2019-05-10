@@ -1,5 +1,6 @@
-fn main() void {
+fn main() int {
     int a := 3;
-    float b := 3.0;
+    bool b := 1 < 2;
     int c := a + b;
+    return 0;
 }

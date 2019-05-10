@@ -1,4 +1,4 @@
-fn main() void {
+fn main() int {
     int a := 3;
     if(True) {
         if(True) {
