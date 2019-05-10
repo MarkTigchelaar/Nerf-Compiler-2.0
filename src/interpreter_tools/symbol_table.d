@@ -41,10 +41,18 @@ class SymbolTable {
         return operation_table;
     }
 
+    final string get_asm_operator(string op) {
+        return operation_table[op];
+    }
+
     final ProgramStateManager get_state_mgmt() {
         return state_mgmt;
     }
 
+    final int current_scope_level() {
+        return state_mgmt.current_scope_level();
+    }
+    
     final void scope_level_one_level_deeper() {
         state_mgmt.inc_scope_level();
     }

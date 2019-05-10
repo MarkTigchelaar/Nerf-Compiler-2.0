@@ -1,11 +1,11 @@
-fn main() void {
+fn main() int {
     int a := 10 ^ 2;
     while(True) {
         int k := 17 + a;
         if(k < 100) {
             while(12 > a) {
                 if(a + 17 > k + 23 * a) {
-                    return;
+                    return 0;
                 } else {
                     print(a,k,a,a);
                 }
@@ -18,7 +18,9 @@ fn main() void {
             }
         }
     }
-    float f := get_float(2.7) + get_another_float() + 17.8;
+    
+    int f := get_int(27) + get_another_int() + 178;
+    return f;
 }
 
 fn get_bool(int first, int second) bool {
@@ -29,7 +31,7 @@ fn add_one(int arg) int {
     return arg + 1;
 }
 
-fn get_float(float arg) float {
+fn get_int(int arg) int {
     if(True) {
         if(True) {
             if(True) {
@@ -42,15 +44,18 @@ fn get_float(float arg) float {
                         }
                     }
                 } else {
-                    return 27.0;
+                    return 270;
                 }
+            }
+            if(arg < 100) {
+                return 2;
             }
         }
     } else {
-        return arg * 10000.0;
+        return arg * 100000;
     }
 }
 
-fn get_another_float() float {
-    return 8.87;
+fn get_another_int() int {
+    return 887;
 }

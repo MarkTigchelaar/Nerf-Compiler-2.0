@@ -1,7 +1,7 @@
-fn main() void {
+fn main() int {
     return;
 }
 
-fn second void {
+fn second int {
     return;
 }

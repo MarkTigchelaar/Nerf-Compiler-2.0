@@ -32,3 +32,8 @@ void assignment_to_constant() {
     writeln("ERROR: cannot assign to constant values.");
     exit(1);
 }
+
+void repeated_variable_name() {
+    writeln("ERROR: variable has already been declared.");
+    exit(1);
+}

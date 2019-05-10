@@ -1,5 +1,5 @@
-fn main() void {
-    int y := 2;
+fn main() int {
+    int y := 2 + 3 * 5;
     if(1 < 2) {
         int t := 3;
     }

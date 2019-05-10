@@ -1,5 +1,5 @@
-fn main() void {
+fn main() int {
     return;
 }
 
-fn second( int j, bool k, int e) void {}
+fn second( int j, bool k, int e) int {}

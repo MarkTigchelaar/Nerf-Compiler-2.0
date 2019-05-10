@@ -1,7 +1,7 @@
-fn main() void {
-    float a :=  23 * funcE(3.6,);
+fn main() int {
+    int a :=  23 * funcE(3,);
 }
 
-fn funcE(float a, float b) float {
-    return 2.7 + (a * b);
+fn funcE(int a, int b) int {
+    return 2 + (a * b);
 }

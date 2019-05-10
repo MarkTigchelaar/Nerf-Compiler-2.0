@@ -19,6 +19,10 @@ class ProgramStateManager {
         this.states = new Stack!(func_state*);
     }
 
+    public int current_scope_level() {
+        return current_func.current_scope_level;
+    }
+
     public void inc_scope_level() {
         current_func.current_scope_level++;
     }

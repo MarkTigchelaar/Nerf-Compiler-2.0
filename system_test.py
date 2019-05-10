@@ -189,7 +189,7 @@ def fn_assignments_tests():
     file = 'primitive_type_only_no_semicolon.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    err = 'ERROR: statement is not valid.'
+    err = 'ERROR: missing assignment operator.'
     file = 'variable_only.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
@@ -348,7 +348,7 @@ def run_semantics_tests():
 
     tests = list()
 
-    err = 'ERROR: functions must have unique names.'
+    err = 'ERROR: program must have exactly one entry function named main.'
     file = 'duplicate_main.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
@@ -420,7 +420,7 @@ def run_semantics_tests():
     file = 'undeclared_variables_in_expression.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 
-    err = 'ERROR: r value of variable assignment has mismatching types.'
+    err = 'ERROR: assignment or return expression has type that does not match expected.'
     file = 'assignment_type_mismatch1.nerf'
     tests.append((preamble + file + fail + err, dir_name+file, err,))
 

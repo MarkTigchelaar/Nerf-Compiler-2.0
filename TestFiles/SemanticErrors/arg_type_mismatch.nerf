@@ -1,8 +1,9 @@
-fn main() void {
+fn main() int {
     int c := func(1, 2, 3, 4);
+    return 0;
 }
 
-fn func(int a, int b, int c, float d) int {
-    float f := d + 1.0;
+fn func(int a, int b, int c, bool d) int {
+    int f := d + 10;
     return a + b + c;
 }

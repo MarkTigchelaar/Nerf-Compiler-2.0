@@ -1,0 +1,4 @@
+fn main() int {
+    int k := 0 + (11 / 22);
+    return k;
+}

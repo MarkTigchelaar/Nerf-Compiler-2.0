@@ -1,17 +1,15 @@
 module scoped_token_collector;
 
 import stack;
-import symbol_table;
+import NewSymbolTable;
 
 class ScopedTokenCollector {
     private Stack!string stk;
-    private SymbolTable table;
     private string[] scoped_tokens;
     private bool skip_token = true;
 
-    this(SymbolTable table) {
+    this() {
         stk = new Stack!string;
-        this.table = table;
     }
 
     public bool not_done_collecting() {
@@ -22,10 +20,10 @@ class ScopedTokenCollector {
         if(!skip_token && stk.isEmpty()) {
             return;
         }
-        if(table.is_open_seperator(token)) {
+        if(is_open_seperator(token)) {
             stk.push(token);
-        } else if(table.is_close_seperator(token)) {
-            if(stk.peek() == table.get_close_match(token)) {
+        } else if(is_close_seperator(token)) {
+            if(stk.peek() == get_close_match(token)) {
                 stk.pop();
                 if(stk.isEmpty()) {
                     return;
@@ -42,6 +40,7 @@ class ScopedTokenCollector {
     }
 
     public string[] get_scoped_tokens() {
+        import std.stdio:writeln;
         skip_token = true;
         string[] temp = scoped_tokens.dup;
         scoped_tokens = null;
@@ -54,8 +53,7 @@ class ScopedTokenCollector {
 
 
 unittest {
-    SymbolTable s = new SymbolTable;
-    ScopedTokenCollector sc = new ScopedTokenCollector(s);
+    ScopedTokenCollector sc = new ScopedTokenCollector();
     string[] expect = ["(", "i", "<", "j", ")"];
     foreach(string str; expect) {
         sc.add_token(str);
@@ -69,8 +67,7 @@ unittest {
 }
 
 unittest {
-    SymbolTable s = new SymbolTable;
-    ScopedTokenCollector sc = new ScopedTokenCollector(s);
+    ScopedTokenCollector sc = new ScopedTokenCollector();
     string[] expect = ["(", "i", "<", "j", ")", "{", "}"];
     foreach(string str; expect) {
         sc.add_token(str);

@@ -1,11 +1,11 @@
-fn main() void {
+fn main() int {
     if(True) {
-        float do_stuff := 0.0;
+        int do_stuff := 200;
     } else if(True) {
         print(9 + 1 == 11);
     }
     int k := 0;
     else {
-        return;
+        return 0;
     }
 }

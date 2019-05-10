@@ -1,54 +1,118 @@
-module lexing_tools;
+module Lexer;
 
-import lexing_errors;
-import symbol_table: SymbolTable;
-import stack: Stack;
-import std.ascii: isWhite;
+import core.sys.posix.stdlib: exit;
+import std.stdio: writeln;
+import LexingErrors;
+import NewSymbolTable;
+import scoped_token_collector;
+import stack;
+
+/*
+    Replace this P.O.S with a better written one.
+    This is garbage.
+*/
 
 class Lexer {
+
+    private struct saved_tokens {
+        int index;
+        string[] tokens;
+    }
+    private int index;
     private string[] tokens;
     private string candidate;
-    private ulong index;
-    private SymbolTable table;
-    private Stack!string stk;
+    private ScopedTokenCollector collector;
+    private saved_tokens*[] prev_state;
+    private uint prev_state_index;
 
-    this(SymbolTable table) {
-        index = 0;
-        this.table = table;
-        this.stk = new Stack!string;
+    this() {
+        this.collector = new ScopedTokenCollector;
+        this.prev_state = new saved_tokens*[100];
+        this.prev_state_index = 0;
     }
 
-    this(SymbolTable table, string[] test_tokens) {
-        this(table);
-        tokens = test_tokens;
+    this(string toks) {
+        this();
+        tokenize(toks);
     }
 
-    public void process_source(string[] arguments) {
-        check_files(arguments);
-        process_file(arguments[1]);
+    this(string[] toks) {
+        //this();
+        this.collector = new ScopedTokenCollector;
+        this.prev_state = new saved_tokens*[100];
+        this.prev_state_index = 0;
+        tokens = toks;
     }
 
-    public string get_token() {
-        if(index >= tokens.length) {
-            return null;
-        }
-        return tokens[index];
+    public bool has_tokens() {
+        return index < tokens.length;
+    }
+
+    public string next_token() {
+        string tok = tokens[index];
+        index++;
+        return tok;
+    }
+
+    public void process_source(string[] args) {
+        check_files(args);
+        process_file(args[1]);
     }
 
     public void increment_stream_index() {
         index++;
-        if(index > tokens.length) {
-            throw new Exception("Lexer exceeded token stream length.");
+    }
+
+    public string[] collect_until_match(string token) {
+        string tok;
+        string[] toks;
+        while(has_tokens()) {
+            tok = next_token();
+            if(token == tok) {
+                return toks;
+            }
+            toks ~= tok;
+        }
+        statement_not_terminated();
+        return null;
+    }
+
+    public void set_init_token_type_for_collection(string token) {
+        collector.add_token(token);
+    }
+
+    public void take_tokens_of_deeper_scope() {
+        string[] scoped_tokens = collect_scoped_tokens();
+        saved_tokens* current_tokens = new saved_tokens;
+        current_tokens.index = index;
+        current_tokens.tokens = tokens;
+        prev_state[prev_state_index] = current_tokens;
+        tokens = scoped_tokens;
+        index = 0;
+        prev_state_index++;        
+    }
+
+    public void restore_previous_scope_level() {
+        prev_state_index--;
+        saved_tokens* restored_scope = prev_state[prev_state_index];
+        prev_state[prev_state_index] = null;
+        index = restored_scope.index;
+        tokens = restored_scope.tokens;
+    }
+
+    public string[] collect_scoped_tokens() {
+        while(has_tokens() && collector.not_done_collecting()) {
+            collector.add_token(next_token());
+        }
+        return collector.get_scoped_tokens();
+    }
+
+    public void display_tokens() {
+        foreach(string tok; tokens) {
+            writeln(tok);
         }
     }
 
-    public bool not_complete() {
-        return index < tokens.length;
-    }
-
-    final SymbolTable get_table() {
-        return table;
-    }
 
     private void check_files(string[] arguments) {
         import std.algorithm: endsWith;
@@ -66,7 +130,6 @@ class Lexer {
     private void process_file(string file_name) {
         import std.stdio: File;
         import std.string: chomp, strip;
-        import lexing_errors: mismatched_tokens;
         File file;
         string rawline;
         try {
@@ -82,32 +145,8 @@ class Lexer {
             if(rawline.length < 1) {
                 empty_file();
             }
-            if(!check_seperators(rawline)) {
-                mismatched_tokens();
-            }
             tokenize(rawline);
         }
-    }
-
-    private bool check_seperators(string tokstream) {
-        string tok;
-        stk.clear();
-        foreach(char ch; tokstream) {
-            tok ~= ch;
-            if(table.is_open_seperator(tok)) {
-                stk.push(tok);
-            } else if(table.is_close_seperator(tok)) {
-                if(stk.peek()!= table.get_close_match(tok)) {
-                    return false;
-                }
-                stk.pop();
-            }
-            tok = "";
-        }
-        if(!stk.isEmpty()) {
-            return false;
-        }
-        return true;
     }
 
     private void tokenize(string stream) {
@@ -116,11 +155,11 @@ class Lexer {
         foreach(char ch; stream) {
             trailing = "" ~ ch;
             if(is_part_of_valid_token(trailing)) {
-                if(table.is_partial_op(candidate)) {
+                if(is_partial_op(candidate)) {
                     add_candidate();
                 }
                 candidate ~= trailing;
-            } else if(table.is_partial_op(trailing)) {
+            } else if(is_partial_op(trailing)) {
                 tokenize_partial_ops(trailing);
             } else {
                 add_candidate();
@@ -133,13 +172,13 @@ class Lexer {
     }
 
     private bool is_part_of_valid_token(string part) {
-        if(table.is_valid_variable(candidate ~ part)) {
+        if(is_valid_variable(candidate ~ part)) {
             return true;
-        } else if(table.is_keyword(candidate ~ part)) {
+        } else if(is_keyword(candidate ~ part)) {
             return true;
-        } else if(table.is_number(part)) {
+        } else if(is_number(part)) {
             return true;
-        }  else if(table.is_dot(part)) {
+        }  else if(is_dot(part)) {
             return true;
         } else {
             return false;
@@ -149,13 +188,13 @@ class Lexer {
     private void tokenize_partial_ops(string part) {
         if(candidate.length < 1) {
             candidate = part;
-        } else if(table.is_operator(candidate ~ part) ) {
+        } else if(is_operator(candidate ~ part) ) {
             candidate ~= part;
             add_candidate();
-        } else if(table.is_assignment(candidate ~ part)) {
+        } else if(is_assignment(candidate ~ part)) {
             candidate ~= part;
             add_candidate();
-        } else if(table.is_partial_op(candidate)) {
+        } else if(is_partial_op(candidate)) {
             add_candidate();
         } else {
             add_candidate();
@@ -164,15 +203,15 @@ class Lexer {
     }
 
     private void determine_token_type(string type) {
-        if(table.is_terminator(type) ||
-           table.is_operator(type)   ||
-           table.is_seperator(type))
+        if(is_terminator(type) ||
+           is_operator(type)   ||
+           is_seperator(type))
         {
             candidate = type;
             add_candidate();
-        } else if(table.is_partial_op(type)) {
+        } else if(is_partial_op(type)) {
             candidate = type;
-        } else if(table.is_valid_variable(type)) {
+        } else if(is_valid_variable(type)) {
             candidate = type;
         }
     }
@@ -189,69 +228,22 @@ class Lexer {
             candidate = null;
         }
     }
-
-    public void print_tokens() {
-        import std.stdio: writeln, write;
-        int indent_val = 0;
-        string indent;
-        if(!table.is_seperator("{") ||
-           !table.is_seperator("}") ||
-           !table.is_terminator(";")) {
-               throw new Exception(
-            "Indentation using tokens that are no longer part of language.");
-           }
-        foreach(string tok; tokens) {
-
-            
-            if(tok == "{") {
-                indent = "";
-                write("\'" ~ tok ~ "\' ");
-                indent_val += 2;
-                writeln();
-                for(int i = 0; i < indent_val; i++) {
-                    indent ~= " ";
-                }
-                write(indent);
-            } else if(tok == "}") {
-                indent_val -= 2;
-                indent = "";
-                for(int i = 0; i < indent_val; i++) {
-                    indent ~= " ";
-                }
-                writeln();
-                writeln(indent ~ "\'" ~ tok ~ "\' ");
-                
-            } else if(tok == ";") {
-                writeln("\'" ~ tok ~ "\' ");
-                for(int i = 0; i < indent_val; i++) {
-                    indent ~= " ";
-                }
-            } else {
-                write(indent ~ "\'" ~ tok ~ "\' ");
-                indent = "";
-            }
-        }
-    }
 }
 
 
 
 
 
-unittest {
-    SymbolTable s = new SymbolTable;
-    Lexer l = new Lexer(s);
-    assert(!l.check_seperators("{{{ }}} )"));
-    assert(!l.check_seperators("{(})"));
-    assert(!l.check_seperators("{{{{ }}}"));
-    assert(l.check_seperators("(){}a"));
-    assert(l.check_seperators("{ { {} () test {} }}"));
-    assert(!l.check_seperators("}{"));
-}
+
+
+
+
+
+
+
 
 unittest {
-    SymbolTable s = new SymbolTable;
-    Lexer l = new Lexer(s);
+    Lexer l = new Lexer();
     string test;
     string[] expect;
 
@@ -272,8 +264,7 @@ unittest {
 }
 
 unittest {
-    SymbolTable s = new SymbolTable;
-    Lexer l = new Lexer(s);
+    Lexer l = new Lexer();
     string test = "<= c:=d a<b d>=e != f==g;";
     string[] expect = ["<=", "c", ":=", "d", "a",
                        "<", "b", "d", ">=", "e",
@@ -286,8 +277,7 @@ unittest {
 }
 
 unittest {
-    SymbolTable s = new SymbolTable;
-    Lexer l = new Lexer(s);
+    Lexer l = new Lexer();
     string test;
     string[] expect;
 
@@ -304,8 +294,7 @@ unittest {
 }
 
 unittest {
-    SymbolTable s = new SymbolTable;
-    Lexer l = new Lexer(s);
+    Lexer l = new Lexer();
     string test;
     string[] expect;
 
@@ -321,3 +310,16 @@ unittest {
     } 
 }
 
+unittest {
+    string test = "inty booly floaty fny breakr 
+             returnn whiley continueo";
+    Lexer l = new Lexer(test);
+
+    string[] expect = ["inty", "booly", "floaty", "fny",
+              "breakr", "returnn", "whiley","continueo"];
+    
+    assert(l.tokens.length == expect.length);
+    for(int i = 0; i < expect.length; i++) {
+        assert(l.next_token() == expect[i]);
+    } 
+}

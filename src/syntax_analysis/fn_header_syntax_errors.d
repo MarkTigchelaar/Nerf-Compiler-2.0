@@ -57,3 +57,8 @@ void empty_func_body() {
     writeln("ERROR: function body is missing.");
     exit(1);
 }
+
+void unknown_type() {
+    writeln("ERROR: unknown type declaration.");
+    exit(1);
+}

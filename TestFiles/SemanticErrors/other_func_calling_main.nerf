@@ -1,5 +1,6 @@
-fn main() void {
+fn main() int {
     int k := ok();
+    return 0;
 }
 
 fn ok() int {
