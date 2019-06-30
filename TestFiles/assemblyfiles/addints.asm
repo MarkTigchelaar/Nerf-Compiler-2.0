@@ -1,0 +1,7 @@
+iPUSHc
+17
+iPUSHc
+23
+iADD
+iPUTLN
+HALT

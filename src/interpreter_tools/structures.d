@@ -1,7 +1,7 @@
 module structures;
 
         import std.stdio;
-
+/*
 struct Program {
     Function[] functions;
     mnemonic_node*[] mnemonic_code;
@@ -287,7 +287,7 @@ class Function {
         return -1;
     }
 }
-
+*/
 struct Statement {
     immutable int stmt_type;
     int depth;
@@ -339,7 +339,8 @@ enum PrimitiveTypes {
 
 
 enum opcodes: ubyte {
-    SAVEFRAME = 0,
+    HALT = 0,
+    SAVEFRAME,
     LOADFRAME,
     SAVEINSTRUCTION,
     LOADINSTRUCTION,
@@ -370,14 +371,25 @@ enum opcodes: ubyte {
     chLTEQ,
     chGTEQ,
 
+    fpEQ,
+    fpNEQ,
+    fpLT,
+    fpGT,
+    fpLTEQ,
+    fpGTEQ,
+
     iPUSHc,
     iPUSHv,
 
     chPUSHc,
     chPUSHv,
 
+    fpPUSHc,
+    fpPUShv,
+
     iMOVE,
     chMOVE,
+    fpMOVE,
 
     NEWARRAY,
     DELARRAY,
@@ -392,18 +404,27 @@ enum opcodes: ubyte {
     iARRAPPEND,
     iARRDUPLICATE,
 
+    fpARRINSERT,
+    fpARRGET,
+    fpARRAPPEND,
+    fpARRDUPLICATE,
+
     JUMP,
     chJUMPNEQ,
     chJUMPEQ,
     iJUMPNEQ,
     iJUMPEQ,
+    fpJUMPNEQ,
+    fpJUMPEQ,
 
     chPUT,
     chPUTLN,
     iPUT,
     iPUTLN,
-    INPUT,
-    HALT
+    fpPUT,
+    fpPUTLN,
+
+    INPUT
 }
 
 struct mnemonic_node {

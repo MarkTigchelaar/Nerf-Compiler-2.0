@@ -192,7 +192,8 @@ void write_out_else_statement(Program* program, Statement* statement, SymbolTabl
         program.mnemonic_code[program.mnemonic_code.length - 1] = "JUMP";
         program.mnemonic_code ~= "if_" ~ to!string(statement.depth) ~ "_chain_end";
         program.mnemonic_code ~= "if_" ~ to!string(statement.depth) ~ "_end";
-    } else if(program.mnemonic_code[program.mnemonic_code.length - 1] == "if_" ~ to!string(statement.depth) ~ "_chain_end") {
+    } else if(program.mnemonic_code[program.mnemonic_code.length - 1] == 
+      "if_" ~ to!string(statement.depth) ~ "_chain_end") {
         program.mnemonic_code = program.mnemonic_code[0 .. $ - 1];
     }
     foreach(Statement* s; statement.stmts) {

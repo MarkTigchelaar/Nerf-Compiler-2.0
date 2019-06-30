@@ -1,0 +1,14 @@
+chPUSHc
+'a'
+chPUTLN
+JUMP
+label1
+>label1:chPUSHc
+'b'
+chPUTLN
+JUMP
+label2
+>label2:chPUSHc
+'c'
+chPUTLN
+HALT

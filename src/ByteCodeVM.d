@@ -1,7 +1,8 @@
 module ByteCodeVM;
 
 import structures: opcodes;
-
+import assembler: ByteCodeProgram;
+import std.stdio;
 /*
     ByteCode Virtual Machine.
     Written by Mark Tigchelaar.
@@ -15,64 +16,97 @@ class ByteCodeVM {
         long id;
         ubyte[] bytecode;
         long[] integers;
+        double[] floats;
     }
 
-    private ubyte[] memory;
+    private ubyte[] instructions;
+    private ubyte[] stack;
+    private double[] fp_stack;
+    private double[] fp_constants;
 
     private ulong inst_ptr;
     private ulong stk_ptr;
+    private ulong fp_stk_ptr;
     private ulong frame_ptr;
 
     private heap_node*[] lazy_heap;
     private ulong unique_heapitem_id;
 
-    private void delegate()[] instructions;
+    private void delegate()[] operations;
 
     this() {
-        memory       = new ubyte[fiftyk];
-        instructions = new void delegate()[inst_count];
+        stack       = new ubyte[fiftyk];
+        fp_stack    = new double[fiftyk];
+        fp_constants = new double[fiftyk / 5];
+        operations = new void delegate()[inst_count];
         unique_heapitem_id = 0;
         lazy_heap    = new heap_node*[1];
         lazy_heap[0] = new heap_node(-1, null, null);
-        set_instructions(this);
+        set_operations(this);
         set_pointers();
     }
 
     // Expensive, and optional.
-    public void reset_memory() {
-        for(ulong i = 0; i < memory.length; i++) {
-            memory[i] = 0;
+    public void reset() {
+        for(ulong i = 0; i < stack.length; i++) {
+            stack[i] = 0;
+        }
+        for(ulong l = 0; l < instructions.length; l++) {
+            instructions[l] = 0;
+        }
+        for(ulong j = 0; j < fp_stack.length; j++) {
+            fp_stack[j] = double.init;
+        }
+        for(ulong k = 0; k < fp_constants.length; k++) {
+            fp_constants[k] = double.init;
         }
         set_pointers();
+    }
+
+    public void pointers() {
+        import std.stdio: write;
+        write("stack pointer: ", stk_ptr, "instruction pointer: ", inst_ptr);
+    }
+
+    public void show_bytecode() {
+        import std.stdio: write, writeln;
+        foreach(ubyte bt; stack[0 .. 30]) {
+            write(bt, ", ");
+        }
+        writeln('\n');
     }
 
     public void load_bytecode(ubyte[] assembled_program) {
         set_pointers();
-        foreach(ubyte bytecode; assembled_program) {
-            push(bytecode);
-        }
+        instructions = assembled_program;
+    }
+
+    public void load_float_constants(double[] floats) {
+        fp_constants = floats;
     }
 
     public void run() {
         while(is_running()) {
-            execute_instructions();
+            execute_operations();
+            show_bytecode();
         }
     }
 
     private bool is_running() {
-        return (inst_ptr < memory.length);
+        return (inst_ptr < instructions.length);
     }
 
-    private void execute_instructions() {
-        instructions[cast(long) fetch_opcode()]();
+    private void execute_operations() {
+        operations[cast(long) fetch_opcode()]();
     }
 
     private ubyte fetch_opcode() {
-        return memory[inst_ptr];
+        return instructions[inst_ptr];
     }
 
     private void set_pointers() {
         stk_ptr = ulong.max;
+        fp_stk_ptr = ulong.max;
         inst_ptr = 0;
         frame_ptr = 0;
         for(ulong i = 0; i < lazy_heap.length; i++) {
@@ -84,27 +118,29 @@ class ByteCodeVM {
 
     private void inc_stk_ptr() {
         stk_ptr++;
-        if(stk_ptr >= memory.length - 1) {
-            ubyte[] upgrade_memory = new ubyte[memory.length + fiftyk];
-            foreach(int i, ubyte bt; memory) {
-                upgrade_memory[i] = bt;
+        if(stk_ptr >= stack.length - 1) {
+            ubyte[] upgrade_stack = new ubyte[stack.length + fiftyk];
+            foreach(long i, ubyte bt; stack) {
+                upgrade_stack[i] = bt;
             }
-            memory = upgrade_memory;
+            stack = upgrade_stack;
         }
     }
 
     // avoids convoluted use of ipush and ipop;
+    // gets index from instructions, which is offset by current
+    // frame pointer value. This supports function calls.
     private ulong collect_int_at(ulong start_idx) {
         ulong temp = 0;
         ulong worker;
         ulong shift_amount = 56;
         for(ulong i = start_idx; i < start_idx + 8; i++) {
-            worker = cast(ulong) memory[i];
+            worker = cast(ulong) stack[i];
             worker <<= shift_amount;
             temp += worker;
             shift_amount -= 8;
         }
-        return temp;
+        return temp + frame_ptr;
     }
 
     private void division_by_zero() {
@@ -129,47 +165,46 @@ class ByteCodeVM {
     private void push(ubyte value) {
         if(stk_ptr == ulong.max) {
             stk_ptr = 0;
-            memory[stk_ptr] = value;
+            stack[stk_ptr] = value;
         } else {
             inc_stk_ptr();
-            memory[stk_ptr] = value;
+            stack[stk_ptr] = value;
         }
     }
 
     private ubyte pop() {
-        ubyte value = memory[stk_ptr];
+        ubyte value = stack[stk_ptr];
+        stack[stk_ptr] = 0;
         stk_ptr--;
         return value;
     }
 
     private void chpushc() {
         inst_ptr++;
-        push(memory[inst_ptr]);
+        push(instructions[inst_ptr]);
         inst_ptr++;
     }
 
     private void chpushv() {
         ipushc();
-        ulong temp_inst_ptr = inst_ptr;
-        inst_ptr = frame_ptr + ((cast(ulong) ipop()) - 1);
-        chpushc();
-        inst_ptr = temp_inst_ptr;
+        ulong address = cast(ulong) ipop();
+        push(stack[address]);
     }
 
     private void ipushc() {
         inst_ptr++;
         for(long i = 0; i < 8; i++) {
-            push(memory[inst_ptr]);
+            push(instructions[inst_ptr]);
             inst_ptr++;
         }
     }
 
     private void ipushv() {
+        // offset from frame pointer is fixed for any function.
+        // put frame pointer offset onto stack
         ipushc();
-        ulong temp_inst_ptr = inst_ptr;
-        inst_ptr = frame_ptr + ((cast(ulong) ipop()) - 1);
-        ipushc();
-        inst_ptr = temp_inst_ptr;
+        // get the number at the location, and push it onto the stack.
+        ipush(collect_int_at(cast(ulong) ipop()));
     }
 
     private long ipop() {
@@ -219,18 +254,17 @@ class ByteCodeVM {
         ulong temp = stk_ptr;
         stk_ptr = inst_ptr + 9;
         ulong var_index = frame_ptr + cast(ulong) ipop();
-        memory[var_index] = value;
+        stack[var_index] = value;
         inst_ptr += 9;
         stk_ptr = temp;
     }
 
     private void imove() {
-        long value = ipop();
-        inst_ptr++;
-        ulong index = collect_int_at(inst_ptr);
-        inst_ptr += 8;
+        ulong value = cast(ulong) ipop();
+        ipushc();
+        ulong index = cast(ulong) ipop();
         ulong temp = stk_ptr;
-        stk_ptr = index - 1;
+        stk_ptr = frame_ptr + index - 1;
         ipush(value);
         stk_ptr = temp;
     }
@@ -242,20 +276,24 @@ class ByteCodeVM {
     }
 
     private void iadd() {
+        inst_ptr++;
         ipush(ipop() + ipop());
     }
 
     private void isub() {
+        inst_ptr++;
         long subtrahend = ipop();
         long minuend = ipop();
         ipush(minuend - subtrahend);
     }
 
     private void imult() {
+        inst_ptr++;
         ipush(ipop() * ipop());
     }
 
     private void idiv() {
+        inst_ptr++;
         long divisor = ipop();
         if(divisor == 0) {
             division_by_zero();
@@ -264,15 +302,17 @@ class ByteCodeVM {
     }
 
     private void iexp() {
+        inst_ptr++;
         long exponent = ipop();
         ipush(ipop() ^ exponent);
     }
 
     private void imod() {
+        inst_ptr++;
         long modulo = ipop();
         ipush(ipop() % modulo);
     }
-
+/*
     private void and() {
         ubyte rhs = pop();
         ubyte lhs = pop();
@@ -289,7 +329,7 @@ class ByteCodeVM {
     private void not() {
         push(pop() == cast(ubyte) 0);
     }
-
+*/
     private void iequal() {
         push(cast(ubyte) ipop() == ipop());
     }
@@ -562,7 +602,7 @@ class ByteCodeVM {
 
     private void chput() {
         import std.stdio: write;
-        write(pop());
+        write(cast(char) pop());
         inst_ptr++;
     }
 
@@ -597,92 +637,86 @@ class ByteCodeVM {
     }
 
     private void halt() {
-        inst_ptr = memory.length + 1;
+        inst_ptr = stack.length + 1;
     }
 }
 
 private:
 
 immutable long fiftyk = 50000;
-immutable long inst_count = 53;
+immutable long inst_count = 100;
 
 private:
 
-void set_instructions(ByteCodeVM VM) {
-    VM.instructions[opcodes.SAVEFRAME]       = &VM.save_frame_ptr;
-    VM.instructions[opcodes.LOADFRAME]       = &VM.restore_frame_ptr;
+void set_operations(ByteCodeVM VM) {
+    VM.operations[opcodes.SAVEFRAME]       = &VM.save_frame_ptr;
+    VM.operations[opcodes.LOADFRAME]       = &VM.restore_frame_ptr;
 
-    VM.instructions[opcodes.SAVEINSTRUCTION] = &VM.save_instr_ptr;
-    VM.instructions[opcodes.LOADINSTRUCTION] = &VM.restore_instr_ptr;
-    VM.instructions[opcodes.ROLLBACK]        = &VM.rollback;
+    VM.operations[opcodes.SAVEINSTRUCTION] = &VM.save_instr_ptr;
+    VM.operations[opcodes.LOADINSTRUCTION] = &VM.restore_instr_ptr;
+    VM.operations[opcodes.ROLLBACK]        = &VM.rollback;
     
-    VM.instructions[opcodes.iADD]            = &VM.iadd;
-    VM.instructions[opcodes.iSUB]            = &VM.isub;
-    VM.instructions[opcodes.iMULT]           = &VM.imult;
-    VM.instructions[opcodes.iDIV]            = &VM.idiv;
-    VM.instructions[opcodes.iEXP]            = &VM.iexp;
-    VM.instructions[opcodes.iMOD]            = &VM.imod;
+    VM.operations[opcodes.iADD]            = &VM.iadd;
+    VM.operations[opcodes.iSUB]            = &VM.isub;
+    VM.operations[opcodes.iMULT]           = &VM.imult;
+    VM.operations[opcodes.iDIV]            = &VM.idiv;
+    VM.operations[opcodes.iEXP]            = &VM.iexp;
+    VM.operations[opcodes.iMOD]            = &VM.imod;
+/*
+    VM.operations[opcodes.AND]             = &VM.and;
+    VM.operations[opcodes.OR]              = &VM.or;
+    VM.operations[opcodes.NOT]             = &VM.not;
+*/
+    VM.operations[opcodes.iEQ]             = &VM.iequal;
+    VM.operations[opcodes.iNEQ]            = &VM.inot_equal;
+    VM.operations[opcodes.iLT]             = &VM.iless_than;
+    VM.operations[opcodes.iGT]             = &VM.igreater_than;
+    VM.operations[opcodes.iLTEQ]           = &VM.iless_than_or_equal;
+    VM.operations[opcodes.iGTEQ]           = &VM.igreater_than_or_equal;
 
-    VM.instructions[opcodes.AND]             = &VM.and;
-    VM.instructions[opcodes.OR]              = &VM.or;
-    VM.instructions[opcodes.NOT]             = &VM.not;
+    VM.operations[opcodes.chEQ]            = &VM.ch_equal;
+    VM.operations[opcodes.chNEQ]           = &VM.ch_not_equal;
+    VM.operations[opcodes.chLT]            = &VM.ch_less_than;
+    VM.operations[opcodes.chGT]            = &VM.ch_greater_than;
+    VM.operations[opcodes.chLTEQ]          = &VM.ch_less_than_or_equal;
+    VM.operations[opcodes.chGTEQ]          = &VM.ch_greater_than_or_equal;
 
-    VM.instructions[opcodes.iEQ]             = &VM.iequal;
-    VM.instructions[opcodes.iNEQ]            = &VM.inot_equal;
-    VM.instructions[opcodes.iLT]             = &VM.iless_than;
-    VM.instructions[opcodes.iGT]             = &VM.igreater_than;
-    VM.instructions[opcodes.iLTEQ]           = &VM.iless_than_or_equal;
-    VM.instructions[opcodes.iGTEQ]           = &VM.igreater_than_or_equal;
+    VM.operations[opcodes.iPUSHc]          = &VM.ipushc;
+    VM.operations[opcodes.iPUSHv]          = &VM.ipushv;
 
-    VM.instructions[opcodes.chEQ]            = &VM.ch_equal;
-    VM.instructions[opcodes.chNEQ]           = &VM.ch_not_equal;
-    VM.instructions[opcodes.chLT]            = &VM.ch_less_than;
-    VM.instructions[opcodes.chGT]            = &VM.ch_greater_than;
-    VM.instructions[opcodes.chLTEQ]          = &VM.ch_less_than_or_equal;
-    VM.instructions[opcodes.chGTEQ]          = &VM.ch_greater_than_or_equal;
+    VM.operations[opcodes.chPUSHc]         = &VM.chpushc;
+    VM.operations[opcodes.chPUSHv]         = &VM.chpushv;
 
-    VM.instructions[opcodes.iPUSHc]          = &VM.ipushc;
-    VM.instructions[opcodes.iPUSHv]          = &VM.ipushv;
+    VM.operations[opcodes.chMOVE]          = &VM.ch_move;
+    VM.operations[opcodes.iMOVE]           = &VM.imove;
 
-    VM.instructions[opcodes.chPUSHc]         = &VM.chpushc;
-    VM.instructions[opcodes.chPUSHv]         = &VM.chpushv;
+    VM.operations[opcodes.NEWARRAY]        = &VM.new_array;
+    VM.operations[opcodes.DELARRAY]        = &VM.delete_array;
 
-    VM.instructions[opcodes.chMOVE]          = &VM.imove;
-    VM.instructions[opcodes.iMOVE]           = &VM.ch_move;
+    VM.operations[opcodes.chARRINSERT]     = &VM.ch_array_insert;
+    VM.operations[opcodes.chARRGET]        = &VM.ch_array_get;
+    VM.operations[opcodes.chARRAPPEND]     = &VM.ch_array_append;
+    VM.operations[opcodes.chARRDUPLICATE]  = &VM.ch_array_duplicate;
 
-    VM.instructions[opcodes.NEWARRAY]        = &VM.new_array;
-    VM.instructions[opcodes.DELARRAY]        = &VM.delete_array;
+    VM.operations[opcodes.iARRINSERT]      = &VM.iarray_insert;
+    VM.operations[opcodes.iARRGET]         = &VM.iarray_get;
+    VM.operations[opcodes.iARRAPPEND]      = &VM.iarray_append;
+    VM.operations[opcodes.iARRDUPLICATE]   = &VM.iarray_duplicate;
 
-    VM.instructions[opcodes.chARRINSERT]     = &VM.ch_array_insert;
-    VM.instructions[opcodes.chARRGET]        = &VM.ch_array_get;
-    VM.instructions[opcodes.chARRAPPEND]     = &VM.ch_array_append;
-    VM.instructions[opcodes.chARRDUPLICATE]  = &VM.ch_array_duplicate;
+    VM.operations[opcodes.JUMP]            = &VM.jump;
+    VM.operations[opcodes.chJUMPNEQ]       = &VM.chjump_if_not_equal;
+    VM.operations[opcodes.chJUMPEQ]        = &VM.chjump_if_equal;
+    VM.operations[opcodes.iJUMPNEQ]        = &VM.ijump_if_not_equal;
+    VM.operations[opcodes.iJUMPEQ]         = &VM.ijump_if_equal;
 
-    VM.instructions[opcodes.iARRINSERT]      = &VM.iarray_insert;
-    VM.instructions[opcodes.iARRGET]         = &VM.iarray_get;
-    VM.instructions[opcodes.iARRAPPEND]      = &VM.iarray_append;
-    VM.instructions[opcodes.iARRDUPLICATE]   = &VM.iarray_duplicate;
-
-    VM.instructions[opcodes.JUMP]            = &VM.jump;
-    VM.instructions[opcodes.chJUMPNEQ]       = &VM.chjump_if_not_equal;
-    VM.instructions[opcodes.chJUMPEQ]        = &VM.chjump_if_equal;
-    VM.instructions[opcodes.iJUMPNEQ]        = &VM.ijump_if_not_equal;
-    VM.instructions[opcodes.iJUMPEQ]         = &VM.ijump_if_equal;
-
-    VM.instructions[opcodes.chPUT]           = &VM.chput;
-    VM.instructions[opcodes.chPUTLN]         = &VM.chputln;
-    VM.instructions[opcodes.iPUT]            = &VM.iput;
-    VM.instructions[opcodes.iPUTLN]          = &VM.iputln;
-    VM.instructions[opcodes.INPUT]           = &VM.input;
-    VM.instructions[opcodes.HALT]            = &VM.halt;
+    VM.operations[opcodes.chPUT]           = &VM.chput;
+    VM.operations[opcodes.chPUTLN]         = &VM.chputln;
+    VM.operations[opcodes.iPUT]            = &VM.iput;
+    VM.operations[opcodes.iPUTLN]          = &VM.iputln;
+    VM.operations[opcodes.INPUT]           = &VM.input;
+    VM.operations[opcodes.HALT]            = &VM.halt;
 }
 
-public:
-
-void main() {
-    ByteCodeVM vm = new ByteCodeVM();
-    //vm.load_bytecode(get_bytes(vm));
-}
 
 unittest {
     ByteCodeVM vm = new ByteCodeVM();
@@ -730,7 +764,7 @@ unittest {
 // chpushc works correctly.
 unittest {
     ByteCodeVM vm = new ByteCodeVM();
-    // throw away, representing the actual cpushc opcode in memory.
+    // throw away, representing the actual cpushc opcode in stack.
     // this is needed bc the instruction pointer is incremented to
     // the next index representing the value to be pushed.
     vm.push(0);
@@ -738,32 +772,32 @@ unittest {
     vm.push(10);
     vm.chpushc();
     assert(vm.inst_ptr == 2);
-    assert(vm.memory[1] == vm.memory[2]);
+    assert(vm.stack[1] == vm.stack[2]);
 }
 
 // cpushv works correctly
 unittest {
     ByteCodeVM vm = new ByteCodeVM();
-    // throw away, representing the actual cpushv opcode in memory.
+    // throw away, representing the actual cpushv opcode in stack.
     // this is needed bc the instruction pointer is incremented to
     // the next index representing the value to be pushed.
     vm.push(0);
     // the address of the variable, offset by the frame pointer (0 in this case)
     vm.ipush(20);
-    vm.memory[20] = cast(ubyte) 13;
+    vm.stack[20] = cast(ubyte) 13;
     vm.chpushv();
     // chpushv manipulates, and restores instruction pointer correctly.
     // The instruction pointer moves further than a char operation, as it needs
     // a address which is always a 64 bit int (8 bytes).
     assert(vm.inst_ptr == 9);
     // item at location is correct
-    assert(vm.memory[vm.stk_ptr] == cast(ubyte) 13);
+    assert(vm.stack[vm.stk_ptr] == cast(ubyte) 13);
 }
 
 // ch_move works correctly
 unittest {
     ByteCodeVM vm = new ByteCodeVM();
-    // throw away, representing the actual chmove opcode in memory.
+    // throw away, representing the actual chmove opcode in stack.
     vm.push(0);
 
     for(ulong i = 9; i < 100; i++) {
@@ -781,14 +815,14 @@ unittest {
         // artificially running same command repeatedly,
         // instruction pointer must be reset.
         vm.inst_ptr = temp;
-        assert(vm.memory[i] == cast(ubyte) 3);
+        assert(vm.stack[i] == cast(ubyte) 3);
     }
 }
 
 // imove works correctly
 unittest {
     ByteCodeVM vm = new ByteCodeVM();
-    // throw away, representing the actual imove opcode in memory.
+    // throw away, representing the actual imove opcode in stack.
     // this is needed bc the instruction pointer is incremented to
     // the next index representing the value to be pushed in the actual operation.
     vm.push(0);
@@ -811,7 +845,7 @@ unittest {
     vm.ipush(0);
     vm.ipush(0);
     vm.ipush(0);
-    // throw away, representing the actual rollback opcode in memory.
+    // throw away, representing the actual rollback opcode in stack.
     // this is needed bc the instruction pointer is incremented to
     // the next index representing the value to be pushed in the actual operation.
     vm.push(0);
@@ -825,7 +859,7 @@ unittest {
 // new_array works correctly
 unittest {
     ByteCodeVM vm = new ByteCodeVM();
-    // throw away, representing the actual imove opcode in memory.
+    // throw away, representing the actual imove opcode in stack.
     // this is needed bc the instruction pointer is incremented to
     // the next index representing the value to be pushed in the actual operation.
     vm.push(0);
@@ -837,16 +871,16 @@ unittest {
     ---------------- Description ----------------
 
     This VM is a stack based machine.
-    It uses unsigned bytes for instructions, and unsigned 64 bit integers for pointers.
+    It uses unsigned bytes for operations, and unsigned 64 bit integers for pointers.
     All integers used in any program are 64 bit signed integers.
 
-    All instructions are responsible for the correct 
+    All operations are responsible for the correct 
     manipulation of the instruction pointer, if used.
 
-    All instructions are responsible for the correct
+    All operations are responsible for the correct
     manipulation of the stack pointer, if used.
 
-    The SAVEFRAME, and LOADFRAME instructions are responsible for the correct
+    The SAVEFRAME, and LOADFRAME operations are responsible for the correct
     manipulation of the frame pointer.
 
     All variables are referenced as an offset from the current location of the frame pointer.
@@ -863,8 +897,8 @@ unittest {
     Local variables are always placed as blanks,
     until a move instruction (assignment) places a value into them.
 
-    It is the caller functions job to place the arguments
-    and local variables onto the stack.
+    It is the caller functions job to place the argumentsonto the stack.
+    It is the called functions job to place the local variables onto the stack.
     It is also the caller functions job to save the location of the next (local) instruction,
     and the current frame pointer.
     The caller function then JUMP(s) to the location of the callee function (It's first instruction).
@@ -873,13 +907,14 @@ unittest {
     This allows for correct access to the variables on the stack, and for the correct
     instruction to run when the callee function returns.
     This is despite the fact that the assembled function templates do not include slots for variables.
+    Variables are strictly found on the stack, and are placed there when the function is called.
 
     In other words, until the caller function loads the variables onto the stack, and adjusts
     the frame pointer, variables in the callee function are actually dangling pointers.
 
     The frame pointer is used for efficiency.
     I decided pushing the function template onto the stack each function call would be too slow.
-    I made functions as static instructions (see load_bytecode).
+    I made functions as static operations (see load_bytecode).
     Their state never changes.
 
     This VM supports calling functions inside of function calls,
@@ -895,10 +930,19 @@ unittest {
     These IDs are auto incremented ulong numbers, and are used for one array instance each.
     This is what makes each array uniquely referencable.
 
-    This VM has special instructions for array operations.
+    This VM has special operations for array operations.
     Array index errors are not permitted, instead array access uses a modulo operation.
     This would be problematic in the real world, but here it is to avoid adding too many checks
     at the machine level.
 
-    This VM currently does not support floating point numbers.
+    This VM supports floating point numbers.
+    Floating point number use a seperate stack, as well as an array that represents all
+    floating point constants found in nerf source code.
+
+    floating point operations also use unsigned integers.
+    These unsigned integers are the literal indicies in the array of constants, or they are
+    offsets from the floating point frame pointer, in the case of variables.
+
+    This VM does not currently support pointers, but most likely will in the future.
+    This will eventually lead to structs, and then classes.
 */

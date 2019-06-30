@@ -1,0 +1,9 @@
+chPUSHc
+'0'
+chPUSHc
+'a'
+chMOVE
+0
+chPUSHv
+0
+chPUTLN

@@ -1,0 +1,4 @@
+chPUSHc
+'a'
+chPUT
+HALT
