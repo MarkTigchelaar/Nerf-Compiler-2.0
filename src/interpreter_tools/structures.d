@@ -1,7 +1,7 @@
 module structures;
 
         import std.stdio;
-/*
+
 struct Program {
     Function[] functions;
     mnemonic_node*[] mnemonic_code;
@@ -287,7 +287,7 @@ class Function {
         return -1;
     }
 }
-*/
+
 struct Statement {
     immutable int stmt_type;
     int depth;
@@ -335,96 +335,6 @@ enum PrimitiveTypes {
     BoolArray,
     Character,
     CharArray
-}
-
-
-enum opcodes: ubyte {
-    HALT = 0,
-    SAVEFRAME,
-    LOADFRAME,
-    SAVEINSTRUCTION,
-    LOADINSTRUCTION,
-    ROLLBACK,
-
-    iADD,
-    iSUB,
-    iMULT,
-    iDIV,
-    iEXP,
-    iMOD,
-
-    AND,
-    OR,
-    NOT,
-
-    iEQ,
-    iNEQ,
-    iLT,
-    iGT,
-    iLTEQ,
-    iGTEQ,
-
-    chEQ,
-    chNEQ,
-    chLT,
-    chGT,
-    chLTEQ,
-    chGTEQ,
-
-    fpEQ,
-    fpNEQ,
-    fpLT,
-    fpGT,
-    fpLTEQ,
-    fpGTEQ,
-
-    iPUSHc,
-    iPUSHv,
-
-    chPUSHc,
-    chPUSHv,
-
-    fpPUSHc,
-    fpPUShv,
-
-    iMOVE,
-    chMOVE,
-    fpMOVE,
-
-    NEWARRAY,
-    DELARRAY,
-
-    chARRINSERT,
-    chARRGET,
-    chARRAPPEND,
-    chARRDUPLICATE,
-
-    iARRINSERT,
-    iARRGET,
-    iARRAPPEND,
-    iARRDUPLICATE,
-
-    fpARRINSERT,
-    fpARRGET,
-    fpARRAPPEND,
-    fpARRDUPLICATE,
-
-    JUMP,
-    chJUMPNEQ,
-    chJUMPEQ,
-    iJUMPNEQ,
-    iJUMPEQ,
-    fpJUMPNEQ,
-    fpJUMPEQ,
-
-    chPUT,
-    chPUTLN,
-    iPUT,
-    iPUTLN,
-    fpPUT,
-    fpPUTLN,
-
-    INPUT
 }
 
 struct mnemonic_node {

@@ -1,0 +1,52 @@
+{
+    "exe": "./nerf ",
+    "dir": "./TestFiles/SyntaxErrors/AssignmentStatementErrors/",
+    "preamble": "Running tests on Parser for assignment statements ...",
+    "postamble": "Tests on parser for assignment statements successful!",
+    "tests": [
+        {
+            "test_file_name": "primitive_type_only.nerf",
+            "expected_output_per_line": ["ERROR: statement is not valid."]
+        },
+        {
+            "test_file_name": "primitive_type_only_no_semicolon.nerf",
+            "expected_output_per_line": ["ERROR: statement is not valid."]
+        },
+        {
+            "test_file_name": "variable_only.nerf",
+            "expected_output_per_line": ["ERROR: missing assignment operator."]
+        },
+        {
+            "test_file_name": "variable_only_no_semicolon.nerf",
+            "expected_output_per_line": ["ERROR: statement is not valid."]
+        },
+        {
+            "test_file_name": "new_var_missing_assignment_operator.nerf",
+            "expected_output_per_line": ["ERROR: missing assignment operator."]
+        },
+        {
+            "test_file_name": "var_reassign_missing_assignment_operator.nerf",
+            "expected_output_per_line": ["ERROR: missing assignment operator."]
+        },
+        {
+            "test_file_name": "new_var_assign_no_identifier.nerf",
+            "expected_output_per_line": ["ERROR: assignment statement is missing identifier (L value)."]
+        },
+        {
+            "test_file_name": "var_reassign_no_identifier.nerf",
+            "expected_output_per_line": ["ERROR: assignment statement is missing identifier (L value)."]
+        },
+        {
+            "test_file_name": "misspelt_type_on_assignment.nerf",
+            "expected_output_per_line": ["ERROR: invalid or misspelt type in assignment statement."]
+        },
+        {
+            "test_file_name": "invalid_identifier_on_new_assignment.nerf",
+            "expected_output_per_line": ["ERROR: identifier cannot be a keyword or contain non alphabetical characters (underscore is exception)."]
+        },
+        {
+            "test_file_name": "invalid_identifier_on_re_assignment.nerf",
+            "expected_output_per_line": ["ERROR: invalid or misspelt type in assignment statement."]
+        }
+    ]
+}

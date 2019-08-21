@@ -1,0 +1,24 @@
+{
+    "exe": "./nerf ",
+    "dir": "./TestFiles/FileErrors/",
+    "preamble": "Running tests for lexer ...",
+    "postamble": "Tests for lexer successful!",
+    "tests": [
+        {
+            "test_file_name": "bad_extension.txt",
+            "expected_output_per_line": ["ERROR: file has incorrect file extension."]
+        },
+        {
+            "test_file_name": "empty.nerf doesnt_exist.nerf",
+            "expected_output_per_line": ["ERROR: language only supports single files."]
+        },
+        {
+            "test_file_name": "doesnt_exist.nerf",
+            "expected_output_per_line": ["ERROR: file not found."]
+        },
+        {
+            "test_file_name": "empty.nerf",
+            "expected_output_per_line": ["ERROR: source file is empty."]
+        }
+    ]
+}

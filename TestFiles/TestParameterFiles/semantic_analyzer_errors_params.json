@@ -1,0 +1,96 @@
+{
+    "exe": "./nerf ",
+    "dir": "./TestFiles/SemanticErrors/",
+    "preamble": "Running tests on semantic analyzer ...",
+    "postamble": "Tests on semantic analyzer successful!",
+    "tests": [
+        {
+            "test_file_name": "duplicate_main.nerf",
+            "expected_output_per_line": ["ERROR: program must have exactly one entry function named main."]
+        },
+        {
+            "test_file_name": "duplicate_fns.nerf",
+            "expected_output_per_line": ["ERROR: functions must have unique names."]
+        },
+        {
+            "test_file_name": "missing_main.nerf",
+            "expected_output_per_line": ["ERROR: program must have exactly one entry function named main."]
+        },
+        {
+            "test_file_name": "return_not_last_stmt_in_scope1.nerf",
+            "expected_output_per_line": ["ERROR: return statement creates unreachable code."]
+        },
+        {
+            "test_file_name": "return_not_last_stmt_in_scope2.nerf",
+            "expected_output_per_line": ["ERROR: return statement creates unreachable code."]
+        },
+        {
+            "test_file_name": "break_not_last_stmt_in_scope1.nerf",
+            "expected_output_per_line": ["ERROR: break or continue statement creates unreachable code."]
+        },
+        {
+            "test_file_name": "continue_not_last_stmt_in_scope.nerf",
+            "expected_output_per_line": ["ERROR: break or continue statement creates unreachable code."]
+        },
+        {
+            "test_file_name": "orphaned_else_statement1.nerf",
+            "expected_output_per_line": ["ERROR: else (if) statements must be preceded by an (else) if statement."]
+        },
+        {
+            "test_file_name": "orphaned_else_statement2.nerf",
+            "expected_output_per_line": ["ERROR: else (if) statements must be preceded by an (else) if statement."]
+        },
+        {
+            "test_file_name": "orphaned_else_statement3.nerf",
+            "expected_output_per_line": ["ERROR: else (if) statements must be preceded by an (else) if statement."]
+        },
+        {
+            "test_file_name": "invalid_func_call.nerf",
+            "expected_output_per_line": ["ERROR: undeclared variable found in expression."]
+        },
+        {
+            "test_file_name": "main_calling_main.nerf",
+            "expected_output_per_line": ["ERROR: function \"main\" cannot be called by another function."]
+        },
+        {
+            "test_file_name": "main_with_args.nerf",
+            "expected_output_per_line": ["ERROR: program entry point \"main\" cannot have arguments."]
+        },
+        {
+            "test_file_name": "other_func_calling_main.nerf",
+            "expected_output_per_line": ["ERROR: function \"main\" cannot be called by another function."]
+        },
+        {
+            "test_file_name": "re_instantiate_variable1.nerf",
+            "expected_output_per_line": ["ERROR: variable has already been declared."]
+        },
+        {
+            "test_file_name": "re_instantiate_variable2.nerf",
+            "expected_output_per_line": ["ERROR: variable has already been declared."]
+        },
+        {
+            "test_file_name": "basic_type_mismatch_in_exp.nerf",
+            "expected_output_per_line": ["ERROR: assignment or return expression has type that does not match expected."]
+        },
+        {
+            "test_file_name": "undeclared_variables_in_expression.nerf",
+            "expected_output_per_line": ["ERROR: undeclared variable found in expression."]
+        },
+        {
+            "test_file_name": "assignment_type_mismatch1.nerf",
+            "expected_output_per_line": ["ERROR: assignment or return expression has type that does not match expected."]
+        },
+        {
+            "test_file_name": "assignment_type_mismatch2.nerf",
+            "expected_output_per_line": ["ERROR: assignment or return expression has type that does not match expected."]
+        },
+        {
+            "test_file_name": "arg_number_mismatch.nerf",
+            "expected_output_per_line": ["ERROR: number of arguments in function call does not match function declaration."]
+        },
+        {
+            "test_file_name": "arg_type_mismatch.nerf",
+            "expected_output_per_line": ["ERROR: function call has mismatched arguments to function declaration."]
+        }
+    ]
+}

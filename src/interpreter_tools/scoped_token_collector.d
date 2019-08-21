@@ -60,7 +60,7 @@ unittest {
     }
     string[] result = sc.get_scoped_tokens();
     assert(expect.length == (result.length + 2));
-    foreach(int i, string str; expect[1..4]) {
+    foreach(long i, string str; expect[1..4]) {
         assert(result[i] == str);
     }
     assert(sc.stk.isEmpty());
@@ -74,7 +74,7 @@ unittest {
     }
     string[] result = sc.get_scoped_tokens();
     assert(result.length == 3);
-    foreach(int i, string str; expect[1..4]) {
+    foreach(long i, string str; expect[1..4]) {
         assert(result[i] == str);
     }
     assert(sc.stk.isEmpty());

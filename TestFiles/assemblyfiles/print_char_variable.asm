@@ -1,9 +1,12 @@
+<char:1
 chPUSHc
 '0'
 chPUSHc
 'a'
 chMOVE
-0
-chPUSHv
-0
+char
 chPUTLN
+chPUSHv
+char
+chPUTLN
+HALT

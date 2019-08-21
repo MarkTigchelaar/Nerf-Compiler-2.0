@@ -204,7 +204,6 @@ private:
         invalid_expression();
     }
 
-    // This is dog shit code, fix later. Replace all three funcs with lexer.
     string get_token(string[] func_body, int* index)  {
         string token = current_token(func_body, index);
         (*index)++;

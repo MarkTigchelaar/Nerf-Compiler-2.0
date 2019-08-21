@@ -5,7 +5,7 @@ import SemanticAnalyzer;
 import std.stdio: writeln;
 import std.getopt;
 import structures: Program;
-import assembler: assemble;
+//import assembler: assemble;
 
 void main(string[] arguments) {
     if(arguments.length < 2) {
@@ -21,7 +21,7 @@ void main(string[] arguments) {
     Program* program = parser.parse();
     SemanticAnalyzer analyzer = new SemanticAnalyzer();
     analyzer.semantic_analysis(program);
-    ubyte[] bytecode = assemble(program);
+    //ubyte[] bytecode = assemble(program);
 /*
     ByteCodeVM VirtualMachine = new ByteCodeVM();
     VirtualMachine.load_bytecode(bytecode);

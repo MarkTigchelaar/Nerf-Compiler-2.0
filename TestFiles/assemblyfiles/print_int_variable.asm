@@ -1,0 +1,12 @@
+<number:8
+iPUSHc
+0
+iPUSHc
+97
+iMOVE
+number
+iPUTLN
+iPUSHv
+number
+iPUTLN
+HALT

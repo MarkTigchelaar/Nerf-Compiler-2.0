@@ -5,7 +5,7 @@ import std.stdio;
 import std.string;
 import std.algorithm;
 import std.conv: to;
-import structures;
+import opcodes: opcodes, get_operator;
 import core.sys.posix.stdlib: exit;
 
 struct ByteCodeProgram {
@@ -18,6 +18,8 @@ class Assembler {
     private string[] assembly;
     private ByteCodeProgram* product;
     private long[string] label_locations;
+    private long[string] var_locations;
+    private long[string] call_locations;
     private static char[] digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
     private ubyte[] integer;
 
@@ -48,84 +50,120 @@ class Assembler {
         assembly = asm_program;
     }
 
-    // memory location is in bytes, adjust 64 bit integers to show this
-    private void process_offsets() {
-        string[] temp;
-        string test_value;
-        for(long i = 0; i < assembly.length; i++) {
-            temp ~= assembly[i];
-            if(startsWith(assembly[i], ">")) { //writeln("here  ", assembly[i]);
-                string[] label_and_op = split(assembly[i], ':');
-                test_value = label_and_op[1][0..$];
-            } else {
-                test_value = assembly[i];
-            }
-            if(is_const_int_or_ptr_operation(test_value)) {//writeln("and here  ", test_value);
-                //if(startsWith(assembly[i], ":")) {
-                //    assembly[i] = assembly[i][1 .. $];
-                //}
-                i++;
-                temp ~= assembly[i];
-                for(int j = 1; j <= 7; j++) {
-                    temp ~= " ";
-                }
-            }
-        }
-        assembly = temp;
-    }
-
-    private void process_labels() {
-        for(long index = 0; index < assembly.length; index++) {
-            if(startsWith(assembly[index], ">")) {
-                string[] label_and_op = split(assembly[index], ':');
-                label_locations[label_and_op[0][1..$]] = index;
-                assembly[index] = label_and_op[1];
-            }
-        }
-    }
-
-    private void process_variable_declarations() {
-        string[] temp;
-        for(long i = 0; i < assembly.length; i++) {
-            if(startsWith(assembly[i], "<")) {
-                string declare = assembly[i][1 .. $];
-                string[] name_and_offset = split(declare, ":");
-                label_locations[name_and_offset[0]] = str_to_int(name_and_offset[1]);
-            } else {
-                temp ~= assembly[i];
-            }
-        }
-        assembly = temp;
-    }
-
     public ByteCodeProgram* assemble() {
-        process_variable_declarations();
-        process_offsets();
-        process_labels();
+        insert_label_offsets();
+        resolve_label_locations();
+/*
+        writeln("variable keys: ");
+        foreach(string key; var_locations.byKey) {
+            writeln(key, ' ', var_locations[key]);
+        }
 
-        foreach(string str; assembly) { //writeln(str);
+        writeln("label keys: ");
+        foreach(string key; label_locations.byKey) {
+            writeln(key, ' ', label_locations[key]);
+        }
+
+        writeln("func call keys: ");
+        foreach(string key; call_locations.byKey) {
+            writeln(key, ' ',call_locations[key]);
+        }
+*/
+        foreach(long i, string str; assembly) { //writeln(str);
             ubyte op = get_operator(str);
             if(op != ubyte.max) {
                 product.compiled_program ~= op;
-            } else if(is_label(str)){
-                assemble_label(str);
+            } else if(is_label(str)) {
+                assemble_label(str, i);
+            } else if(is_variable_dec(str)) {
+                assemble_variable_dec(str);
+            } else if(is_variable_ref(str)) {
+                assemble_variable_ref(str, i);
             } else if(is_integer(str)) {
                 assemble_int_const(str);
             } else if(is_float(str)) {
                 assemble_float_const(str);
             } else if(is_char(str)) {
                 assemble_char(str);
+            } else if(is_func_call(str)) {
+                assemble_func_call(str);
             } else if(str == " ") {
                 continue;
             } else {
-                writeln("ERROR: unknown operation or type.");
+                writeln("ERROR: unknown operation or type: " ~ str);
                 exit(1);
             }
-        }//writeln('\n');
+        }//writeln("end \n");
         return product;
     }
 
+    // memory location is in bytes, adjust 64 bit integers to show this
+    private void insert_label_offsets() {
+        string[] temp;
+        string test_value;
+        for(long i = 0; i < assembly.length; i++) {
+            temp ~= assembly[i];
+            string[] label_and_op = split(assembly[i], ':');
+            if(label_and_op.length == 1) {
+                if(is_const_int_or_ptr_operation(assembly[i])) {
+                    i++;
+                    temp ~= assembly[i];
+                    for(int j = 1; j <= 7; j++) {
+                        temp ~= " ";
+                    }
+                }
+            }
+            if(startsWith(assembly[i], ">")) {
+                test_value = label_and_op[1][0..$];
+                if(is_const_int_or_ptr_operation(test_value)) {
+                    i++;
+                    temp ~= assembly[i];
+                    for(int j = 1; j <= 7; j++) {
+                        temp ~= " ";
+                    }
+                }
+            } else if(startsWith(assembly[i], "<")) {
+                long number = str_to_int(label_and_op[1]);
+                for(long j = 0; j < number - 1; j++) {
+                    temp ~= " ";
+                }
+            } else if (startsWith(assembly[i], "`")) {
+                for(int k = 0; k < 7; k++) {
+                    temp ~= " ";
+                }
+            }
+        }
+        assembly = temp;
+        //foreach(string str; assembly) {
+        //    writeln(str);
+        //}
+        //writeln("assembly length: ", assembly.length);
+    }
+
+    private void resolve_label_locations() {
+        string[] label_and_op;
+        for(long index = 0; index < assembly.length; index++) {
+            if(startsWith(assembly[index], "`")) {
+                //label_and_op = split(assembly[index], ":");
+                //call_locations[label_and_op[0][1..$]] = index;
+                call_locations[assembly[index][1 .. $]] = index;
+                assembly[index] = function_size_as_string(index);//label_and_op[1];
+            } else if(startsWith(assembly[index], ">")) {
+                label_and_op = split(assembly[index], ':');
+                label_locations[label_and_op[0][1..$]] = index;
+                assembly[index] = label_and_op[1];
+            } else if(startsWith(assembly[index], "<")) {
+                label_and_op = split(assembly[index], ':');
+                string var_name = label_and_op[0][1..$];
+                var_locations[var_name] = index;
+            }
+        }
+    }
+
     private bool is_integer(string str) {
+        if(startsWith(str, "-")) {
+            str = str[1..$];
+        }
         char[] chars = cast(char[]) str;
         foreach(char ch; chars) {
             bool found = false;
@@ -149,6 +187,11 @@ class Assembler {
     }
 
     private long str_to_int(string str) {
+        bool is_neg = false;
+        if(startsWith(str, "-")) {
+            str = str[1..$];
+            is_neg = true;
+        }
         char[] chars = cast(char[]) str;
         long digit = 0;
         long result = 0;
@@ -162,6 +205,9 @@ class Assembler {
             }
             digit = digit * pow(10, len - i);
             result += digit;
+        }
+        if(is_neg) {
+            result *= -1;
         }
         return result;
     }
@@ -226,6 +272,12 @@ class Assembler {
         }
 
         switch(operation) {
+            case "CALL":
+                it_is = true;
+                break;
+            case "LOADSTACK":
+                it_is = true;
+                break;
             case "iPUSHc":
                 it_is = true;
                 break;
@@ -233,9 +285,6 @@ class Assembler {
                 it_is = true;
                 break;
             case "chPUSHv":
-                it_is = true;
-                break;
-            case "ROLLBACK":
                 it_is = true;
                 break;
             case "iMOVE":
@@ -262,6 +311,12 @@ class Assembler {
             case "iJUMPEQ":
                 it_is = true;
                 break;
+            case "iJUMPLT":
+                it_is = true;
+                break;
+            case "iJUMPGT":
+                it_is = true;
+                break;
             default:
                 it_is = false;
                 break;
@@ -276,9 +331,80 @@ class Assembler {
         return false;
     }
 
-    private void assemble_label(string str) {
-        to_array_int(label_locations[str]);
+    private void assemble_label(string str, long var_index) {
+        to_array_int(label_locations[str] - var_index - 8);
         append_integer_to_bytecode();
+    }
+
+    private bool is_func_call(string str) {
+        if(str in call_locations) {
+            return true;
+        }
+        return false;
+    }
+
+    private void assemble_func_call(string str) {
+        long bytes_to_skip = 0;
+        for(long i = 0; i < call_locations[str]; i++) {
+            if(startsWith(assembly[i], "<~")) {
+                string[] label_and_size = split(assembly[i], ":");
+                bytes_to_skip += str_to_int(label_and_size[1]);
+            }
+        }
+        to_array_int(call_locations[str] - bytes_to_skip);
+        append_integer_to_bytecode();
+    }
+
+    // This works because main is always starting at index 0,
+    // and all other functions begin with `.
+    private string function_size_as_string(long func_index) {
+        long size = -1;
+        func_index += 8;
+        for(long index = func_index; index < assembly.length; index++) {
+            if(startsWith(assembly[index], "`")) {
+                size = index - func_index;
+                break;
+            }
+        }
+        if(size < 0) {
+            size = assembly.length - func_index;
+        }
+        return int_as_string(size);
+    }
+
+    private bool is_variable_ref(string str) {
+        if(str in var_locations) {
+            return true;
+        } else if("~" ~ str in var_locations) {
+            return true;
+        }
+        return false;
+    }
+
+    private void assemble_variable_ref(string var, long var_index) {
+
+        if(var in var_locations) {
+            to_array_int(var_index - var_locations[var]);
+        } else if("~" ~ var in var_locations) {
+            to_array_int(var_index - var_locations["~" ~ var]);
+        }
+        append_integer_to_bytecode();
+        //writeln("This is the offset:                           ", var_index - var_locations[var]);
+    }
+
+    private bool is_variable_dec(string str) {
+        return startsWith(str, "<");
+    }
+
+    private void assemble_variable_dec(string str) {
+        if(startsWith(str[1 .. $], "~")) {
+            return;
+        }
+        string[] components = split(str, ':');
+        const long byte_offset = str_to_int(components[1]);
+        for(long i = 0; i < byte_offset; i++) {
+            product.compiled_program ~= opcodes.MEMALLOC;
+        }
     }
 
     private void append_integer_to_bytecode() {
@@ -286,341 +412,49 @@ class Assembler {
             product.compiled_program ~= bt;
         }
     }
-}
 
-ubyte get_operator(string operator_literal) {
-    ubyte code;
-    switch(operator_literal) {
-        case "iADD":
-            code = opcodes.iADD;
-            break;
-        case "iSUB":
-            code = opcodes.iSUB;
-            break;
-        case "iMULT":
-            code = opcodes.iMULT;
-            break;
-        case "iDIV":
-            code = opcodes.iDIV;
-            break;
-        case "iEXP":
-            code = opcodes.iEXP;
-            break;
-        case "iMOD":
-            code = opcodes.iMOD;
-            break;
-        case "iGT":
-            code = opcodes.iGT;
-            break;
-        case "iLT":
-            code = opcodes.iLT;
-            break;
-        case "iLTEQ":
-            code = opcodes.iLTEQ;
-            break;
-        case "iGTEQ":
-            code = opcodes.iGTEQ;
-            break;
-        case "iEQ":
-            code = opcodes.iEQ;
-            break;
-        case "iNEQ":
-            code = opcodes.iNEQ;
-            break;
-        case "chEQ":
-            code = opcodes.chEQ;
-            break;
-        case "chNEQ":
-            code = opcodes.chNEQ;
-            break;
-        case "chLT":
-            code = opcodes.chLT;
-            break;
-        case "chGT":
-            code = opcodes.chGT;
-            break;
-        case "chLTEQ":
-            code = opcodes.chLTEQ;
-            break;
-        case "chGTEQ":
-            code = opcodes.chGTEQ;
-            break;
-        case "fpEQ":
-            code = opcodes.fpEQ;
-            break;
-        case "fpNEQ":
-            code = opcodes.fpNEQ;
-            break;
-        case "fpLT":
-            code = opcodes.fpLT;
-            break;
-        case "fpGT":
-            code = opcodes.fpGT;
-            break;
-        case "fpLTEQ":
-            code = opcodes.fpLTEQ;
-            break;
-        case "fpGTEQ":
-            code = opcodes.fpGTEQ;
-            break;
-        case "iPUSHc":
-            code = opcodes.iPUSHc;
-            break;
-        case "iPUSHv":
-            code = opcodes.iPUSHv;
-            break;
-        case "chPUSHc":
-            code = opcodes.chPUSHc;
-            break;
-        case "chPUSHv":
-            code = opcodes.chPUSHv;
-            break;
-        case "fpPUSHc":
-            code = opcodes.fpPUSHc;
-            break;
-        case "fpPUShv":
-            code = opcodes.fpPUShv;
-            break;
-        case "iMOVE":
-            code = opcodes.iMOVE;
-            break;
-        case "chMOVE":
-            code = opcodes.chMOVE;
-            break;
-        case "fpMOVE":
-            code = opcodes.fpMOVE;
-            break;
-        case "NEWARRAY":
-            code = opcodes.NEWARRAY;
-            break;
-        case "DELARRAY":
-            code = opcodes.DELARRAY;
-            break;
-        case "chARRINSERT":
-            code = opcodes.chARRINSERT;
-            break;
-        case "chARRGET":
-            code = opcodes.chARRGET;
-            break;
-        case "chARRAPPEND":
-            code = opcodes.chARRAPPEND;
-            break;
-        case "chARRDUPLICATE":
-            code = opcodes.chARRDUPLICATE;
-            break;
-        case "iARRINSERT":
-            code = opcodes.iARRINSERT;
-            break;
-        case "iARRGET":
-            code = opcodes.iARRGET;
-            break;
-        case "iARRAPPEND":
-            code = opcodes.iARRAPPEND;
-            break;
-        case "iARRDUPLICATE":
-            code = opcodes.iARRDUPLICATE;
-            break;
-        case "fpARRINSERT":
-            code = opcodes.fpARRINSERT;
-            break;
-        case "fpARRGET":
-            code = opcodes.fpARRGET;
-            break;
-        case "fpARRAPPEND":
-            code = opcodes.fpARRAPPEND;
-            break;
-        case "fpARRDUPLICATE":
-            code = opcodes.fpARRDUPLICATE;
-            break;
-        case "JUMP":
-            code = opcodes.JUMP;
-            break;
-        case "chJUMPNEQ":
-            code = opcodes.chJUMPNEQ;
-            break;
-        case "chJUMPEQ":
-            code = opcodes.chJUMPEQ;
-            break;
-        case "iJUMPNEQ":
-            code = opcodes.iJUMPNEQ;
-            break;
-        case "iJUMPEQ":
-            code = opcodes.iJUMPEQ;
-            break;
-        case "fpJUMPNEQ":
-            code = opcodes.fpJUMPNEQ;
-            break;
-        case "fpJUMPEQ":
-            code = opcodes.fpJUMPEQ;
-            break;
-        case "chPUT":
-            code = opcodes.chPUT;
-            break;
-        case "chPUTLN":
-            code = opcodes.chPUTLN;
-            break;
-        case "iPUT":
-            code = opcodes.iPUT;
-            break;
-        case "iPUTLN":
-            code = opcodes.iPUTLN;
-            break;
-        case "fpPUT":
-            code = opcodes.fpPUT;
-            break;
-        case "fpPUTLN":
-            code = opcodes.fpPUTLN;
-            break;
-        case "INPUT":
-            code = opcodes.INPUT;
-            break;
-        case "HALT":
-            code = opcodes.HALT;
-            break;
-        default:
-            code = ubyte.max;
-            break;
+    // In efficient, but function sizes should not be larger
+    // than a few thousand bytes max.
+    private string int_as_string(long value) {
+        char[] str_num = ['0','0','0','0','0','0','0','0','0','0','0','0'];
+        for(long i = 1; i <= value; i++) {
+            increment_array(str_num);
+        }
+        string return_val;
+        bool append = false;
+        foreach(char ch; str_num) {
+            if(ch != '0') {
+                append = true;
+            }
+            if(append) {
+                return_val ~= ch;
+            }
+        }
+        return return_val;
     }
-    return code;
-}
 
-
-
-
-
-
-
-
-/*
-string show_asm(ubyte opcode) {
-    string name;
-    switch(opcode) {
-        case opcodes.SAVEFRAME:
-            name = "SAVEFRAME";
-            break;
-        case opcodes.LOADFRAME:
-            name = "LOADFRAME";
-            break;
-        case opcodes.SAVEINSTRUCTION:
-            name = "SAVEINSTRUCTION";
-            break;
-        case opcodes.LOADINSTRUCTION:
-            name = "LOADINSTRUCTION";
-            break;
-        case opcodes.ROLLBACK:
-            name = "ROLLBACK";
-            break;
-        case opcodes.iADD:
-            name = "iADD";
-            break;
-        case opcodes.iSUB:
-            name = "iSUB";
-            break;
-        case opcodes.iMULT:
-            name = "iMULT";
-            break;
-        case opcodes.iDIV:
-            name = "iDIV";
-            break;
-        case opcodes.iEXP:
-            name = "iEXP";
-            break;
-        case opcodes.iMOD:
-            name = "iMOD";
-            break;
-        case opcodes.AND:
-            name = "AND";
-            break;
-        case opcodes.OR:
-            name = "OR";
-            break;
-        case opcodes.NOT:
-            name = "NOT";
-            break;
-        case opcodes.iEQ:
-            name = "iEQ";
-            break;
-        case opcodes.iNEQ:
-            name = "iNEQ";
-            break;
-        case opcodes.iLT:
-            name = "iLT";
-            break;
-        case opcodes.iGT:
-            name = "iGT";
-            break;
-        case opcodes.iLTEQ:
-            name = "iLTEQ";
-            break;
-        case opcodes.iGTEQ:
-            name = "iGTEQ";
-            break;
-        case opcodes.chEQ:
-            name = "chEQ";
-            break;
-        case opcodes.chNEQ:
-            name = "chNEQ";
-            break;
-        case opcodes.chLT:
-            name = "chLT";
-            break;
-        case opcodes.chGT:
-            name = "chGT";
-            break;
-        case opcodes.chLTEQ:
-            name = "chLTEQ";
-            break;
-        case opcodes.chGTEQ:
-            name = "chGTEQ";
-            break;
-        case opcodes.iPUSHc:
-            name = "iPUSHc";
-            break;
-        case opcodes.iPUSHv:
-            name = "iPUSHv";
-            break;
-        case opcodes.chPUSHc:
-            name = "chPUSHc";
-            break;
-        case opcodes.chPUSHv:
-            name = "chPUSHv";
-            break;
-        case opcodes.iMOVE:
-            name = "iMOVE";
-            break;
-        case opcodes.chMOVE:
-            name = "chMOVE";
-            break;
-        case opcodes.JUMP:
-            name = "JUMP";
-            break;
-        case opcodes.chJUMPNEQ:
-            name = "chJUMPNEQ";
-            break;
-        case opcodes.chJUMPEQ:
-            name = "chJUMPEQ";
-            break;
-        case opcodes.iJUMPNEQ:
-            name = "iJUMPNEQ";
-            break;
-        case opcodes.iJUMPEQ:
-            name = "iJUMPEQ";
-            break;
-        case opcodes.iPUT:
-            name = "iPUT";
-            break;
-        case opcodes.iPUTLN:
-            name = "iPUTLN";
-            break;
-        case opcodes.INPUT:
-            name = "INPUT";
-            break;
-        case opcodes.HALT:
-            name = "HALT";
-            break;
-        default:
-            name = "UNKNOWN";
+    // This can go wrong if the function
+    // length is a insanely huge number.
+    private void increment_array(char[] str_num) {
+        long start = str_num.length - 1;
+        while(start >= 0) {
+            long index = get_index(str_num[start]);
+            if(index < 9) {
+                str_num[start] = digits[index + 1];
+                break;
+            } else { // digit is 9.
+                str_num[start] = '0';
+                start--;
+            }
+        }
     }
-    return name;
+
+    private long get_index(char digit) {
+        for(long i = 0; i < digits.length; i++) {
+            if(digits[i] == digit) {
+                return i;
+            }
+        }
+        return 0;
+    }
 }
-*/

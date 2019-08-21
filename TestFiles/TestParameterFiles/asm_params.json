@@ -1,0 +1,148 @@
+{   
+    "exe": "./ClunkASM ",
+    "dir": "./TestFiles/assemblyfiles/",
+    "preamble": "Running tests for assembler ...",
+    "postamble": "Tests for assembler successful!",
+    "tests": [
+        {
+            "test_file_name": "quit.asm",
+            "expected_output_per_line":[]
+        },
+        {
+            "test_file_name": "print_single_char.asm",
+            "expected_output_per_line": ["a"]
+        },
+        {
+            "test_file_name": "print_char_variable.asm",
+            "expected_output_per_line": ["0", "a"]
+        },
+        {
+            "test_file_name": "print_multiple_char_variables.asm",
+            "expected_output_per_line": ["a","b","c"]
+        },
+        {
+            "test_file_name": "print_int_variable.asm",
+            "expected_output_per_line": ["0", "97"]
+        },
+        {
+            "test_file_name": "print_multiple_int_variables.asm",
+            "expected_output_per_line": ["97","98","99"]
+        },
+        {
+            "test_file_name": "add_two_ints.asm",
+            "expected_output_per_line": ["40"]
+        },
+        {
+            "test_file_name": "jump_skip_printing_25.asm",
+            "expected_output_per_line": ["10", "117", "e"]
+        },
+        {
+            "test_file_name": "multiple_sequential_uncondtional_jumps.asm",
+            "expected_output_per_line": ["w100t"]
+        },
+        {
+            "test_file_name": "jump_to_address_immediately_after_jump_address.asm",
+            "expected_output_per_line": ["a", "b", "c"]
+        },
+        {
+            "test_file_name": "assign_to_variable_raw_mem_address_no_label.asm",
+            "expected_output_per_line": ["15"]
+        },
+        {
+            "test_file_name": "assign_to_raw_mem_address_large_num.asm",
+            "expected_output_per_line": ["9223372036854775807"]
+        },
+        {
+            "test_file_name": "assign_to_raw_mem_address_large_neg_num.asm",
+            "expected_output_per_line": ["-9223372036854775808"]
+        },
+        {
+            "test_file_name": "assign_to_mem_address_then_print_mem_address_contents.asm",
+            "expected_output_per_line": ["a"]
+        },
+        {
+            "test_file_name": "assign_to_variable_with_label_then_print_variable.asm",
+            "expected_output_per_line": ["a"]
+        },
+        {
+            "test_file_name": "loop_using_jump_not_eq_with_variable.asm",
+            "expected_output_per_line": ["1", "2", "3", "4", "5"]
+        },
+        {
+            "test_file_name": "loop_using_jump_eq_as_break_and_unconditional_jump_as_iterator.asm",
+            "expected_output_per_line": ["1", "2", "3", "4", "5"]
+        },
+        {
+            "test_file_name": "ch_branch_eq_negative_case.asm",
+            "expected_output_per_line": ["n", "u"]
+        },
+        {
+            "test_file_name": "ch_branch_eq_positive_case.asm",
+            "expected_output_per_line": ["L", "u"]
+        },
+        {
+            "test_file_name": "ch_branch_neq_positive_case.asm",
+            "expected_output_per_line": ["L", "u"]
+        },
+        {
+            "test_file_name": "ch_branch_neq_negative_case.asm",
+            "expected_output_per_line": ["n", "u"]
+        },
+        {
+            "test_file_name": "int_branch_eq_negative_case.asm",
+            "expected_output_per_line": ["800", "34"]
+        },
+        {
+            "test_file_name": "int_branch_eq_positive_case.asm",
+            "expected_output_per_line": ["456", "34"]
+        },
+        {
+            "test_file_name": "int_branch_neq_positive_case.asm",
+            "expected_output_per_line": ["456", "34"]
+        },
+        {
+            "test_file_name": "int_branch_neq_negative_case.asm",
+            "expected_output_per_line": ["800", "34"]
+        },
+        {
+            "test_file_name": "int_branch_lt_negative_case.asm",
+            "expected_output_per_line": ["800", "34"]
+        },
+        {
+            "test_file_name": "int_branch_lt_positive_case.asm",
+            "expected_output_per_line": ["456", "34"]
+        },
+        {
+            "test_file_name": "int_branch_gt_positive_case.asm",
+            "expected_output_per_line": ["456", "34"]
+        },
+        {
+            "test_file_name": "int_branch_gt_negative_case.asm",
+            "expected_output_per_line": ["800", "34"]
+        },
+        {
+            "test_file_name": "call_func_of_no_return.asm",
+            "expected_output_per_line": ["27"]
+        },
+        {
+            "test_file_name": "call_char_func_of_no_return.asm",
+            "expected_output_per_line": ["a"]
+        },
+        {
+            "test_file_name": "call_mixed_func_of_no_return.asm",
+            "expected_output_per_line": ["a", "27"]
+        },
+        {
+            "test_file_name": "call_two_mixed_funcs_of_no_return.asm",
+            "expected_output_per_line": ["a", "27", "55067", "27", "a"]
+        },
+        {
+            "test_file_name": "simple_recursive_function.asm",
+            "expected_output_per_line": ["10", "11", "12", "13", "14", "15", "16", "5", "a"]
+        },
+        {
+            "test_file_name": "mutually_recursive_functions.asm",
+            "expected_output_per_line": ["4567890"]
+        }
+    ]
+}

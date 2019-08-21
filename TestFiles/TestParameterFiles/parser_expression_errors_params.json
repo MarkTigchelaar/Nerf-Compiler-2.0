@@ -1,0 +1,52 @@
+{
+    "exe": "./nerf ",
+    "dir": "./TestFiles/SyntaxErrors/ExpressionErrors/",
+    "preamble": "Running tests on Parser for expressions ...",
+    "postamble": "Tests on parser for expressions successful!",
+    "tests": [
+        {
+            "test_file_name": "operator_only.nerf",
+            "expected_output_per_line": ["ERROR: expression is invalid."]
+        },
+        {
+            "test_file_name": "double_negative1.nerf",
+            "expected_output_per_line": ["ERROR: cannot use double negatives for prefix expressions."]
+        },
+        {
+            "test_file_name": "double_negative2.nerf",
+            "expected_output_per_line": ["ERROR: cannot use double negatives for prefix expressions."]
+        },
+        {
+            "test_file_name": "double_negative3.nerf",
+            "expected_output_per_line": ["ERROR: cannot use double negatives for prefix expressions."]
+        },
+        {
+            "test_file_name": "empty_parens1.nerf",
+            "expected_output_per_line": ["ERROR: parenthesis contains no expressions."]
+        },
+        {
+            "test_file_name": "double_operators1.nerf",
+            "expected_output_per_line": ["ERROR: expression is missing variable or constant."]
+        },
+        {
+            "test_file_name": "double_operators2.nerf",
+            "expected_output_per_line": ["ERROR: expression is missing variable or constant."]
+        },
+        {
+            "test_file_name": "func_call_missing_expressions1.nerf",
+            "expected_output_per_line": ["ERROR: function call missing argument(s)."]
+        },
+        {
+            "test_file_name": "func_call_missing_expressions2.nerf",
+            "expected_output_per_line": ["ERROR: function call missing argument(s)."]
+        },
+        {
+            "test_file_name": "func_call_missing_expressions3.nerf",
+            "expected_output_per_line": ["ERROR: function call missing argument(s)."]
+        },
+        {
+            "test_file_name": "missing_operator1.nerf",
+            "expected_output_per_line": ["ERROR: expression is missing operator."]
+        }
+    ]
+}

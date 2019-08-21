@@ -1,0 +1,60 @@
+{
+    "exe": "./nerf ",
+    "dir": "./TestFiles/SyntaxErrors/BranchingLogicErrors/",
+    "preamble": "Running tests on Parser for branching logic ...",
+    "postamble": "Tests on parser for branching logic successful!",
+    "tests": [
+        {
+            "test_file_name": "if_stub.nerf",
+            "expected_output_per_line": ["ERROR: branching logic has malformed argument."]
+        },
+        {
+            "test_file_name": "while_stub.nerf",
+            "expected_output_per_line": ["ERROR: branching logic has malformed argument."]
+        },
+        {
+            "test_file_name": "if_no_paren_w_scope.nerf",
+            "expected_output_per_line": ["ERROR: branching logic has malformed argument."]
+        },
+        {
+            "test_file_name": "if_no_paren_w_scope_no_condition.nerf",
+            "expected_output_per_line": ["ERROR: branching logic has malformed argument."]
+        },
+        {
+            "test_file_name": "while_no_paren_w_scope.nerf",
+            "expected_output_per_line": ["ERROR: branching logic has malformed argument."]
+        },
+        {
+            "test_file_name": "while_no_paren_w_scope_no_condition.nerf",
+            "expected_output_per_line": ["ERROR: branching logic has malformed argument."]
+        },
+        {
+            "test_file_name": "if_no_scope_body.nerf",
+            "expected_output_per_line": ["ERROR: body of branching logic statement begins with invalid token."]
+        },
+        {
+            "test_file_name": "while_no_scope_body.nerf",
+            "expected_output_per_line": ["ERROR: body of branching logic statement begins with invalid token."]
+        },
+        {
+            "test_file_name": "if_no_body.nerf",
+            "expected_output_per_line": ["ERROR: no statements in branching logic body."]
+        },
+        {
+            "test_file_name": "while_no_body.nerf",
+            "expected_output_per_line": ["ERROR: no statements in branching logic body."]
+        },
+        {
+            "test_file_name": "conditional_no_branching_type.nerf",
+            "expected_output_per_line": ["ERROR: statement is not valid."]
+        },
+        {
+            "test_file_name": "if_conditional_no_args.nerf",
+            "expected_output_per_line": ["ERROR: argument for branching logic is empty."]
+        },
+        {
+            "test_file_name": "while_conditional_no_args.nerf",
+            "expected_output_per_line": ["ERROR: argument for branching logic is empty."]
+        }
+    ]
+}

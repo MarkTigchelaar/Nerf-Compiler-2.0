@@ -9,7 +9,7 @@ void missing_arg_from_call() {
 }
 
 void empty_parens() {
-    writeln("ERROR: parenthesis contains no epressions.");
+    writeln("ERROR: parenthesis contains no expressions.");
     exit(1);
 }
 

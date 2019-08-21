@@ -1,0 +1,80 @@
+{
+    "exe": "./nerf ",
+    "dir": "./TestFiles/SyntaxErrors/fnDeclarationErrors/",
+    "preamble": "Running tests for function declarations ...",
+    "postamble": "Tests on parser for function declarations successful!",
+    "tests": [
+        {
+            "test_file_name": "noFnError.nerf",
+            "expected_output_per_line":["ERROR: function declaration invalid."]
+        },
+        {
+            "test_file_name": "noFnError2functions.nerf",
+            "expected_output_per_line": ["ERROR: function declaration invalid."]
+        },
+        {
+            "test_file_name": "noFnName.nerf",
+            "expected_output_per_line": ["ERROR: function missing name."]
+        },
+        {
+            "test_file_name": "nonNumericFuncname.nerf",
+            "expected_output_per_line": ["ERROR: variable or function name has invalid characters."]
+        },
+        {
+            "test_file_name": "keywordFunctionName.nerf",
+            "expected_output_per_line": ["ERROR: variable or function name has invalid characters."]
+        },
+        {
+            "test_file_name": "noFnName2functions.nerf",
+            "expected_output_per_line": ["ERROR: function missing name."]
+        },
+        {
+            "test_file_name": "noFnArgParen.nerf",
+            "expected_output_per_line": ["ERROR: function missing parentheses for arguments."]
+        },
+        {
+            "test_file_name": "noFnArgParen2.nerf",
+            "expected_output_per_line": ["ERROR: function missing parentheses for arguments."]
+        },
+        {
+            "test_file_name": "fnDupArgs.nerf",
+            "expected_output_per_line": ["ERROR: function has duplicate argument variable names."]
+        },
+        {
+            "test_file_name": "noReturnType.nerf",
+            "expected_output_per_line": ["ERROR: missing or invalid return type."]
+        },
+        {
+            "test_file_name": "noReturnType2.nerf",
+            "expected_output_per_line": ["ERROR: missing or invalid return type."]
+        },
+        {
+            "test_file_name": "invalidReturnType.nerf",
+            "expected_output_per_line": ["ERROR: missing or invalid return type."]
+        },
+        {
+            "test_file_name": "invalidReturnType2.nerf",
+            "expected_output_per_line": ["ERROR: missing or invalid return type."]
+        },
+        {
+            "test_file_name": "noFnBody.nerf",
+            "expected_output_per_line": ["ERROR: function body is missing."]
+        },
+        {
+            "test_file_name": "noFnBody2.nerf",
+            "expected_output_per_line": ["ERROR: function body is missing."]
+        },
+        {
+            "test_file_name": "badFnBodyScopeToken.nerf",
+            "expected_output_per_line": ["ERROR: function body begins with invalid token."]
+        },
+        {
+            "test_file_name": "missingFnBodyScopeToken.nerf",
+            "expected_output_per_line": ["ERROR: function body begins with invalid token."]
+        },
+        {
+            "test_file_name": "fn_and_name_only.nerf",
+            "expected_output_per_line": ["ERROR: function missing parentheses for arguments."]
+        }
+    ]
+}

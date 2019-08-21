@@ -1,10 +1,11 @@
+<num1:8
 iPUSHc
 1
 iPUSHc
 15
 iMOVE
-0
+num1
 iPUSHv
-0
+num1
 iPUTLN
 HALT

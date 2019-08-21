@@ -89,7 +89,7 @@ class Parser {
         
         check_first_and_last_positions(raw_args);
         Variable* argument = new Variable;
-        foreach(int i, string arg_member; raw_args) {
+        foreach(long i, string arg_member; raw_args) {
             final switch(get_position_of_arg(i)) {
                 case 0:
                     argument.type = enforce_key_word(arg_member);
@@ -118,7 +118,7 @@ class Parser {
         }
     }
 
-    private int get_position_of_arg(int index) {
+    private int get_position_of_arg(long index) {
         return index % 3;
     }
 

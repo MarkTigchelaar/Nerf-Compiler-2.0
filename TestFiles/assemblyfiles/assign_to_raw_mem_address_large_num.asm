@@ -1,0 +1,11 @@
+<num:8
+iPUSHc
+0
+iPUSHc
+9223372036854775807
+iMOVE
+num
+iPUSHv
+num
+iPUTLN
+HALT

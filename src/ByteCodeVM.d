@@ -1,6 +1,6 @@
 module ByteCodeVM;
 
-import structures: opcodes;
+import opcodes: opcodes;
 import assembler: ByteCodeProgram;
 import std.stdio;
 /*
@@ -34,6 +34,9 @@ class ByteCodeVM {
 
     private void delegate()[] operations;
 
+    private long counter;
+
+
     this() {
         stack       = new ubyte[fiftyk];
         fp_stack    = new double[fiftyk];
@@ -64,21 +67,55 @@ class ByteCodeVM {
     }
 
     public void pointers() {
-        import std.stdio: write;
-        write("stack pointer: ", stk_ptr, "instruction pointer: ", inst_ptr);
+        import std.stdio: writeln;
+        writeln("stack pointer: ", stk_ptr, "    instruction pointer: ", inst_ptr);
     }
 
     public void show_bytecode() {
         import std.stdio: write, writeln;
-        foreach(ubyte bt; stack[0 .. 30]) {
-            write(bt, ", ");
+        writeln("stack length: ", stack.length);
+        writeln("Stack:");
+        for(long i = 0; i < 500; i++) {
+            ubyte bt = stack[i];
+            if(i == stk_ptr) {
+                write('(');
+            }
+            if(i == inst_ptr) {
+                write('[');
+            }
+            if(i == counter) {
+                write('{');
+            }
+            write(bt);
+            if(i == stk_ptr) {
+                write(')');
+            }
+            if(i == inst_ptr) {
+                write(']');
+            }
+            if(i == counter) {
+                write('}');
+            }
+            if((i + 1) % 8 == 0 && i > 0) {
+                write("| ");
+            } else {
+                write(", ");
+            }
         }
         writeln('\n');
+        writeln("Done showbytecode");
     }
+
+
 
     public void load_bytecode(ubyte[] assembled_program) {
         set_pointers();
-        instructions = assembled_program;
+        long i = 0;
+        foreach(ubyte bt; assembled_program) {
+            push(bt);
+            i++;
+        }
+        counter = i - 1;
     }
 
     public void load_float_constants(double[] floats) {
@@ -87,13 +124,18 @@ class ByteCodeVM {
 
     public void run() {
         while(is_running()) {
+            //write("before: ");
+            //pointers();
+            //writeln("Executing instruction:");
             execute_operations();
-            show_bytecode();
+            //write("after: ");
+            //pointers();
+            //show_bytecode();
         }
     }
 
     private bool is_running() {
-        return (inst_ptr < instructions.length);
+        return (inst_ptr < stack.length);
     }
 
     private void execute_operations() {
@@ -101,7 +143,7 @@ class ByteCodeVM {
     }
 
     private ubyte fetch_opcode() {
-        return instructions[inst_ptr];
+        return stack[inst_ptr];
     }
 
     private void set_pointers() {
@@ -140,7 +182,7 @@ class ByteCodeVM {
             temp += worker;
             shift_amount -= 8;
         }
-        return temp + frame_ptr;
+        return temp;
     }
 
     private void division_by_zero() {
@@ -153,6 +195,10 @@ class ByteCodeVM {
 
     private void array_out_of_bounds() {
         error_msg("ERROR: Array index out of bounds!");
+    }
+
+    private void stack_overflow() {
+        error_msg("ERROR: Maximum stack frames reached!");
     }
 
     private void error_msg(string message) {
@@ -173,28 +219,36 @@ class ByteCodeVM {
     }
 
     private ubyte pop() {
+        if(stk_ptr > stack.length - 1) {
+            error_msg("stack pointer off array!");
+        }
         ubyte value = stack[stk_ptr];
         stack[stk_ptr] = 0;
         stk_ptr--;
         return value;
     }
 
+    private void mem_alloc() {
+        stack[inst_ptr] = cast(ubyte) 0;
+        inst_ptr++;
+    }
+
     private void chpushc() {
         inst_ptr++;
-        push(instructions[inst_ptr]);
+        push(stack[inst_ptr]);
         inst_ptr++;
     }
 
     private void chpushv() {
         ipushc();
-        ulong address = cast(ulong) ipop();
-        push(stack[address]);
+        ulong diff = inst_ptr - cast(ulong) ipop() - 8;
+        push(stack[diff]);
     }
 
     private void ipushc() {
         inst_ptr++;
         for(long i = 0; i < 8; i++) {
-            push(instructions[inst_ptr]);
+            push(stack[inst_ptr]);
             inst_ptr++;
         }
     }
@@ -204,7 +258,8 @@ class ByteCodeVM {
         // put frame pointer offset onto stack
         ipushc();
         // get the number at the location, and push it onto the stack.
-        ipush(collect_int_at(cast(ulong) ipop()));
+        ulong diff = inst_ptr - cast(ulong) ipop() - 8;
+        ipush(collect_int_at(diff));
     }
 
     private long ipop() {
@@ -233,46 +288,24 @@ class ByteCodeVM {
         }
     }
 
-    private void save_frame_ptr() {
-        ipush(frame_ptr);
-    }
-
-    private void restore_frame_ptr() {
-        frame_ptr = cast(ulong) ipop();
-    }
-
-    private void save_instr_ptr() {
-        ipush(inst_ptr);
-    }
-
-    private void restore_instr_ptr() {
-        inst_ptr = cast(ulong) ipop();
-    }
-
     private void ch_move() {
         ubyte value = pop();
+        ipushc();
+        ulong diff = cast(ulong) ipop();
         ulong temp = stk_ptr;
-        stk_ptr = inst_ptr + 9;
-        ulong var_index = frame_ptr + cast(ulong) ipop();
-        stack[var_index] = value;
-        inst_ptr += 9;
+        stk_ptr = inst_ptr - diff - 9;
+        push(value);
         stk_ptr = temp;
     }
 
     private void imove() {
         ulong value = cast(ulong) ipop();
         ipushc();
-        ulong index = cast(ulong) ipop();
+        ulong diff = cast(ulong) ipop();
         ulong temp = stk_ptr;
-        stk_ptr = frame_ptr + index - 1;
+        stk_ptr = inst_ptr - diff - 9;
         ipush(value);
         stk_ptr = temp;
-    }
-
-    private void rollback() {
-        inst_ptr++;
-        stk_ptr = collect_int_at(inst_ptr);
-        inst_ptr += 8; 
     }
 
     private void iadd() {
@@ -311,79 +344,6 @@ class ByteCodeVM {
         inst_ptr++;
         long modulo = ipop();
         ipush(ipop() % modulo);
-    }
-/*
-    private void and() {
-        ubyte rhs = pop();
-        ubyte lhs = pop();
-        ubyte eq = cast(ubyte) lhs == rhs;
-        push(cast(ubyte) eq > 0);
-    }
-
-    private void or() {
-        ubyte rhs = pop();
-        ubyte lhs = pop();
-        push(cast(ubyte) (rhs > 0) || (lhs > 0));
-    }
-
-    private void not() {
-        push(pop() == cast(ubyte) 0);
-    }
-*/
-    private void iequal() {
-        push(cast(ubyte) ipop() == ipop());
-    }
-
-    private void inot_equal() {
-        push(cast(ubyte) ipop() != ipop());
-    }
-
-    private void iless_than() {
-        long rhs = ipop();
-        push(cast(ubyte) ipop() < rhs);
-    }
-
-    private void igreater_than() {
-        long rhs = ipop();
-        push(cast(ubyte) ipop() > rhs);
-    }
-
-    private void iless_than_or_equal() {
-        long rhs = ipop();
-        push(cast(ubyte) ipop() <= rhs);
-    }
-
-    private void igreater_than_or_equal() {
-        long rhs = ipop();
-        push(cast(ubyte) ipop() >= rhs);
-    }
-
-    private void ch_equal() {
-        push(cast(ubyte) pop() == pop());
-    }
-
-    private void ch_not_equal() {
-        push(cast(ubyte) pop() != pop());
-    }
-
-    private void ch_less_than() {
-        ubyte rhs = pop();
-        push(cast(ubyte) pop() < rhs);
-    }
-
-    private void ch_greater_than() {
-        ubyte rhs = pop();
-        push(cast(ubyte) pop() > rhs);
-    }
-
-    private void ch_less_than_or_equal() {
-        ubyte rhs = pop();
-        push(cast(ubyte) pop() <= rhs);
-    }
-
-    private void ch_greater_than_or_equal() {
-        ubyte rhs = pop();
-        push(cast(ubyte) ipop() >= rhs);
     }
 
     private void expand_heap() {
@@ -491,7 +451,6 @@ class ByteCodeVM {
     private void array_append(bool is_char) {
         inst_ptr++;
         long array_id = ipop();
-        long index = ipop();
         heap_node* node = lazy_heap[find(array_id)];
         if(is_char) {
             node.bytecode ~= pop();
@@ -557,7 +516,11 @@ class ByteCodeVM {
     }
 
     private void jump() {
-        inst_ptr = collect_int_at(++inst_ptr);
+        ipushc();
+        long relative_address = ipop();
+        long temp = cast(long) inst_ptr;
+        temp += relative_address;
+        inst_ptr = cast(ulong) temp;
     }
 
     private void chjump_if_equal() {
@@ -566,7 +529,7 @@ class ByteCodeVM {
         if(lhs == rhs) {
             jump();
         } else {
-            inst_ptr+=9;
+            inst_ptr += 9;
         }
     }
 
@@ -576,7 +539,7 @@ class ByteCodeVM {
         if(lhs != rhs) {
             jump();
         } else {
-            inst_ptr+=9;
+            inst_ptr += 9;
         }
     }
 
@@ -586,7 +549,7 @@ class ByteCodeVM {
         if(lhs == rhs) {
             jump();
         } else {
-            inst_ptr +=9;
+            inst_ptr += 9;
         }
     }
 
@@ -596,7 +559,102 @@ class ByteCodeVM {
         if(lhs != rhs) {
             jump();
         } else {
-            inst_ptr +=9;
+            inst_ptr += 9;
+        }
+    }
+
+    private void ijump_if_lhs_less_than() {
+        long rhs = ipop();
+        long lhs = ipop();
+        if(lhs < rhs) {
+            jump();
+        } else {
+            inst_ptr += 9;
+        }
+    }
+
+    private void ijump_if_lhs_greater_than() {
+        long rhs = ipop();
+        long lhs = ipop();
+        if(lhs > rhs) {
+            jump();
+        } else {
+            inst_ptr += 9;
+        }
+    }
+
+    private double fppop() {
+        double value = fp_stack[fp_stk_ptr];
+        fp_stk_ptr--;
+        return value;
+    }
+
+    private void fppush(double value) {
+        inc_fp_stk_ptr();
+        fp_stack[fp_stk_ptr] = value;
+    }
+
+/*
+    private void fp_pushc() {
+
+    }
+
+    private void fp_pushv() {
+
+    }
+
+    private long fp_move() {
+
+    }
+*/
+    private void inc_fp_stk_ptr() {
+        fp_stk_ptr++;
+        if(fp_stk_ptr >= fp_stack.length - 1) {
+            double[] upgrade_stack = new double[fp_stack.length + fiftyk];
+            foreach(long i, double fp; fp_stack) {
+                upgrade_stack[i] = fp;
+            }
+            fp_stack = upgrade_stack;
+        }
+    }
+
+    private void fpjump_if_equal() {
+        double rhs = fppop();
+        double lhs = fppop();
+        if(lhs == rhs) {
+            jump();
+        } else {
+            inst_ptr += 9;
+        }
+    }
+
+    private void fpjump_if_not_equal() {
+        double rhs = fppop();
+        double lhs = fppop();
+        if(lhs != rhs) {
+            jump();
+        } else {
+            inst_ptr += 9;
+        }
+    }
+
+    private void fpjump_if_lhs_less_than() {
+        double rhs = fppop();
+        double lhs = fppop();
+        if(lhs < rhs) {
+            jump();
+        } else {
+            inst_ptr += 9;
+        }
+    }
+
+    private void fpjump_if_lhs_greater_than() {
+        double rhs = fppop();
+        double lhs = fppop();
+        if(lhs > rhs) {
+            jump();
+        } else {
+            inst_ptr += 9;
         }
     }
 
@@ -636,6 +694,41 @@ class ByteCodeVM {
         inst_ptr++;
     }
 
+    private void call_func() {
+        ulong save_instruction = inst_ptr;
+        ipushc();
+        ulong func_template_address = cast(ulong) ipop();
+        ulong func_size = collect_int_at(func_template_address);
+        ulong start = func_template_address + 8;
+        ulong end = start + func_size;// - 16;
+        ulong func_start = stk_ptr + 1;
+        for(; start < end; start++) {
+            push(stack[start]);
+        }
+        ipush(save_instruction);
+        ipush(func_size - 16);
+        inst_ptr = func_start;
+    }
+
+
+    private void ireturn() {
+        long i_ret_val = ipop();
+        ulong func_size = cast(ulong) ipop();
+        ulong temp_stk_ptr = (inst_ptr + 17) - func_size - 1;
+        inst_ptr = cast(ulong) ipop();
+        stk_ptr = temp_stk_ptr;
+        ipush(i_ret_val);
+    }
+
+    private void chreturn() {
+        ubyte ch_ret_val = pop();
+        ulong func_size = cast(ulong) ipop();
+        ulong temp_stk_ptr = (inst_ptr + 17) - func_size - 1;
+        inst_ptr = cast(ulong) ipop();
+        stk_ptr = temp_stk_ptr;
+        push(ch_ret_val);
+    }
+
     private void halt() {
         inst_ptr = stack.length + 1;
     }
@@ -649,37 +742,17 @@ immutable long inst_count = 100;
 private:
 
 void set_operations(ByteCodeVM VM) {
-    VM.operations[opcodes.SAVEFRAME]       = &VM.save_frame_ptr;
-    VM.operations[opcodes.LOADFRAME]       = &VM.restore_frame_ptr;
+    VM.operations[opcodes.MEMALLOC]        = &VM.mem_alloc;
+    VM.operations[opcodes.CALL]            = &VM.call_func;
+    VM.operations[opcodes.iRETURN]          = &VM.ireturn;
+    VM.operations[opcodes.chRETURN]          = &VM.chreturn;
 
-    VM.operations[opcodes.SAVEINSTRUCTION] = &VM.save_instr_ptr;
-    VM.operations[opcodes.LOADINSTRUCTION] = &VM.restore_instr_ptr;
-    VM.operations[opcodes.ROLLBACK]        = &VM.rollback;
-    
     VM.operations[opcodes.iADD]            = &VM.iadd;
     VM.operations[opcodes.iSUB]            = &VM.isub;
     VM.operations[opcodes.iMULT]           = &VM.imult;
     VM.operations[opcodes.iDIV]            = &VM.idiv;
     VM.operations[opcodes.iEXP]            = &VM.iexp;
     VM.operations[opcodes.iMOD]            = &VM.imod;
-/*
-    VM.operations[opcodes.AND]             = &VM.and;
-    VM.operations[opcodes.OR]              = &VM.or;
-    VM.operations[opcodes.NOT]             = &VM.not;
-*/
-    VM.operations[opcodes.iEQ]             = &VM.iequal;
-    VM.operations[opcodes.iNEQ]            = &VM.inot_equal;
-    VM.operations[opcodes.iLT]             = &VM.iless_than;
-    VM.operations[opcodes.iGT]             = &VM.igreater_than;
-    VM.operations[opcodes.iLTEQ]           = &VM.iless_than_or_equal;
-    VM.operations[opcodes.iGTEQ]           = &VM.igreater_than_or_equal;
-
-    VM.operations[opcodes.chEQ]            = &VM.ch_equal;
-    VM.operations[opcodes.chNEQ]           = &VM.ch_not_equal;
-    VM.operations[opcodes.chLT]            = &VM.ch_less_than;
-    VM.operations[opcodes.chGT]            = &VM.ch_greater_than;
-    VM.operations[opcodes.chLTEQ]          = &VM.ch_less_than_or_equal;
-    VM.operations[opcodes.chGTEQ]          = &VM.ch_greater_than_or_equal;
 
     VM.operations[opcodes.iPUSHc]          = &VM.ipushc;
     VM.operations[opcodes.iPUSHv]          = &VM.ipushv;
@@ -706,8 +779,16 @@ void set_operations(ByteCodeVM VM) {
     VM.operations[opcodes.JUMP]            = &VM.jump;
     VM.operations[opcodes.chJUMPNEQ]       = &VM.chjump_if_not_equal;
     VM.operations[opcodes.chJUMPEQ]        = &VM.chjump_if_equal;
+
     VM.operations[opcodes.iJUMPNEQ]        = &VM.ijump_if_not_equal;
     VM.operations[opcodes.iJUMPEQ]         = &VM.ijump_if_equal;
+    VM.operations[opcodes.iJUMPLT]         = &VM.ijump_if_lhs_less_than;
+    VM.operations[opcodes.iJUMPGT]         = &VM.ijump_if_lhs_greater_than;
+
+    VM.operations[opcodes.fpJUMPNEQ]        = &VM.fpjump_if_not_equal;
+    VM.operations[opcodes.fpJUMPEQ]         = &VM.fpjump_if_equal;
+    VM.operations[opcodes.fpJUMPLT]         = &VM.fpjump_if_lhs_less_than;
+    VM.operations[opcodes.fpJUMPGT]         = &VM.fpjump_if_lhs_greater_than;
 
     VM.operations[opcodes.chPUT]           = &VM.chput;
     VM.operations[opcodes.chPUTLN]         = &VM.chputln;
@@ -717,7 +798,7 @@ void set_operations(ByteCodeVM VM) {
     VM.operations[opcodes.HALT]            = &VM.halt;
 }
 
-
+/*
 unittest {
     ByteCodeVM vm = new ByteCodeVM();
     vm.ipush(long.max);
@@ -737,8 +818,10 @@ unittest {
 }
 
 // pushing and popping integers gives correct values.
+/*
 unittest {
     ByteCodeVM vm = new ByteCodeVM();
+    vm.load_bytecode([23,23,23,67]);
     for(long i = -100; i <= 100; i++) {
         vm.ipush(i);
         long j = vm.ipop();
@@ -795,8 +878,10 @@ unittest {
 }
 
 // ch_move works correctly
+/*
 unittest {
     ByteCodeVM vm = new ByteCodeVM();
+    vm.load_bytecode([]);
     // throw away, representing the actual chmove opcode in stack.
     vm.push(0);
 
@@ -866,7 +951,7 @@ unittest {
     vm.new_array();
     assert(vm.ipop() == 0);
 }
-
+*/
 /*
     ---------------- Description ----------------
 
@@ -939,7 +1024,7 @@ unittest {
     Floating point number use a seperate stack, as well as an array that represents all
     floating point constants found in nerf source code.
 
-    floating point operations also use unsigned integers.
+    Floating point operations also use unsigned integers.
     These unsigned integers are the literal indicies in the array of constants, or they are
     offsets from the floating point frame pointer, in the case of variables.
 

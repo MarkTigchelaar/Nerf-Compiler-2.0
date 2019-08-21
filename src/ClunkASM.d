@@ -1,10 +1,9 @@
 import ByteCodeVM;
 import assembler: Assembler, ByteCodeProgram;
-import structures;
 import std.stdio;
+import core.memory;
 
 void main(string[] args) {
-    writeln("Starting program.");
     if(args.length != 2) {
         writeln("ERROR: 1 filename argument required.");
     } else {
@@ -14,8 +13,9 @@ void main(string[] args) {
         ByteCodeProgram* runnable = asblr.assemble();
         vm.load_bytecode(runnable.compiled_program);
         vm.load_float_constants(runnable.fp_constants);
+        GC.collect();
+        GC.disable();
         vm.run();
-        writeln("Program finished.");
-        //vm.show_bytecode();
+        GC.enable();
     }
 }
