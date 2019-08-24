@@ -7,10 +7,6 @@ import NewSymbolTable;
 import scoped_token_collector;
 import stack;
 
-/*
-    Replace this P.O.S with a better written one.
-    This is garbage.
-*/
 
 class Lexer {
 
