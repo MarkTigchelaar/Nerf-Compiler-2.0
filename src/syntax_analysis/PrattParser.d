@@ -1,7 +1,8 @@
 module PrattParser;
 
 import NewSymbolTable;
-import structures: Expression, Function, ExpTypes, Variable, PrimitiveTypes;
+import structures: Expression, ExpTypes, Variable, PrimitiveTypes;
+import functions: Function;
 import expression_errors;
 import scoped_token_collector;
 import Lexer;

@@ -75,7 +75,7 @@ class ByteCodeVM {
         import std.stdio: write, writeln;
         writeln("stack length: ", stack.length);
         writeln("Stack:");
-        for(long i = 0; i < 500; i++) {
+        for(long i = 0; i < 1000; i++) {
             ubyte bt = stack[i];
             if(i == stk_ptr) {
                 write('(');
@@ -699,25 +699,34 @@ class ByteCodeVM {
         ipushc();
         ulong func_template_address = cast(ulong) ipop();
         ulong func_size = collect_int_at(func_template_address);
+        //stderr.writeln("Function size: ", func_size);
         ulong start = func_template_address + 8;
-        ulong end = start + func_size;// - 16;
+        ulong end = start + func_size;
         ulong func_start = stk_ptr + 1;
         for(; start < end; start++) {
             push(stack[start]);
         }
-        ipush(save_instruction);
-        ipush(func_size - 16);
+        ipush(save_instruction + 9);
+        ipush(func_size);
         inst_ptr = func_start;
+        //show_bytecode();
     }
 
 
     private void ireturn() {
+        //import core.sys.posix.stdlib: exit;
+        //stderr.writeln("here");
+        //show_bytecode();
         long i_ret_val = ipop();
         ulong func_size = cast(ulong) ipop();
         ulong temp_stk_ptr = (inst_ptr + 17) - func_size - 1;
         inst_ptr = cast(ulong) ipop();
         stk_ptr = temp_stk_ptr;
+        //show_bytecode();
+        //stderr.writeln("Values: return value: ", i_ret_val, ", func size: ", func_size, ", temp stack pinter: ", temp_stk_ptr);
+        //stderr.writeln("more values: instruction pointer: ", inst_ptr, ", stack pointer: ", stk_ptr);
         ipush(i_ret_val);
+        //exit(1);
     }
 
     private void chreturn() {

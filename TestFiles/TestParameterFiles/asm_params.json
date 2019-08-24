@@ -143,6 +143,18 @@
         {
             "test_file_name": "mutually_recursive_functions.asm",
             "expected_output_per_line": ["4567890"]
+        },
+        {
+            "test_file_name": "function_with_int_return_value.asm",
+            "expected_output_per_line": ["1187"]
+        },
+        {
+            "test_file_name": "function_with_char_return_value.asm",
+            "expected_output_per_line": ["a"]
+        },
+        {
+            "test_file_name": "func_call_in_main_loop.asm",
+            "expected_output_per_line": ["1", "2", "3", "4", "5"]
         }
     ]
 }

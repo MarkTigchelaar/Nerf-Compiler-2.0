@@ -10,9 +10,6 @@ Useage:
         with full testing at each step.
         Then builds optimized interpreter.
 
-    -clunk :
-        builds the clunk compiler.
-
     -asm :
         Builds the assembler.
 
@@ -55,8 +52,6 @@ def build():
         return
     elif arg == '-all':
         build_all_steps(test)
-    elif arg =='-clunk':
-        build_clunk(test)
     elif arg == '-asm':
         build_assembler(test)
     else:
@@ -69,7 +64,7 @@ def build():
 
 def build_release():
     command = general_build()
-    command += ' -O -m64 -inline'
+    #command += ' -O -m64 -inline'
     os.system(command)
 
 def build_unittest():
@@ -93,6 +88,8 @@ def general_build():
     command += utilities_path + 'structures.d '
     command += utilities_path + 'opcodes.d '
     command += utilities_path + 'scoped_token_collector.d '
+    command += utilities_path + 'Function.d '
+    command += utilities_path + 'useage.d '
     command += syntax_path + 'fn_header_syntax_errors.d '
     command += syntax_path + 'function_parsers.d '
     command += syntax_path + 'variable_assign_errors.d '
@@ -104,12 +101,10 @@ def general_build():
 
     command += semantics_path + 'semantic_errors.d '
     command += semantics_path + 'SemanticAnalyzer.d '
-    #command += gen_path + 'assembler.d '
-    """
-    command += gen_path + 'code_generation.d '
+    command += gen_path + 'compile.d '
     command += gen_path + 'assembler.d '
-    command += utilities_path + 'display_ast.d'
-    """
+    command += './src/ByteCodeVM.d '
+
     return command
 
 
@@ -122,12 +117,10 @@ def build_all_steps(test):
             'parser_fn_declare', 
             'parser_expression_errors',
             'parser_assignment_errors',
-            'semantic_analyzer_errors'
+            'semantic_analyzer_errors',
+            'assembly_output'
             ])
         os.system('rm nerf nerf.o')
-
-def build_clunk(test):
-    pass
 
 def build_assembler(test):
     command = 'dmd ' 

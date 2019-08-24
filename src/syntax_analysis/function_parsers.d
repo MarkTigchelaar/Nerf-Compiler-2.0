@@ -5,7 +5,8 @@ import std.stdio: writeln, write;
 import NewSymbolTable;
 import stack;
 import fn_header_syntax_errors;
-import structures: Program, Function, Statement, Variable, PrimitiveTypes;
+import structures: Statement, Variable, PrimitiveTypes;
+import functions: Function;
 //import lexing_tools;
 import Lexer;
 //import scoped_token_collector;
@@ -27,14 +28,14 @@ class Parser {
     }
 
 
-    public Program* parse() {
-        Program* program = new Program();
+    public Function[] parse() {
+        Function[] program;
         seperators = new Stack!string;
         
         while(lexer.has_tokens()) {
             parse_function_header();
             parse_function_body();
-            program.functions ~= func;
+            program ~= func;
             func = null;
         }
         return program;

@@ -1,0 +1,12 @@
+{
+    "exe": "./nerf -asm",
+    "dir": "./TestFiles/nerf_asm_out/",
+    "preamble": "Running tests for compiler backend ...",
+    "postamble": "Tests for acompiler backend successful!",
+    "test": [
+        {
+            "test_file_name": "var_assign.nerf",
+            "expected_output_per_line":[""]
+        }
+    ]
+}

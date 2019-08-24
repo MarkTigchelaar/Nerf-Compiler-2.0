@@ -1,0 +1,14 @@
+<char_var:1
+CALL
+func2
+chMOVE
+char_var
+chPUSHv
+char_var
+chPUTLN
+HALT
+`func2
+<temp:1
+chPUSHc
+'a'
+chRETURN

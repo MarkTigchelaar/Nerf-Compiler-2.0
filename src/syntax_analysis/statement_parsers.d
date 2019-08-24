@@ -1,6 +1,7 @@
 module statement_parsers;
 
-import structures: Statement, Expression, StatementTypes, Function, PrimitiveTypes, Variable;
+import structures: Statement, Expression, StatementTypes, PrimitiveTypes, Variable;
+import functions: Function;
 import NewSymbolTable;
 import Lexer;
 import variable_assign_errors;

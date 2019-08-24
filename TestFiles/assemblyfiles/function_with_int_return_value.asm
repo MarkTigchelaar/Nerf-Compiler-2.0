@@ -1,0 +1,14 @@
+<int_var:8
+CALL
+func2
+iMOVE
+int_var
+iPUSHv
+int_var
+iPUTLN
+HALT
+`func2
+<temp:8
+iPUSHc
+1187
+iRETURN

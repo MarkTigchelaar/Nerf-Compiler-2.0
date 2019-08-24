@@ -73,35 +73,14 @@ enum opcodes: ubyte {
 ubyte get_operator(string operator_literal) {
     ubyte code;
     switch(operator_literal) {
-        /*case "SAVESTACK":
-            code = opcodes.SAVESTACK;
-            break;
-        case "LOADSTACK":
-            code = opcodes.LOADSTACK;
-            break;
-        case "SAVEINSTRUCTION":
-            code = opcodes.SAVEINSTRUCTION;
-            break;
-        case "LOADINSTRUCTION":
-            code = opcodes.LOADINSTRUCTION;
-            break;
-        case "chSAVERETURN":
-            code = opcodes.chSAVERETURN;
-            break;
-        case "chLOADRETURN":
-            code = opcodes.chLOADRETURN;
-            break;
-        case "iSAVERETURN":
-            code = opcodes.iSAVERETURN;
-            break;
-        case "iLOADRETURN":
-            code = opcodes.iLOADRETURN;
-            break;*/
         case "CALL":
             code = opcodes.CALL;
             break;
-        case "RETURN":
-            code = opcodes.RETURN;
+        case "iRETURN":
+            code = opcodes.iRETURN;
+            break;
+        case "chRETURN":
+            code = opcodes.chRETURN;
             break;
         case "iADD":
             code = opcodes.iADD;

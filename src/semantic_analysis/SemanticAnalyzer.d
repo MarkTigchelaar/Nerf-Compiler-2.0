@@ -1,6 +1,7 @@
 module SemanticAnalyzer;
 
 import structures;
+import functions: Function;
 import semantic_errors;
 import NewSymbolTable;
 import std.stdio;
@@ -8,13 +9,13 @@ import std.stdio;
 class SemanticAnalyzer {
 
     private Function func;
-    private Program* program;
+    private Function[] program;
 
-    public void semantic_analysis(Program* program) {
+    public void semantic_analysis(Function[] program) {
         this.program = program;
         int count_main = 0;
         string[] func_names;
-        foreach(Function func; program.functions) {
+        foreach(Function func; program) {
             if(is_program_entry_point(func.get_name())) {
                 count_main++;
                 check_for_args_in_main(func);
@@ -40,7 +41,7 @@ class SemanticAnalyzer {
 
     void check_for_order_of_statements(Statement*[] statements, int depth) {
         for(int i = 0; i < statements.length; i++) {
-            stderr.writeln(statements[i].name);
+            //stderr.writeln(statements[i].name);
             switch(statements[i].stmt_type) {
                 case StatementTypes.else_statement:
                 case StatementTypes.else_if_statement:
@@ -66,7 +67,7 @@ class SemanticAnalyzer {
     }
 
     void check_last_statement(Statement* last) {
-        stderr.writeln(last.name);
+        //stderr.writeln(last.name);
         if(last.stmt_type != StatementTypes.return_statement) {
             if(last.stmts is null || last.stmts.length < 1) {
                 non_void_func_missing_returns();
@@ -303,7 +304,7 @@ class SemanticAnalyzer {
     }
 
     Function get_function(string name) {
-        foreach(Function f; program.functions) {
+        foreach(Function f; program) {
             if(f.get_name() == name) {
                 return f;
             }
@@ -313,7 +314,7 @@ class SemanticAnalyzer {
     }
 
     bool is_function_name(string name) {
-        foreach(Function f; program.functions) {
+        foreach(Function f; program) {
             if(f.get_name() == name) {
                 return true;
             }
