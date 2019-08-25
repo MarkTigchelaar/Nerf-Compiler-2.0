@@ -1,6 +1,5 @@
 import Lexer;
 import SemanticAnalyzer;
-import std.stdio: writeln;
 import std.getopt;
 //import structures: Program;
 import functions: Function;
@@ -29,10 +28,10 @@ void main(string[] arguments) {
     analyzer.semantic_analysis(program);
 
     string[] assembly = compile(program);
-    //if(_asm) {
+    if(_asm) {
         display_asm(assembly);
         return;
-    //}
+    }
     //Assembler asm_machine = new Assembler();
     //asm_machine.assemble(assembly);
     //asm_machine.load_from_compiler(assembly);

@@ -1,12 +1,105 @@
 {
-    "exe": "./nerf ",
+    "exe": "./nerf --asm",
     "dir": "./TestFiles/nerf_asm_out/",
     "preamble": "Running tests for compiler backend ...",
-    "postamble": "Tests for acompiler backend successful!",
+    "postamble": "Tests for compiler backend successful!",
     "tests": [
         {
             "test_file_name": "var_assign.nerf",
-            "expected_output_per_line":[""]
+            "expected_output_per_line":
+            [
+                "<main_e:8",
+                "<main_y:8",
+                "iPUSHc",
+                "0",
+                "iMOVE",
+                "main_e",
+                "iPUSHc",
+                "2",
+                "iPUSHc",
+                "3",
+                "iPUSHv",
+                "main_e",
+                "iMULT",
+                "iADD",
+                "iMOVE",
+                "main_y",
+                "iPUSHc",
+                "0",
+                ">return_main:HALT"
+            ]
+        },
+        {
+            "test_file_name": "var_assign_mod.nerf",
+            "expected_output_per_line":
+            [
+                "iPUSHc",
+                "11",
+                "iPUSHc",
+                "3",
+                "iPUSHc",
+                "3",
+                "iMOD",
+                "iADD",
+                ">return_main:HALT"
+            ]
+        },
+        {
+            "test_file_name": "var_assign_parens.nerf",
+            "expected_output_per_line":
+            [
+                "<main_y:8",
+                "iPUSHc",
+                "2",
+                "iPUSHc",
+                "30",
+                "iADD",
+                "iPUSHc",
+                "4",
+                "iMULT",
+                "iMOVE",
+                "main_y",
+                "iPUSHv",
+                "main_y",
+                ">return_main:HALT"
+            ]
+        },
+        {
+            "test_file_name": "var_assign_parens_and_subtract.nerf",
+            "expected_output_per_line":
+            [
+                "<main_y:8",
+                "iPUSHc",
+                "2",
+                "iPUSHc",
+                "30",
+                "iSUB",
+                "iPUSHc",
+                "4",
+                "iEXP",
+                "iMOVE",
+                "main_y",
+                "iPUSHv",
+                "main_y",
+                ">return_main:HALT"
+            ]
+        },
+        {
+            "test_file_name": "negative_variable.nerf",
+            "expected_output_per_line":
+            [
+                "<main_y:8",
+                "iPUSHc",
+                "-4",
+                "iMOVE",
+                "main_y",
+                "iPUSHc",
+                "0",
+                "iPUSHv",
+                "main_y",
+                "iSUB",
+                ">return_main:HALT"
+            ]
         }
     ]
 }

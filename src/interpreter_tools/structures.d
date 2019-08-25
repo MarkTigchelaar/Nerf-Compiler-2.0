@@ -45,7 +45,7 @@ enum StatementTypes {
 }
 
 struct Expression {
-    immutable string var_name;
+    string var_name;
     int var_type;
     int exp_type;
     Expression*[] args;

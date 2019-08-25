@@ -63,7 +63,7 @@ def show_mismatch(contents, expected_output):
                 print(red_start + item + red_end)
         print('\n\t' + red_start + ' ... Got:' + red_end)
         for item in contents:
-                print(red_start + item + red_end)
+                print(red_start + item.replace('\n', '') + red_end)
         exit(1)
 
 

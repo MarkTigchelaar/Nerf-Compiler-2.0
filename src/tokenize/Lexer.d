@@ -113,11 +113,22 @@ class Lexer {
     private void check_files(string[] arguments) {
         import std.algorithm: endsWith;
         import core.sys.posix.stdlib: exit;
+        long src_count = 0;
+        long src_location = 1;
         if(arguments.length < 2) {
             exit(-1);
         } else if(arguments.length > 2) {
-            multiple_files();
+            foreach(long i, string arg; arguments) {
+                if(endsWith(arg, ".nerf")) {
+                    src_count++;
+                    src_location = i;
+                }
+            }
+            if(src_count > 1) {
+                multiple_files();
+            }
         }
+        arguments[1] = arguments[src_location];
         if(! endsWith(arguments[1], ".nerf")) {
             bad_file_extension();
         }

@@ -22,7 +22,7 @@ Useage:
     default :
         builds optimized interpreter.
 """
-
+# Change later to use Arg Parse
 def build():
     test = ''
 
@@ -54,6 +54,8 @@ def build():
         build_all_steps(test)
     elif arg == '-asm':
         build_assembler(test)
+    elif arg == '-test':
+        build_asm_out()
     else:
         build_release()
     
@@ -64,7 +66,7 @@ def build():
 
 def build_release():
     command = general_build()
-    #command += ' -O -m64 -inline'
+    command += ' -O -m64 -inline'
     os.system(command)
 
 def build_unittest():
@@ -107,6 +109,10 @@ def general_build():
 
     return command
 
+def build_asm_out():
+    build_unittest()
+    test_system(['assembly_output'])
+    os.system('rm nerf nerf.o')
 
 def build_all_steps(test):
     build_assembler(test)

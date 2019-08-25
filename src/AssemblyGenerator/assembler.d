@@ -284,6 +284,24 @@ class Assembler {
             case "iPUSHv":
                 it_is = true;
                 break;
+            case "iLTEQ":
+                it_is = true;
+                break;
+            case "iGTEQ":
+                it_is = true;
+                break;
+            case "iLT":
+                it_is = true;
+                break;
+            case "iGT":
+                it_is = true;
+                break;
+            case "iEQ":
+                it_is = true;
+                break;
+            case "iNEQ":
+                it_is = true;
+                break;
             case "chPUSHv":
                 it_is = true;
                 break;

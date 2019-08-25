@@ -66,7 +66,13 @@ enum opcodes: ubyte {
     fpPUT,           // 49
     fpPUTLN,         // 50
 
-    INPUT            // 51
+    INPUT,           // 51
+    iLTEQ,
+    iGTEQ,
+    iLT,
+    iGT,
+    iEQ,
+    iNEQ
 }
 
 
@@ -106,6 +112,26 @@ ubyte get_operator(string operator_literal) {
         case "iPUSHv":
             code = opcodes.iPUSHv;
             break;
+
+        case "iLTEQ":
+            code = opcodes.iLTEQ;
+            break;
+        case "iGTEQ":
+            code = opcodes.iGTEQ;
+            break;
+        case "iLT":
+            code = opcodes.iLT;
+            break;
+        case "iGT":
+            code = opcodes.iGT;
+            break;
+        case "iEQ":
+            code = opcodes.iEQ;
+            break;
+        case "iNEQ":
+            code = opcodes.iNEQ;
+            break;
+
         case "chPUSHc":
             code = opcodes.chPUSHc;
             break;

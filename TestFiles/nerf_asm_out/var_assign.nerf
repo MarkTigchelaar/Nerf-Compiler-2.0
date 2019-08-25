@@ -1,10 +1,5 @@
 fn main() int {
-    int z := 0;
-    int y := 2 + 3 * 5 + second(1, 2) + z;
+    int e := 0;
+    int y := 2 + 3 * e;
     return 0;
-}
-
-fn second(int a, int b) int {
-    int y := a - b * 6;
-    return y;
 }
