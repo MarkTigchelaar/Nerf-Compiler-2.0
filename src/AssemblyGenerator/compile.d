@@ -1,7 +1,7 @@
 module compile;
 
 import functions: Function;
-import structures: Variable, Statement, Expression, StatementTypes, PrimitiveTypes;
+import structures: Variable, Statement, Expression, StatementTypes, PrimitiveTypes, ExpTypes;
 import std.conv: to;
 import std.stdio;
 
@@ -31,18 +31,29 @@ string[] compile(Function[] program) {
             fn_main = program[i];
         }
     }
+    stderr.writeln("begin\n\n");
     write_out_locals(&assembly, fn_main);
     write_out_statements(&assembly, fn_main);
     foreach(Function func; program) {
         if(func.get_name() == "main") {
             continue;
         }
-        // assembly ~= "`" ~ func.get_name();
-        // write_out_args(&assembly, func);
+        assembly ~= "`" ~ func.get_name();
+        write_out_args(&assembly, func);
         write_out_locals(&assembly, func);
         write_out_statements(&assembly, func);
     }
     return assembly;
+}
+
+void write_out_args(string[] *assembly, Function func) {
+    string item = "";
+    foreach(Variable* variable; func.get_arguments()) {
+        item ~= "<~" ~ func.get_name();
+        item ~= "_" ~ variable.name ~ get_offset(variable);
+        *assembly ~= item;
+        item = "";
+    }
 }
 
 void write_out_locals(string[] *assembly, Function func) {
@@ -51,6 +62,7 @@ void write_out_locals(string[] *assembly, Function func) {
         item ~= "<" ~ func.get_name();
         item ~= "_" ~ variable.name ~ get_offset(variable);
         *assembly ~= item;
+        item = "";
     }
 }
 
@@ -90,16 +102,22 @@ void write_out_statements(string[] *assembly, Function func) {
                 break;
             case StatementTypes.if_statement:
             case StatementTypes.else_if_statement:
+                //write_out_branch_logic();
                 break;
             case StatementTypes.while_statement:
+                //write_out_loop_logic();
                 break;
             case StatementTypes.continue_statement:
+                //write_out_continue_statement();
                 break;
             case StatementTypes.print_statement:
+                //write_out_print_statement();
                 break;
             case StatementTypes.return_statement:
+                //write_out_return_statement();
                 break;
             case StatementTypes.break_statement:
+                //write_out_break_statement();
                 break;
             default:
                 throw new Exception("AST TO ASM ERROR: Could not find matching type while writing out asm for " ~ statement.name);
@@ -112,11 +130,28 @@ void write_out_assignment(Statement* statement, string[] *assembly) {
     write_out_expression(assembly, statement.syntax_tree);
     *assembly ~= get_var_type(statement) ~ "MOVE";
     *assembly ~= statement.func_name ~ "_" ~ statement.name;
-    writeln("var type: ", statement.syntax_tree.var_type);
+    //writeln("var type: ", statement.syntax_tree.var_type);
 }
 
 void write_out_expression(string[] *assembly, Expression* root) {
-    return;
+    import NewSymbolTable;
+    if(root is null) {
+        return;
+    }
+    write_out_expression(assembly, root.left);
+    write_out_expression(assembly, root.right);
+    if((root.args !is null && root.args.length > 0) || 
+        root.exp_type == ExpTypes.FnCall) {
+        foreach(Expression* arg; root.args) {
+            write_out_expression(assembly, arg);
+        }
+        *assembly ~= "CALL";
+        *assembly ~= root.var_name;
+    }
+    if(is_variable_integer(root.var_name)) {
+        *assembly ~= "iPUSHc";
+        *assembly ~= root.var_name;
+    }
 }
 
 void write_out_return_statement(string[] *assembly, Function func) {

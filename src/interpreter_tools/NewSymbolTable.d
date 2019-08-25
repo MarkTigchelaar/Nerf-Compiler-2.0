@@ -396,9 +396,11 @@ string[] key_words() {
             "int",
             "char",
             "bool",
+            //float,
             "int[]",
             "char[]",
             "bool[]",
+            //float[],
             "True",
             "False",
             "return",
@@ -434,6 +436,12 @@ int set_type_code(string type) {
             break;
         case "char[]":
             type_code = PrimitiveTypes.CharArray;
+            break;
+        case "float":
+            type_code = PrimitiveTypes.Float;
+            break;
+        case "float[]":
+            type_code = PrimitiveTypes.FloatArray;
             break;
         default:
             throw new Exception("ERROR: unknown type.");
