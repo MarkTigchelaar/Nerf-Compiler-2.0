@@ -4,8 +4,10 @@ import functions: Function;
 import structures: Variable, Statement, Expression, StatementTypes, PrimitiveTypes, ExpTypes;
 import std.conv: to;
 import std.stdio;
-import std.string: chomp;
+import std.string: chomp, split;
 import std.algorithm: startsWith;
+import std.stdio;
+
 
 // Need one of these for each function
 // used to label each branching logic statement.
@@ -23,26 +25,40 @@ class IdGenerator {
     }
 }
 
+
 string[] compile(Function[] program) {
     string[] assembly;
     Function fn_main;
     for(long i = 0; i < program.length; i++) {
         name_every_statement_uniquely(program[i]);
-        link_branching_with_alternate_branches(program[i]);
+        link_branching_with_alternate_branches(program[i].get_statements());
         if(program[i].get_name() == "main") {
             fn_main = program[i];
         }
     }
     write_out_locals(&assembly, fn_main);
-    write_out_statements(&assembly, fn_main);
+    Statement*[] main_statements = fn_main.get_statements();
+    foreach(Statement* s; main_statements) {
+        s.func_name = fn_main.get_name();
+    }
+    string[] variable_names = fn_main.get_var_names();
+    write_out_statements(&assembly, main_statements, &variable_names, fn_main.get_return_type());
+    write_out_return_statement(&assembly, fn_main.get_name(), fn_main.get_return_type());
     foreach(Function func; program) {
         if(func.get_name() == "main") {
             continue;
         }
+        stderr.writeln("Should not reach this if only func is main.");
         assembly ~= "`" ~ func.get_name();
         write_out_args(&assembly, func);
         write_out_locals(&assembly, func);
-        write_out_statements(&assembly, func);
+        Statement*[] stmts = func.get_statements();
+        foreach(Statement* s; stmts) {
+            s.func_name = func.get_name();
+        }
+        variable_names = func.get_var_names();
+        write_out_statements(&assembly, stmts, &variable_names, func.get_return_type());
+        write_out_return_statement(&assembly, func.get_name(), func.get_return_type());
     }
     for(long i = 0; i < assembly.length; i++) {
         assembly[i] = chomp(assembly[i]);
@@ -94,12 +110,38 @@ string get_var_type(Statement* statement) {
     }
     return "ch";
 }
-void write_out_statements(string[] *assembly, Function func) {
-    Statement*[] all_statements = func.get_statements();
-    string[] variable_names = func.get_var_names();
+
+/*
+    revisit this for handling edge cases.
+*/
+string get_var_type_for_expression(Expression* expression) {
+    if(expression.left is null && expression.right is null) {
+        if(expression.var_type == PrimitiveTypes.Integer) {
+            return "i";
+        }
+    } else if(is_prefix(expression)) {
+        if(expression.right.var_type == PrimitiveTypes.Integer) {
+            return "i";
+        }
+    }
+    if(expression.right.var_type == PrimitiveTypes.Integer &&
+       expression.left.var_type == PrimitiveTypes.Integer    
+    ) {
+        return "i";
+    }
+    return "ch";
+}
+
+void write_out_statements(
+        string[] *assembly, 
+        Statement*[] all_statements, 
+        string[]* var_names, 
+        long func_return_type
+    ) {
+    string[] variable_names = *var_names;
     for(long i = 0; i < all_statements.length; i++) {
+        long current_index = (*assembly).length;
         Statement* statement = all_statements[i];
-        statement.func_name = func.get_name();
         switch(statement.stmt_type) {
             case StatementTypes.assign_statement:
             case StatementTypes.re_assign_statement:
@@ -107,112 +149,246 @@ void write_out_statements(string[] *assembly, Function func) {
                 break;
             case StatementTypes.if_statement:
             case StatementTypes.else_if_statement:
-                //write_out_branch_logic();
+                write_out_branch_logic(statement, assembly, &variable_names, func_return_type);
+                break;
+            case StatementTypes.else_statement:
+                write_out_statements(assembly, statement.stmts, &variable_names, func_return_type);
+                *assembly ~= "JUMP";
+                *assembly ~= statement.end_branch_name;
                 break;
             case StatementTypes.while_statement:
-                //write_out_loop_logic();
+                //TODO: write_out_loop_logic();
                 break;
             case StatementTypes.continue_statement:
-                //write_out_continue_statement();
+                //TODO: write_out_continue_statement();
                 break;
             case StatementTypes.print_statement:
-                //write_out_print_statement();
+                write_out_print_statement(statement, assembly, &variable_names);
                 break;
             case StatementTypes.return_statement:
-                process_inner_returns(i, all_statements.length, assembly, statement, &variable_names, func.get_name());
+                process_return_expressions(
+                    i, 
+                    all_statements.length, 
+                    assembly, 
+                    statement, 
+                    &variable_names, 
+                    statement.func_name
+                );
                 break;
             case StatementTypes.break_statement:
-                //write_out_break_statement();
+                //TODO: write_out_break_statement();
                 break;
             default:
                 throw new Exception("AST TO ASM ERROR: Could not find matching type while writing out asm for " ~ statement.name);
         }
+        if(statement.stmt_type == StatementTypes.else_statement) {
+            (*assembly)[current_index] = ">" ~ statement.stmt_name ~ ":" ~ break_off_label((*assembly)[current_index]);
+        } else {
+            (*assembly)[current_index] = ">" ~ statement.stmt_name ~ ":" ~(*assembly)[current_index];
+        }
     }
-    write_out_return_statement(assembly, func);
 }
 
-void process_inner_returns (
+
+string break_off_label(string statement) {
+    string[] parts = split(statement, ":");
+    return parts[1];
+}
+
+void process_return_expressions (
     long i, 
     long statements_length, 
     string[] *assembly, 
     Statement* statement, 
     string[] *variable_names, 
     string func_name
+) {
+    if(statement.syntax_tree.var_name == "-" && 
+        is_prefix(statement.syntax_tree)
     ) {
-    if(i < statements_length - 1) {
-        if(statement.syntax_tree.var_name == "-") {
-            write_out_neg_expression(assembly, statement.syntax_tree, variable_names, func_name);
-        } else {
-            writeln(statement.syntax_tree.var_name ~ " is the var name");
-            write_out_expression(assembly, statement.syntax_tree, variable_names, func_name);
-        }
-        *assembly ~= "JUMP";
-        *assembly ~= "return_" ~ func_name;
+        write_out_prefix_expression(
+            assembly, 
+            statement.syntax_tree, 
+            variable_names, 
+            func_name
+        );
     } else {
-        if(statement.syntax_tree.var_name == "-") {
-            write_out_neg_expression(assembly, statement.syntax_tree, variable_names, func_name);
-        } else {
-            write_out_expression(assembly, statement.syntax_tree, variable_names, func_name);
-        }
+        write_out_expression(
+            assembly, 
+            statement.syntax_tree, 
+            variable_names, 
+            func_name
+        );
     }
+    *assembly ~= "JUMP";
+    *assembly ~= "return_" ~ func_name;
+
 }
 
-void write_out_assignment(Statement* statement, string[] *assembly, string[] *variable_names) {
-    if(statement.syntax_tree.var_name == "-") {
-        write_out_neg_expression(assembly, statement.syntax_tree, variable_names, statement.func_name);
+bool is_prefix(Expression* root) {
+    if(root is null) {
+        return false;
+    }
+    return root.left is null && root.right !is null;
+}
+
+void write_out_assignment(
+    Statement* statement, 
+    string[] *assembly, 
+    string[] *variable_names
+) {
+    if(is_prefix(statement.syntax_tree)) {
+        write_out_prefix_expression(
+            assembly, 
+            statement.syntax_tree, 
+            variable_names, 
+            statement.func_name
+        );
     } else {
-        write_out_expression(assembly, statement.syntax_tree, variable_names, statement.func_name);
+        write_out_expression(
+            assembly, 
+            statement.syntax_tree, 
+            variable_names, 
+            statement.func_name
+        );
     }
     *assembly ~= get_var_type(statement) ~ "MOVE";
     *assembly ~= statement.func_name ~ "_" ~ statement.name;
-    //writeln("var type: ", statement.syntax_tree.var_type);
 }
 
-void write_out_neg_expression(string[] *assembly, Expression* root, string[] *variable_names, string func_name) {
+void write_out_print_statement(
+    Statement* statement, 
+    string[] *assembly, 
+    string[] *variable_names
+) {
+    foreach(Expression* arg; statement.built_in_args) {
+        if(is_prefix(arg)) {
+            write_out_prefix_expression(
+                assembly, 
+                arg, 
+                variable_names, 
+                statement.func_name
+            );
+        } else {
+            write_out_expression(
+                assembly, 
+                arg, 
+                variable_names, 
+                statement.func_name
+            );
+        }
+        *assembly ~= get_var_type_for_expression(arg) ~ "PUTLN";
+    }
+}
+
+void write_out_prefix_expression(
+    string[] *assembly, 
+    Expression* root, 
+    string[] *variable_names, 
+    string func_name
+) {
     import NewSymbolTable: is_variable_integer;
-    if(root.right !is null && 
-       root.right.var_type == PrimitiveTypes.Integer && 
-       is_variable_integer(root.right.var_name)
-    ) {
+    if(is_variable_integer(root.right.var_name)) {
         root.right.var_name = "-" ~ root.right.var_name;
-        write_out_expression(assembly, root.right, variable_names, func_name);
+        write_out_expression(
+            assembly, 
+            root.right, 
+            variable_names, 
+            func_name
+        );
     } else {
-        //writeln("here: " ~ )
         *assembly ~= "iPUSHc";
         *assembly ~= "0";
-        write_out_expression(assembly, root.left, variable_names, func_name);
-        write_out_expression(assembly, root.right, variable_names, func_name);
+        write_out_expression(
+            assembly, 
+            root.right, 
+            variable_names, 
+            func_name
+        );
         *assembly ~= "iSUB";
     }
 }
 
-void write_out_expression(string[] *assembly, Expression* root, string[] *variable_names, string func_name) {
+void write_out_expression(
+    string[] *assembly,
+    Expression* root, 
+    string[] *variable_names, 
+    string func_name
+) {
     if(root is null) {
         return;
     }
-    write_out_expression(assembly, root.left, variable_names, func_name);
-    write_out_expression(assembly, root.right, variable_names, func_name);
+    process_expression_by_type(
+        assembly, 
+        root.left, 
+        variable_names, 
+        func_name
+    );
+    process_expression_by_type(
+        assembly, 
+        root.right, 
+        variable_names, 
+        func_name
+    );
     if((root.args !is null && root.args.length > 0) || 
         root.exp_type == ExpTypes.FnCall) {
         foreach(Expression* arg; root.args) {
-            write_out_expression(assembly, arg, variable_names, func_name);
+            process_expression_by_type(
+                assembly, 
+                arg, 
+                variable_names, 
+                func_name
+            );
         }
         *assembly ~= "CALL";
         *assembly ~= root.var_name;
     }
-    append_current_expression(assembly, root, variable_names, func_name);
+    append_current_expression(
+        assembly, 
+        root, 
+        variable_names, 
+        func_name
+    );
 }
 
-void append_current_expression(string[] *assembly, Expression* root, string[] *variable_names, string func_name) {
+void process_expression_by_type(
+    string[] *assembly, 
+    Expression* root, 
+    string[] *variable_names,
+    string func_name
+) {
+    if(is_prefix(root)) {
+        write_out_prefix_expression(
+            assembly, 
+            root, 
+            variable_names, 
+            func_name
+        );
+    } else {
+        write_out_expression(
+            assembly, 
+            root, 
+            variable_names, 
+            func_name
+        );
+    }
+}
+
+void append_current_expression(
+    string[] *assembly, 
+    Expression* root, 
+    string[] *variable_names, 
+    string func_name
+) {
     import NewSymbolTable;
     if(is_variable_integer(root.var_name)) {
         *assembly ~= "iPUSHc";
         *assembly ~= root.var_name;
-    } else if (startsWith(root.var_name, "-")) {
-        if(is_variable_integer(root.var_name[1 .. $])) {
-            *assembly ~= "iPUSHc";
-            *assembly ~= root.var_name;
-        }
+    } else if(startsWith(root.var_name, "-") && 
+              is_variable_integer(root.var_name[1 .. $])
+      ) {        
+        *assembly ~= "iPUSHc";
+        *assembly ~= root.var_name;
     }
     string var = get_operator_string(root.var_name);
     if(var != "no_var") {
@@ -231,13 +407,13 @@ bool is_variable(string root_name, string[] *variable_names) {
     }
     return false;
 }
-void write_out_return_statement(string[] *assembly, Function func) {
-    if(func.get_name() == "main") {
+void write_out_return_statement(string[] *assembly, string func_name, long func_return_type) {
+    if(func_name == "main") {
         *assembly ~= ">return_main:HALT";
         return;
     } 
     string prefix = "";
-    switch(func.get_return_type()) {
+    switch(func_return_type) {
         case PrimitiveTypes.Integer:
         case PrimitiveTypes.IntArray:
         case PrimitiveTypes.BoolArray:
@@ -250,7 +426,7 @@ void write_out_return_statement(string[] *assembly, Function func) {
             prefix = "ch";
             break;
     }
-    *assembly ~= "return_" ~ func.get_name() ~ ":" ~ prefix ~ "RETURN";
+    *assembly ~= ">return_" ~ func_name ~ ":" ~ prefix ~ "RETURN";
 }
 
 string int_as_string(long value) {
@@ -306,10 +482,7 @@ void name_every_statement_uniquely(Function func) {
 }
 
 void name_statement(Statement* statement, IdGenerator gen) {
-    //if(statement.stmt_type != StatementTypes.print_statement) {
     statement.stmt_name = statement.func_name ~ "_" ~ type_name(statement) ~ "_" ~ gen.next_id();
-    //stderr.writeln("I name you: " ~ statement.stmt_name ~ " for " ~ statement.name);
-    //}
     if(statement.stmts !is null && statement.stmts.length > 0) {
         for(long index = 0; index < statement.stmts.length; index++) {
             statement.stmts[index].func_name = statement.func_name;
@@ -348,14 +521,54 @@ string type_name(Statement* statement) {
         case StatementTypes.continue_statement:
             type = "continue";
             break;
+        case StatementTypes.print_statement:
+            type = "print";
+            break;
         default:
             throw new Exception("AST TO ASM ERROR: Didn't find matching statement type.");
     }
     return type;
 }
 
-void link_branching_with_alternate_branches(Function func) {
-    return;
+void link_branching_with_alternate_branches(Statement*[] statements) {
+    if(statements is null || statements.length < 1) {
+        return;
+    }
+    for(long i = 0; i < statements.length; i++) {
+        if(
+            statements[i].stmt_type == StatementTypes.if_statement || 
+            statements[i].stmt_type == StatementTypes.else_if_statement
+        ) {
+            statements[i].alt_branch_name = get_next_branch_name(statements[i+1]);
+            statements[i].end_branch_name = find_last_connected_branch(statements, i + 1);
+            if(statements[i].alt_branch_name is null || statements[i].alt_branch_name == "") {
+                statements[i].alt_branch_name = statements[i].end_branch_name;
+            }
+        } else if(statements[i].stmt_type == StatementTypes.else_statement) {
+            statements[i].end_branch_name = find_last_connected_branch(statements, i + 1);
+            statements[i].alt_branch_name = statements[i].end_branch_name;
+        }
+        link_branching_with_alternate_branches(statements[i].stmts);
+    }
+}
+
+string get_next_branch_name(Statement* statement) {
+    if(statement.stmt_type == StatementTypes.else_if_statement) {
+        return statement.stmt_name;
+    } else if(statement.stmt_type == StatementTypes.else_statement) {
+        return statement.stmt_name;
+    }
+    return "";
+}
+
+string find_last_connected_branch(Statement*[] statements, long index) {
+    for(; index < statements.length; index++) {
+        if(statements[index].stmt_type != StatementTypes.else_if_statement &&
+           statements[index].stmt_type != StatementTypes.else_statement) {
+            break;
+        }
+    }
+    return statements[index].stmt_name;
 }
 
 
@@ -363,43 +576,78 @@ string get_operator_string(string operator) {
     string asm_operator;
     switch(operator) {
         case "+":
-        asm_operator = "iADD";
-        break;
+            asm_operator = "iADD";
+            break;
         case "-":
-        asm_operator = "iSUB";
-        break;
+            asm_operator = "iSUB";
+            break;
         case "*":
-        asm_operator = "iMULT";
-        break;
+            asm_operator = "iMULT";
+            break;
         case "/":
-        asm_operator = "iDIV";
-        break;
+            asm_operator = "iDIV";
+            break;
         case "%":
-        asm_operator = "iMOD";
-        break;
+            asm_operator = "iMOD";
+            break;
         case "^":
-        asm_operator = "iEXP";
-        break;
+            asm_operator = "iEXP";
+            break;
         case "<=":
-        asm_operator = "iLTEQ";
-        break;
+            asm_operator = "iLTEQ";
+            break;
         case ">=":
-        asm_operator = "iGTEQ";
-        break;
+            asm_operator = "iGTEQ";
+            break;
         case "<":
-        asm_operator = "iLT";
-        break;
+            asm_operator = "iLT";
+            break;
         case ">":
-        asm_operator = "iGT";
-        break;
+            asm_operator = "iGT";
+            break;
         case "==":
-        asm_operator = "iEQ";
-        break;
+            asm_operator = "iEQ";
+            break;
         case "!=":
-        asm_operator = "iNEQ";
-        break;
+            asm_operator = "iNEQ";
+            break;
         default:
         asm_operator = "no_var";
     }
     return asm_operator;
+}
+
+
+void write_out_branch_logic (
+    Statement* statement, 
+    string[] *assembly, 
+    string[] *variable_names,
+    long func_return_type
+) {
+    if(is_prefix(statement.syntax_tree)) {
+        write_out_prefix_expression(
+            assembly, 
+            statement.syntax_tree, 
+            variable_names, 
+            statement.func_name
+        );
+    } else {
+        write_out_expression(
+            assembly, 
+            statement.syntax_tree, 
+            variable_names, 
+            statement.func_name
+        );
+    }
+    *assembly ~= "iPUSHc";
+    *assembly ~= "1";
+    *assembly ~= "iJUMPNEQ";
+    if(statement.end_branch_name !is null && statement.end_branch_name != "") {
+        *assembly ~= statement.alt_branch_name;        
+    } else {
+        *assembly ~= statement.end_branch_name;
+    }
+    write_out_statements(assembly, statement.stmts, variable_names, func_return_type);
+    *assembly ~= "JUMP";
+    *assembly ~= statement.end_branch_name;
 }

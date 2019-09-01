@@ -66,12 +66,12 @@ def build():
 
 def build_release():
     command = general_build()
-    command += ' -O -m64 -inline'
+    #command += ' -O -m64 -inline'
     os.system(command)
 
 def build_unittest():
     command = general_build()
-    command += ' -w -m64 -inline -unittest'
+    command += ' -unittest'
     os.system(command)
 
 

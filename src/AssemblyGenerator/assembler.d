@@ -53,23 +53,8 @@ class Assembler {
     public ByteCodeProgram* assemble() {
         insert_label_offsets();
         resolve_label_locations();
-/*
-        writeln("variable keys: ");
-        foreach(string key; var_locations.byKey) {
-            writeln(key, ' ', var_locations[key]);
-        }
 
-        writeln("label keys: ");
-        foreach(string key; label_locations.byKey) {
-            writeln(key, ' ', label_locations[key]);
-        }
-
-        writeln("func call keys: ");
-        foreach(string key; call_locations.byKey) {
-            writeln(key, ' ',call_locations[key]);
-        }
-*/
-        foreach(long i, string str; assembly) { //writeln(str);
+        foreach(long i, string str; assembly) {
             ubyte op = get_operator(str);
             if(op != ubyte.max) {
                 product.compiled_program ~= op;
@@ -93,7 +78,7 @@ class Assembler {
                 writeln("ERROR: unknown operation or type: " ~ str);
                 exit(1);
             }
-        }//writeln("end \n");
+        }
         return product;
     }
 
@@ -134,20 +119,14 @@ class Assembler {
             }
         }
         assembly = temp;
-        //foreach(string str; assembly) {
-        //    writeln(str);
-        //}
-        //writeln("assembly length: ", assembly.length);
     }
 
     private void resolve_label_locations() {
         string[] label_and_op;
         for(long index = 0; index < assembly.length; index++) {
             if(startsWith(assembly[index], "`")) {
-                //label_and_op = split(assembly[index], ":");
-                //call_locations[label_and_op[0][1..$]] = index;
                 call_locations[assembly[index][1 .. $]] = index;
-                assembly[index] = function_size_as_string(index);//label_and_op[1];
+                assembly[index] = function_size_as_string(index);
             } else if(startsWith(assembly[index], ">")) {
                 label_and_op = split(assembly[index], ':');
                 label_locations[label_and_op[0][1..$]] = index;
@@ -407,7 +386,6 @@ class Assembler {
             to_array_int(var_index - var_locations["~" ~ var]);
         }
         append_integer_to_bytecode();
-        //writeln("This is the offset:                           ", var_index - var_locations[var]);
     }
 
     private bool is_variable_dec(string str) {
@@ -431,8 +409,10 @@ class Assembler {
         }
     }
 
-    // In efficient, but function sizes should not be larger
-    // than a few thousand bytes max.
+    /*
+        Inefficient, but function sizes should not be larger
+        than a few thousand bytes max.
+    */
     private string int_as_string(long value) {
         char[] str_num = ['0','0','0','0','0','0','0','0','0','0','0','0'];
         for(long i = 1; i <= value; i++) {

@@ -35,9 +35,11 @@ class ByteCodeVM {
     private void delegate()[] operations;
 
     private long counter;
+    private long function_depth;
 
 
     this() {
+        function_depth = 0;
         stack       = new ubyte[fiftyk];
         fp_stack    = new double[fiftyk];
         fp_constants = new double[fiftyk / 5];
@@ -124,13 +126,7 @@ class ByteCodeVM {
 
     public void run() {
         while(is_running()) {
-            //write("before: ");
-            //pointers();
-            //writeln("Executing instruction:");
             execute_operations();
-            //write("after: ");
-            //pointers();
-            //show_bytecode();
         }
     }
 
@@ -231,6 +227,17 @@ class ByteCodeVM {
     private void mem_alloc() {
         stack[inst_ptr] = cast(ubyte) 0;
         inst_ptr++;
+    }
+
+    private void inc_func_depth() {
+        function_depth++;
+        if(function_depth > max_recursion) {
+            stack_overflow();
+        }
+    }
+
+    private void dec_func_depth() {
+        function_depth--;
     }
 
     private void chpushc() {
@@ -344,6 +351,72 @@ class ByteCodeVM {
         inst_ptr++;
         long modulo = ipop();
         ipush(ipop() % modulo);
+    }
+
+    private void ilessThanEQ() {
+        inst_ptr++;
+        long left = ipop();
+        long right = ipop();
+        if(left <= right) {
+            ipush(1);
+        } else {
+            ipush(0);
+        }
+    }
+
+    private void ilessThan() {
+        inst_ptr++;
+        long left = ipop();
+        long right = ipop();
+        if(left < right) {
+            ipush(1);
+        } else {
+            ipush(0);
+        }
+    }
+
+    private void iGreaterThanEQ() {
+        inst_ptr++;
+        long left = ipop();
+        long right = ipop();
+        if(left >= right) {
+            ipush(1);
+        } else {
+            ipush(0);
+        }
+    }
+
+    private void iGreaterThan() {
+        inst_ptr++;
+        long left = ipop();
+        long right = ipop();
+        if(left > right) {
+            ipush(1);
+        } else {
+            ipush(0);
+        }
+    }
+
+    private void iNotEqual() {
+        inst_ptr++;
+        long left = ipop();
+        long right = ipop();
+        if(left != right) {
+            ipush(1);
+        } else {
+            ipush(0);
+        }
+    }
+
+    private void iEqual() {
+        inst_ptr++;
+        long left = ipop();
+        long right = ipop();
+        if(left == right) {
+            ipush(1);
+        } else {
+            ipush(0);
+        }
     }
 
     private void expand_heap() {
@@ -695,11 +768,11 @@ class ByteCodeVM {
     }
 
     private void call_func() {
+        inc_func_depth();
         ulong save_instruction = inst_ptr;
         ipushc();
         ulong func_template_address = cast(ulong) ipop();
         ulong func_size = collect_int_at(func_template_address);
-        //stderr.writeln("Function size: ", func_size);
         ulong start = func_template_address + 8;
         ulong end = start + func_size;
         ulong func_start = stk_ptr + 1;
@@ -709,24 +782,17 @@ class ByteCodeVM {
         ipush(save_instruction + 9);
         ipush(func_size);
         inst_ptr = func_start;
-        //show_bytecode();
     }
 
 
     private void ireturn() {
-        //import core.sys.posix.stdlib: exit;
-        //stderr.writeln("here");
-        //show_bytecode();
+        dec_func_depth();
         long i_ret_val = ipop();
         ulong func_size = cast(ulong) ipop();
         ulong temp_stk_ptr = (inst_ptr + 17) - func_size - 1;
         inst_ptr = cast(ulong) ipop();
         stk_ptr = temp_stk_ptr;
-        //show_bytecode();
-        //stderr.writeln("Values: return value: ", i_ret_val, ", func size: ", func_size, ", temp stack pinter: ", temp_stk_ptr);
-        //stderr.writeln("more values: instruction pointer: ", inst_ptr, ", stack pointer: ", stk_ptr);
         ipush(i_ret_val);
-        //exit(1);
     }
 
     private void chreturn() {
@@ -747,14 +813,15 @@ private:
 
 immutable long fiftyk = 50000;
 immutable long inst_count = 100;
+immutable long max_recursion = 3000;
 
 private:
 
 void set_operations(ByteCodeVM VM) {
     VM.operations[opcodes.MEMALLOC]        = &VM.mem_alloc;
     VM.operations[opcodes.CALL]            = &VM.call_func;
-    VM.operations[opcodes.iRETURN]          = &VM.ireturn;
-    VM.operations[opcodes.chRETURN]          = &VM.chreturn;
+    VM.operations[opcodes.iRETURN]         = &VM.ireturn;
+    VM.operations[opcodes.chRETURN]        = &VM.chreturn;
 
     VM.operations[opcodes.iADD]            = &VM.iadd;
     VM.operations[opcodes.iSUB]            = &VM.isub;
@@ -762,6 +829,13 @@ void set_operations(ByteCodeVM VM) {
     VM.operations[opcodes.iDIV]            = &VM.idiv;
     VM.operations[opcodes.iEXP]            = &VM.iexp;
     VM.operations[opcodes.iMOD]            = &VM.imod;
+
+    VM.operations[opcodes.iLTEQ]           = &VM.ilessThanEQ;
+    VM.operations[opcodes.iGTEQ]           = &VM.iGreaterThanEQ;
+    VM.operations[opcodes.iLT]             = &VM.ilessThan;
+    VM.operations[opcodes.iGT]             = &VM.iGreaterThan;
+    VM.operations[opcodes.iEQ]             = &VM.iEqual;
+    VM.operations[opcodes.iNEQ]            = &VM.iNotEqual;
 
     VM.operations[opcodes.iPUSHc]          = &VM.ipushc;
     VM.operations[opcodes.iPUSHv]          = &VM.ipushv;
@@ -807,160 +881,6 @@ void set_operations(ByteCodeVM VM) {
     VM.operations[opcodes.HALT]            = &VM.halt;
 }
 
-/*
-unittest {
-    ByteCodeVM vm = new ByteCodeVM();
-    vm.ipush(long.max);
-    assert(vm.stk_ptr == 7);
-}
-
-// ipushc places correct # bytes on stack,
-// instruction pointer at next byte after number.
-unittest {
-    ByteCodeVM vm = new ByteCodeVM();
-    vm.ipush(3);
-    vm.ipushc();
-    // int offset, plus next instruction.
-    assert(vm.inst_ptr == 9);
-    // pushed two ints, 16 bytes in.
-    assert(vm.stk_ptr == 15);
-}
-
-// pushing and popping integers gives correct values.
-/*
-unittest {
-    ByteCodeVM vm = new ByteCodeVM();
-    vm.load_bytecode([23,23,23,67]);
-    for(long i = -100; i <= 100; i++) {
-        vm.ipush(i);
-        long j = vm.ipop();
-        assert(i == j);
-    }
-}
-
-// pushing integers based off of variable reference.
-unittest {
-    ByteCodeVM vm = new ByteCodeVM();
-    // actual variable to be pushed.
-    vm.ipush(3);
-    // set ptr to where var reference is (begins).
-    vm.inst_ptr = 8;
-    // index of variable to be pushed.
-    // relative to frame pointer.
-    vm.ipush(0);
-    // push from variable location
-    vm.ipushv();
-    assert(vm.ipop() == 3);
-}
-
-// chpushc works correctly.
-unittest {
-    ByteCodeVM vm = new ByteCodeVM();
-    // throw away, representing the actual cpushc opcode in stack.
-    // this is needed bc the instruction pointer is incremented to
-    // the next index representing the value to be pushed.
-    vm.push(0);
-    // the const value to push on the stack.
-    vm.push(10);
-    vm.chpushc();
-    assert(vm.inst_ptr == 2);
-    assert(vm.stack[1] == vm.stack[2]);
-}
-
-// cpushv works correctly
-unittest {
-    ByteCodeVM vm = new ByteCodeVM();
-    // throw away, representing the actual cpushv opcode in stack.
-    // this is needed bc the instruction pointer is incremented to
-    // the next index representing the value to be pushed.
-    vm.push(0);
-    // the address of the variable, offset by the frame pointer (0 in this case)
-    vm.ipush(20);
-    vm.stack[20] = cast(ubyte) 13;
-    vm.chpushv();
-    // chpushv manipulates, and restores instruction pointer correctly.
-    // The instruction pointer moves further than a char operation, as it needs
-    // a address which is always a 64 bit int (8 bytes).
-    assert(vm.inst_ptr == 9);
-    // item at location is correct
-    assert(vm.stack[vm.stk_ptr] == cast(ubyte) 13);
-}
-
-// ch_move works correctly
-/*
-unittest {
-    ByteCodeVM vm = new ByteCodeVM();
-    vm.load_bytecode([]);
-    // throw away, representing the actual chmove opcode in stack.
-    vm.push(0);
-
-    for(ulong i = 9; i < 100; i++) {
-        // The value to place into the "variable"
-        vm.push(3);
-        ulong temp = vm.stk_ptr;
-        // The variable location
-        vm.ipush(i);
-        // in reality, this mem address would be coded in by the assembler.
-        // it wouldn't be actually pushing the address on the stack.
-        // so reset the stack pointer.
-        vm.stk_ptr = temp;
-        temp = vm.inst_ptr;
-        vm.ch_move();
-        // artificially running same command repeatedly,
-        // instruction pointer must be reset.
-        vm.inst_ptr = temp;
-        assert(vm.stack[i] == cast(ubyte) 3);
-    }
-}
-
-// imove works correctly
-unittest {
-    ByteCodeVM vm = new ByteCodeVM();
-    // throw away, representing the actual imove opcode in stack.
-    // this is needed bc the instruction pointer is incremented to
-    // the next index representing the value to be pushed in the actual operation.
-    vm.push(0);
-    // push location
-    vm.ipush(16);
-    // The value to place into the "variable"
-    vm.ipush(30);
-    // move 30 into variable location
-    vm.imove();
-    assert(vm.stk_ptr == 8);
-    assert(vm.inst_ptr == 9);
-    assert(vm.collect_int_at(16) == 30);
- 
-}
-
-// rollback works correctly
-unittest {
-    ByteCodeVM vm = new ByteCodeVM();
-    // simulate being at end of function.
-    vm.ipush(0);
-    vm.ipush(0);
-    vm.ipush(0);
-    // throw away, representing the actual rollback opcode in stack.
-    // this is needed bc the instruction pointer is incremented to
-    // the next index representing the value to be pushed in the actual operation.
-    vm.push(0);
-    vm.inst_ptr = 24;
-    vm.ipush(0);
-    vm.rollback();
-    assert(vm.inst_ptr == 33);
-    assert(vm.stk_ptr == 0);
-}
-
-// new_array works correctly
-unittest {
-    ByteCodeVM vm = new ByteCodeVM();
-    // throw away, representing the actual imove opcode in stack.
-    // this is needed bc the instruction pointer is incremented to
-    // the next index representing the value to be pushed in the actual operation.
-    vm.push(0);
-    vm.new_array();
-    assert(vm.ipop() == 0);
-}
-*/
 /*
     ---------------- Description ----------------
 

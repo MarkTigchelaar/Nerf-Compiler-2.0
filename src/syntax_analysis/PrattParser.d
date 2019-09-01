@@ -166,7 +166,6 @@ private:
 
     Expression* func_call_parser(Expression* left, string[] exptokens, int* index) {
         string[] call_args = collect_scoped_tokens(exptokens, index);
-        //writeln(call_args);
         left.args = parse_func_call_arg_expressions(call_args);
         return left;
     }
@@ -177,8 +176,7 @@ private:
         exp.var_type = func.get_variable_type(current);
         exp.exp_type = ExpTypes.Variable;
         return exp;
-    } // return new Expression(get_token(exptokens, index));
-
+    }
 
     void check_last_index(string[] rvalues) {
         if(is_valid_variable(rvalues[rvalues.length - 1])) {
@@ -707,4 +705,22 @@ unittest {
     assert(result.var_type == PrimitiveTypes.Bool);
     assert(result.right !is null);
     assert(result.left !is null);
+}
+
+unittest {
+    // - y - 4
+    PrattParser pratt = new PrattParser();
+    Function test = new Function("test");
+    pratt.set_function(test);
+    Variable* y = new Variable();
+    y.name = "y";
+    y.type = PrimitiveTypes.Integer;
+    test.add_local(y);
+    string[] exp = ["-", "y", "-", "4"];
+    Expression* result = pratt.parse_expressions(exp);
+    assert(result !is null);
+    assert(result.var_name == "-");
+    assert(result.left.var_name == "-");
+    assert(result.left.right.var_name == "y");
+    assert(result.right.var_name == "4");
 }

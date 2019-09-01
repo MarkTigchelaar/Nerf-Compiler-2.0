@@ -1,13 +1,6 @@
 module structures;
 
-        import std.stdio;
-
-/*struct Program {
-    Function[] functions;
-    //mnemonic_node*[] mnemonic_code;
-    //mnemonic_node* current;
-    //ubyte[] bytecode;
-}*/
+import std.stdio;
 
 struct Variable {
     string name;
@@ -24,6 +17,7 @@ struct Statement {
     string name;
     string stmt_name;
     string alt_branch_name;
+    string end_branch_name;
     string func_name;
     Expression* syntax_tree;
     Expression*[] built_in_args;

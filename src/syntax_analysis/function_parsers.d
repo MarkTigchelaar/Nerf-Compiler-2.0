@@ -1,15 +1,12 @@
 module function_parsers;
 
-//import symbol_table;
 import std.stdio: writeln, write;
 import NewSymbolTable;
 import stack;
 import fn_header_syntax_errors;
 import structures: Statement, Variable, PrimitiveTypes;
 import functions: Function;
-//import lexing_tools;
 import Lexer;
-//import scoped_token_collector;
 import statement_parsers: StatementParser;
 
 class Parser {
@@ -69,8 +66,6 @@ class Parser {
         if(!(is_open_seperator(token) && is_prefix(token))) {
             function_missing_arg_parens();
         }
-        // push onto stack, inc scope depth;
-        // skip this crap here/
         lexer.set_init_token_type_for_collection(token);
         string[] raw_args = lexer.collect_scoped_tokens();
         parse_arguments(raw_args);
@@ -81,13 +76,8 @@ class Parser {
 
     private void parse_arguments(string[] raw_args) {
         if(raw_args.length == 0) {
-        //    table.add_fn_args(func_name, null);
             return;
         }
-    // foreach(string arg; raw_args) {
-    //     writeln("arg: ", arg);
-        //}
-        
         check_first_and_last_positions(raw_args);
         Variable* argument = new Variable;
         foreach(long i, string arg_member; raw_args) {
@@ -124,35 +114,29 @@ class Parser {
     }
 
     private int enforce_key_word(string arg_member) {
-        //writeln(arg_member);
         int type;
-        //if(is_primitive_type(arg_member)) {
-            switch(arg_member) {
-                case "int":
-                    type = PrimitiveTypes.Integer;
-                    break;
-                case "int[]":
-                    type = PrimitiveTypes.IntArray;
-                    break;
-                case "bool":
-                    type = PrimitiveTypes.Bool;
-                    break;
-                case "bool[]":
-                    type = PrimitiveTypes.BoolArray;
-                    break;
-                case "char":
-                    type = PrimitiveTypes.Character;
-                    break;
-                case "char[]":
-                    type = PrimitiveTypes.CharArray;
-                    break;
-                default:
-                //writeln(arg_member);
-                    unknown_type();
-            }
-    // } else {
-        //    malformed_args();
-        //}
+        switch(arg_member) {
+            case "int":
+                type = PrimitiveTypes.Integer;
+                break;
+            case "int[]":
+                type = PrimitiveTypes.IntArray;
+                break;
+            case "bool":
+                type = PrimitiveTypes.Bool;
+                break;
+            case "bool[]":
+                type = PrimitiveTypes.BoolArray;
+                break;
+            case "char":
+                type = PrimitiveTypes.Character;
+                break;
+            case "char[]":
+                type = PrimitiveTypes.CharArray;
+                break;
+            default:
+                unknown_type();
+        }
         return type;
     }
 

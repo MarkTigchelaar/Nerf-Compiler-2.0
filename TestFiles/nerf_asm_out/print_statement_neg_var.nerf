@@ -1,0 +1,5 @@
+fn main() int {
+    int var_one := -1;
+    print(-var_one, -2);
+    return 1;
+}

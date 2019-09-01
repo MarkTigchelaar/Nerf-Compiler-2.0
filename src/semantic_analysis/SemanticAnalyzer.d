@@ -41,7 +41,6 @@ class SemanticAnalyzer {
 
     void check_for_order_of_statements(Statement*[] statements, int depth) {
         for(int i = 0; i < statements.length; i++) {
-            //stderr.writeln(statements[i].name);
             switch(statements[i].stmt_type) {
                 case StatementTypes.else_statement:
                 case StatementTypes.else_if_statement:
@@ -67,7 +66,6 @@ class SemanticAnalyzer {
     }
 
     void check_last_statement(Statement* last) {
-        //stderr.writeln(last.name);
         if(last.stmt_type != StatementTypes.return_statement) {
             if(last.stmts is null || last.stmts.length < 1) {
                 non_void_func_missing_returns();

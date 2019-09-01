@@ -33,7 +33,6 @@ class Lexer {
     }
 
     this(string[] toks) {
-        //this();
         this.collector = new ScopedTokenCollector;
         this.prev_state = new saved_tokens*[100];
         this.prev_state_index = 0;
@@ -51,7 +50,7 @@ class Lexer {
     }
 
     public void process_source(string[] args) {
-        check_files(args);
+        check_files(&args);
         process_file(args[1]);
     }
 
@@ -110,15 +109,16 @@ class Lexer {
     }
 
 
-    private void check_files(string[] arguments) {
+    private void check_files(string[] *arguments) {
         import std.algorithm: endsWith;
         import core.sys.posix.stdlib: exit;
         long src_count = 0;
         long src_location = 1;
-        if(arguments.length < 2) {
+        string[] temp = *arguments;
+        if(temp.length < 2) {
             exit(-1);
-        } else if(arguments.length > 2) {
-            foreach(long i, string arg; arguments) {
+        } else if(temp.length > 2) {
+            foreach(long i, string arg; *arguments) {
                 if(endsWith(arg, ".nerf")) {
                     src_count++;
                     src_location = i;
@@ -128,8 +128,8 @@ class Lexer {
                 multiple_files();
             }
         }
-        arguments[1] = arguments[src_location];
-        if(! endsWith(arguments[1], ".nerf")) {
+        (*arguments)[1] = (*arguments)[src_location];
+        if(! endsWith((*arguments)[1], ".nerf")) {
             bad_file_extension();
         }
     }

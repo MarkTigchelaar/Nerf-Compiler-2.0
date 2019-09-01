@@ -11,6 +11,9 @@ bool is_number(string variable) {
 }
 
 bool is_variable_integer(string variable) {
+    if(variable is null) {
+        return false;
+    }
     return regex_helper(variable, `^([1-9]\d*|0)$`);
 }
 

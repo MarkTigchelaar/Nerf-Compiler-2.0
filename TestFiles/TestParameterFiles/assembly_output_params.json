@@ -10,11 +10,11 @@
             [
                 "<main_e:8",
                 "<main_y:8",
-                "iPUSHc",
+                ">main_assign_1:iPUSHc",
                 "0",
                 "iMOVE",
                 "main_e",
-                "iPUSHc",
+                ">main_assign_2:iPUSHc",
                 "2",
                 "iPUSHc",
                 "3",
@@ -24,8 +24,10 @@
                 "iADD",
                 "iMOVE",
                 "main_y",
-                "iPUSHc",
+                ">main_return_3:iPUSHc",
                 "0",
+                "JUMP",
+                "return_main",
                 ">return_main:HALT"
             ]
         },
@@ -33,7 +35,7 @@
             "test_file_name": "var_assign_mod.nerf",
             "expected_output_per_line":
             [
-                "iPUSHc",
+                ">main_return_1:iPUSHc",
                 "11",
                 "iPUSHc",
                 "3",
@@ -41,6 +43,8 @@
                 "3",
                 "iMOD",
                 "iADD",
+                "JUMP",
+                "return_main",
                 ">return_main:HALT"
             ]
         },
@@ -49,7 +53,7 @@
             "expected_output_per_line":
             [
                 "<main_y:8",
-                "iPUSHc",
+                ">main_assign_1:iPUSHc",
                 "2",
                 "iPUSHc",
                 "30",
@@ -59,8 +63,10 @@
                 "iMULT",
                 "iMOVE",
                 "main_y",
-                "iPUSHv",
+                ">main_return_2:iPUSHv",
                 "main_y",
+                "JUMP",
+                "return_main",
                 ">return_main:HALT"
             ]
         },
@@ -69,7 +75,7 @@
             "expected_output_per_line":
             [
                 "<main_y:8",
-                "iPUSHc",
+                ">main_assign_1:iPUSHc",
                 "2",
                 "iPUSHc",
                 "30",
@@ -79,8 +85,10 @@
                 "iEXP",
                 "iMOVE",
                 "main_y",
-                "iPUSHv",
+                ">main_return_2:iPUSHv",
                 "main_y",
+                "JUMP",
+                "return_main",
                 ">return_main:HALT"
             ]
         },
@@ -89,15 +97,118 @@
             "expected_output_per_line":
             [
                 "<main_y:8",
-                "iPUSHc",
+                ">main_assign_1:iPUSHc",
                 "-4",
                 "iMOVE",
                 "main_y",
-                "iPUSHc",
+                ">main_return_2:iPUSHc",
                 "0",
                 "iPUSHv",
                 "main_y",
                 "iSUB",
+                "JUMP",
+                "return_main",
+                ">return_main:HALT"
+            ]
+        },
+        {
+            "test_file_name": "negative_variable_in_parens.nerf",
+            "expected_output_per_line":
+            [
+                "<main_y:8",
+                ">main_assign_1:iPUSHc",
+                "4",
+                "iPUSHc",
+                "1",
+                "iADD",
+                "iPUSHc",
+                "2",
+                "iADD",
+                "iMOVE",
+                "main_y",
+                ">main_return_2:iPUSHc",
+                "0",
+                "iPUSHv",
+                "main_y",
+                "iSUB",
+                "iPUSHc",
+                "4",
+                "iSUB",
+                "JUMP",
+                "return_main",
+                ">return_main:HALT"
+            ]
+        },
+        {
+            "test_file_name": "print_statement.nerf",
+            "expected_output_per_line":
+            [
+                ">main_print_1:iPUSHc",
+                "1",
+                "iPUTLN",
+                ">main_return_2:iPUSHc",
+                "1",
+                "JUMP",
+                "return_main",
+                ">return_main:HALT"
+            ]
+        },
+        {
+            "test_file_name": "print_statement_two_args.nerf",
+            "expected_output_per_line":
+            [
+                ">main_print_1:iPUSHc",
+                "1",
+                "iPUTLN",
+                "iPUSHc",
+                "2",
+                "iPUTLN",
+                ">main_return_2:iPUSHc",
+                "1",
+                "JUMP",
+                "return_main",
+                ">return_main:HALT"
+            ]
+        },
+        {
+            "test_file_name": "print_statement_two_negative_const_args.nerf",
+            "expected_output_per_line":
+            [
+                ">main_print_1:iPUSHc",
+                "-1",
+                "iPUTLN",
+                "iPUSHc",
+                "-2",
+                "iPUTLN",
+                ">main_return_2:iPUSHc",
+                "1",
+                "JUMP",
+                "return_main",
+                ">return_main:HALT"
+            ]
+        },
+        {
+            "test_file_name": "print_statement_neg_var.nerf",
+            "expected_output_per_line":
+            [
+                "<main_var_one:8",
+                ">main_assign_1:iPUSHc",
+                "-1",
+                "iMOVE",
+                "main_var_one",
+                ">main_print_2:iPUSHc",
+                "0",
+                "iPUSHv",
+                "main_var_one",
+                "iSUB",
+                "iPUTLN",
+                "iPUSHc",
+                "-2",
+                "iPUTLN",
+                ">main_return_3:iPUSHc",
+                "1",
+                "JUMP",
+                "return_main",
                 ">return_main:HALT"
             ]
         }

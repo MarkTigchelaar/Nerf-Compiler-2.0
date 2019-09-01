@@ -1,0 +1,4 @@
+fn main() int {
+    int y := 4 +  1 + 2;
+    return (- y) - 4;
+}
