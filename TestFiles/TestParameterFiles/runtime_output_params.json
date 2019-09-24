@@ -5,6 +5,12 @@
     "postamble": "Tests for nerf runtime successful!",
     "tests":
     [
-        ""
+        {
+            "test_file_name": "print_int.nerf",
+            "expected_output_per_line": 
+            [
+                "10"
+            ]
+        }
     ]
 }

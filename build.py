@@ -126,7 +126,8 @@ def build_all_steps(test):
             'parser_expression_errors',
             'parser_assignment_errors',
             'semantic_analyzer_errors',
-            'assembly_output'
+            'assembly_output',
+            'runtime_output'
             ])
         os.system('rm nerf nerf.o')
     build_release()
