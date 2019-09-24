@@ -655,6 +655,116 @@
                 "0",
                 ">return_main:HALT"
             ]
+        },
+        {
+            "test_file_name": "break_statement.nerf",
+            "expected_output_per_line":
+            [
+                ">main_while_1:iPUSHc",
+                "1",
+                "iPUSHc",
+                "1",
+                "iEQ",
+                "iPUSHc",
+                "1",
+                "iJUMPNEQ",
+                "main_return_3",
+                ">main_break_2:JUMP",
+                "main_return_3",
+                "JUMP",
+                "main_while_1",
+                ">main_return_3:iPUSHc",
+                "0",
+                ">return_main:HALT"
+            ]
+        },
+        {
+            "test_file_name": "continue_statement.nerf",
+            "expected_output_per_line":
+            [
+                ">main_while_1:iPUSHc",
+                "1",
+                "iPUSHc",
+                "1",
+                "iEQ",
+                "iPUSHc",
+                "1",
+                "iJUMPNEQ",
+                "main_return_3",
+                ">main_continue_2:JUMP",
+                "main_while_1",
+                "JUMP",
+                "main_while_1",
+                ">main_return_3:iPUSHc",
+                "0",
+                ">return_main:HALT"
+            ]
+        },
+        {
+            "test_file_name": "nested_break_statement.nerf",
+            "expected_output_per_line":
+            [
+                ">main_while_1:iPUSHc",
+                "1",
+                "iPUSHc",
+                "0",
+                "iEQ",
+                "iPUSHc",
+                "1",
+                "iJUMPNEQ",
+                "main_return_4",
+                ">main_while_2:iPUSHc",
+                "1",
+                "iPUSHc",
+                "1",
+                "iEQ",
+                "iPUSHc",
+                "1",
+                "iJUMPNEQ",
+                "main_while_1",
+                ">main_break_3:JUMP",
+                "main_while_1",
+                "JUMP",
+                "main_while_2",
+                "JUMP",
+                "main_while_1",
+                ">main_return_4:iPUSHc",
+                "0",
+                ">return_main:HALT"
+            ]
+        },
+        {
+            "test_file_name": "nested_continue_statement.nerf",
+            "expected_output_per_line":
+            [
+                ">main_while_1:iPUSHc",
+                "1",
+                "iPUSHc",
+                "0",
+                "iEQ",
+                "iPUSHc",
+                "1",
+                "iJUMPNEQ",
+                "main_return_4",
+                ">main_while_2:iPUSHc",
+                "1",
+                "iPUSHc",
+                "1",
+                "iEQ",
+                "iPUSHc",
+                "1",
+                "iJUMPNEQ",
+                "main_while_1",
+                ">main_continue_3:JUMP",
+                "main_while_2",
+                "JUMP",
+                "main_while_2",
+                "JUMP",
+                "main_while_1",
+                ">main_return_4:iPUSHc",
+                "0",
+                ">return_main:HALT"
+            ]
         }
     ]
 }
