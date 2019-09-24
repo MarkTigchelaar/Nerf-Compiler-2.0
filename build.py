@@ -51,7 +51,7 @@ def build():
         print(useage)
         return
     elif arg == '-all':
-        build_all_steps(test)
+        build_all_steps('-unittest')
     elif arg == '-asm':
         build_assembler(test)
     elif arg == '-test':
@@ -61,12 +61,13 @@ def build():
     
     if test != '':
         os.system('rm resultfile.txt')
+    os.system('rm ./TestFiles/__pycache__/ -r')
 
 
 
 def build_release():
     command = general_build()
-    #command += ' -O -m64 -inline'
+    command += ' -O -m64 -inline'
     os.system(command)
 
 def build_unittest():
@@ -104,6 +105,7 @@ def general_build():
     command += semantics_path + 'semantic_errors.d '
     command += semantics_path + 'SemanticAnalyzer.d '
     command += gen_path + 'compile.d '
+    command += gen_path + 'tree_linking.d '
     command += gen_path + 'assembler.d '
     command += './src/ByteCodeVM.d '
 
@@ -127,6 +129,7 @@ def build_all_steps(test):
             'assembly_output'
             ])
         os.system('rm nerf nerf.o')
+    build_release()
 
 def build_assembler(test):
     command = 'dmd ' 

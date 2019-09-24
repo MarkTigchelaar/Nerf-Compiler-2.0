@@ -1,5 +1,6 @@
 fn main() int {
     print(secondary(5,6,7,8));
+    return 0;
 }
 
 fn secondary(int five, int six, int five, int eight) int {

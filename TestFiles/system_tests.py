@@ -9,6 +9,7 @@ def test_system(system_list):
         filename = system + post_fix
         tests = retrieve(filename)
         run(tests)
+    os.system('rm resultfile.txt')
 
 
 def retrieve(filename):

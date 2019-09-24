@@ -1,0 +1,10 @@
+fn main() int {
+    if(2 >= 4) {
+        if(10 == 10) {
+            int a := 0;
+        } else {
+            int b := 6;
+        }
+    }
+    return 0;
+}

@@ -184,44 +184,16 @@ class Parser {
 
     }
 }
-/*
+
 // See system_test.py for unhappy path testing.
 unittest {
-    string[] test = ["fn", "func", "(", ")", "void", "{", "return", ";","}"];
+    string[] test = ["fn", "func", "(", ")", "int", "{", "return", "0", ";","}"];
 
     Lexer lexer = new Lexer(test.dup);
     Parser parser = new Parser(lexer);
-    Program* p = parser.parse();
-    assert(p.functions.length == 1);
-    assert(p.functions[0] !is null);
-    assert(p.functions[0].get_name() == "func");
-    //assert(p.functions[0].arguments.length == 0);
+    Function[] p = parser.parse();
+    assert(p.length == 1);
+    assert(p[0] !is null);
+    assert(p[0].get_name() == "func");
+    assert(p[0].number_of_args() == 0);
 }
-/*
-unittest {
-    string[] test = ["fn", "func", "(", ")", "void", "{", "return", ";","}",
-                     "fn", "funcb", "(", "int", "a", ",", "float", "b",
-                     ")", "void", "{", "return", ";","}"];
-    SymbolTable table = new SymbolTable;
-    Lexer lexer = new Lexer(table, test.dup);
-    ScopedTokenCollector collector = new ScopedTokenCollector(table);
-    Program* p = parse_program(lexer, "test");
-    string[] func_arg_types = table.get_function_args("func");
-    assert(func_arg_types is null);
-
-    string[] funcb_arg_types = table.get_function_args("funcb");
-    assert(funcb_arg_types !is null);
-    assert(funcb_arg_types.length == 2);
-    assert(funcb_arg_types[0] == "int");
-    assert(funcb_arg_types[1] == "float");
-    
-    Function*[] funcs = p.functions;
-    assert(p.name == "test");
-    assert(funcs.length == 2);
-    assert(funcs[1] !is null);
-    assert(funcs[1].name == "funcb");
-    assert(funcs[1].arg_names.length == 2);
-    assert(funcs[1].arg_names[0] == "a");
-    assert(funcs[1].arg_names[1] == "b");
-}
-*/

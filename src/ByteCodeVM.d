@@ -355,8 +355,8 @@ class ByteCodeVM {
 
     private void ilessThanEQ() {
         inst_ptr++;
-        long left = ipop();
         long right = ipop();
+        long left = ipop();
         if(left <= right) {
             ipush(1);
         } else {
@@ -366,8 +366,8 @@ class ByteCodeVM {
 
     private void ilessThan() {
         inst_ptr++;
-        long left = ipop();
         long right = ipop();
+        long left = ipop();
         if(left < right) {
             ipush(1);
         } else {
@@ -377,8 +377,8 @@ class ByteCodeVM {
 
     private void iGreaterThanEQ() {
         inst_ptr++;
-        long left = ipop();
         long right = ipop();
+        long left = ipop();
         if(left >= right) {
             ipush(1);
         } else {
@@ -388,8 +388,8 @@ class ByteCodeVM {
 
     private void iGreaterThan() {
         inst_ptr++;
-        long left = ipop();
         long right = ipop();
+        long left = ipop();
         if(left > right) {
             ipush(1);
         } else {
@@ -399,8 +399,8 @@ class ByteCodeVM {
 
     private void iNotEqual() {
         inst_ptr++;
-        long left = ipop();
         long right = ipop();
+        long left = ipop();
         if(left != right) {
             ipush(1);
         } else {
@@ -410,8 +410,8 @@ class ByteCodeVM {
 
     private void iEqual() {
         inst_ptr++;
-        long left = ipop();
         long right = ipop();
+        long left = ipop();
         if(left == right) {
             ipush(1);
         } else {

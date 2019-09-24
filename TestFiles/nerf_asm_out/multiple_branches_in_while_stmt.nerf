@@ -1,0 +1,19 @@
+fn main() int {
+    int a := 0;
+    while(1 == 2) {
+        if(a >= 0) {
+            if(a >= 0) {
+                int b := 1;
+            } else {
+                int c := 2;
+            }
+        } else {
+            if(a <= 0) {
+                int d := 3;
+            } else {
+                int e := 4;
+            }
+        }
+    }
+    return 0;
+}

@@ -7,7 +7,7 @@ import std.stdio;
 import std.string: chomp, split;
 import std.algorithm: startsWith;
 import std.stdio;
-
+import tree_linking: link_ast_branches, generate_parent_for_first_level;
 
 // Need one of these for each function
 // used to label each branching logic statement.
@@ -29,9 +29,12 @@ class IdGenerator {
 string[] compile(Function[] program) {
     string[] assembly;
     Function fn_main;
-    for(long i = 0; i < program.length; i++) {
+    //for(long i = 0; i < program.length; i++) {
+    for(long i = program.length - 1; i >= 0;  i--) { 
         name_every_statement_uniquely(program[i]);
-        link_branching_with_alternate_branches(program[i].get_statements());
+        //link_branching_with_alternate_branches(program[i].get_statements());
+        link_statements_with_alterative_execution_paths(program[i].get_statements());
+        //link_branching_with_alternate_branches(program[i].get_statements());
         if(program[i].get_name() == "main") {
             fn_main = program[i];
         }
@@ -41,14 +44,14 @@ string[] compile(Function[] program) {
     foreach(Statement* s; main_statements) {
         s.func_name = fn_main.get_name();
     }
-    string[] variable_names = fn_main.get_var_names();
+    string[] variable_names = remove_dups(fn_main.get_var_names());
     write_out_statements(&assembly, main_statements, &variable_names, fn_main.get_return_type());
     write_out_return_statement(&assembly, fn_main.get_name(), fn_main.get_return_type());
     foreach(Function func; program) {
         if(func.get_name() == "main") {
             continue;
         }
-        stderr.writeln("Should not reach this if only func is main.");
+        ////stderr.writeln("Should not reach this if only func is main.");
         assembly ~= "`" ~ func.get_name();
         write_out_args(&assembly, func);
         write_out_locals(&assembly, func);
@@ -56,7 +59,7 @@ string[] compile(Function[] program) {
         foreach(Statement* s; stmts) {
             s.func_name = func.get_name();
         }
-        variable_names = func.get_var_names();
+        variable_names = remove_dups(func.get_var_names());
         write_out_statements(&assembly, stmts, &variable_names, func.get_return_type());
         write_out_return_statement(&assembly, func.get_name(), func.get_return_type());
     }
@@ -64,6 +67,38 @@ string[] compile(Function[] program) {
         assembly[i] = chomp(assembly[i]);
     }
     return assembly;
+}
+
+
+void link_statements_with_alterative_execution_paths(Statement*[] statements) {
+    generate_parent_for_first_level(statements);
+    link_ast_branches(statements);
+}
+
+string[] remove_dups(string[] variables) {
+    string[] unique_list;
+    for(long i = 0; i < variables.length; i++) {
+        bool found = false;
+        for(long j = i+1; j < variables.length; j++) {
+            if(variables[i] == variables[j]) {
+                found = true;
+                break;
+            }
+        }
+        if(!found) {
+            found = false;
+            for(long k = 0; k < unique_list.length; k++) {
+                if(variables[i] == unique_list[k]) {
+                    found = true;
+                    break;
+                }
+            }
+            if(!found) {
+                unique_list ~= variables[i];
+            }
+        }
+    }
+    return unique_list;
 }
 
 void write_out_args(string[] *assembly, Function func) {
@@ -149,18 +184,21 @@ void write_out_statements(
                 break;
             case StatementTypes.if_statement:
             case StatementTypes.else_if_statement:
+                //bool next_stmt_not_branch = next_is_branch(all_statements, i);
                 write_out_branch_logic(statement, assembly, &variable_names, func_return_type);
                 break;
             case StatementTypes.else_statement:
                 write_out_statements(assembly, statement.stmts, &variable_names, func_return_type);
-                *assembly ~= "JUMP";
-                *assembly ~= statement.end_branch_name;
+                //if(i < all_statements.length - 1) {
+                //    *assembly ~= "JUMP";
+                 //   *assembly ~= statement.end_branch_name;
+                //}
                 break;
             case StatementTypes.while_statement:
-                //TODO: write_out_loop_logic();
+                write_out_loop_logic(statement, assembly, &variable_names, func_return_type);
                 break;
             case StatementTypes.continue_statement:
-                //TODO: write_out_continue_statement();
+                write_out_continue_statement(statement, assembly, &variable_names);
                 break;
             case StatementTypes.print_statement:
                 write_out_print_statement(statement, assembly, &variable_names);
@@ -176,7 +214,7 @@ void write_out_statements(
                 );
                 break;
             case StatementTypes.break_statement:
-                //TODO: write_out_break_statement();
+                write_out_break_statement(statement, assembly, &variable_names);
                 break;
             default:
                 throw new Exception("AST TO ASM ERROR: Could not find matching type while writing out asm for " ~ statement.name);
@@ -220,9 +258,11 @@ void process_return_expressions (
             func_name
         );
     }
-    *assembly ~= "JUMP";
-    *assembly ~= "return_" ~ func_name;
-
+    if(i != statements_length - 1 || 
+      (statement.parent !is null && statement.parent.stmt_name != "top")) {
+        *assembly ~= "JUMP";
+        *assembly ~= "return_" ~ func_name;
+    }
 }
 
 bool is_prefix(Expression* root) {
@@ -448,8 +488,7 @@ string int_as_string(long value) {
     return return_val;
 }
 
-// This can go wrong if the function
-// length is a insanely huge number.
+// This can go wrong if it is a insanely huge number.
 void increment_array(char[] str_num, char[] digits) {
     long start = str_num.length - 1;
     while(start >= 0) {
@@ -478,6 +517,18 @@ void name_every_statement_uniquely(Function func) {
     foreach(Statement* statement; func.get_statements()) {
         statement.func_name = func.get_name();
         name_statement(statement, gen);
+        set_parent(statement, statement.stmts);
+    }
+}
+
+// apparently this wasen't done during parsing. (bug fix)
+void set_parent(Statement* parent, Statement*[] children) {
+    if(children is null) {
+        return;
+    }
+    foreach(Statement* child; children) {
+        child.parent = parent;
+        set_parent(child, child.stmts);
     }
 }
 
@@ -529,48 +580,6 @@ string type_name(Statement* statement) {
     }
     return type;
 }
-
-void link_branching_with_alternate_branches(Statement*[] statements) {
-    if(statements is null || statements.length < 1) {
-        return;
-    }
-    for(long i = 0; i < statements.length; i++) {
-        if(
-            statements[i].stmt_type == StatementTypes.if_statement || 
-            statements[i].stmt_type == StatementTypes.else_if_statement
-        ) {
-            statements[i].alt_branch_name = get_next_branch_name(statements[i+1]);
-            statements[i].end_branch_name = find_last_connected_branch(statements, i + 1);
-            if(statements[i].alt_branch_name is null || statements[i].alt_branch_name == "") {
-                statements[i].alt_branch_name = statements[i].end_branch_name;
-            }
-        } else if(statements[i].stmt_type == StatementTypes.else_statement) {
-            statements[i].end_branch_name = find_last_connected_branch(statements, i + 1);
-            statements[i].alt_branch_name = statements[i].end_branch_name;
-        }
-        link_branching_with_alternate_branches(statements[i].stmts);
-    }
-}
-
-string get_next_branch_name(Statement* statement) {
-    if(statement.stmt_type == StatementTypes.else_if_statement) {
-        return statement.stmt_name;
-    } else if(statement.stmt_type == StatementTypes.else_statement) {
-        return statement.stmt_name;
-    }
-    return "";
-}
-
-string find_last_connected_branch(Statement*[] statements, long index) {
-    for(; index < statements.length; index++) {
-        if(statements[index].stmt_type != StatementTypes.else_if_statement &&
-           statements[index].stmt_type != StatementTypes.else_statement) {
-            break;
-        }
-    }
-    return statements[index].stmt_name;
-}
-
 
 string get_operator_string(string operator) {
     string asm_operator;
@@ -642,12 +651,67 @@ void write_out_branch_logic (
     *assembly ~= "iPUSHc";
     *assembly ~= "1";
     *assembly ~= "iJUMPNEQ";
-    if(statement.end_branch_name !is null && statement.end_branch_name != "") {
+    *assembly ~= statement.alt_branch_name;
+    write_out_statements(assembly, statement.stmts, variable_names, func_return_type);
+    if((*assembly)[assembly.length-2] != "JUMP" && statement.end_branch_name !is null) {
+        *assembly ~= "JUMP";
+        *assembly ~= statement.end_branch_name;
+    }
+}
+
+void write_out_loop_logic(
+        Statement* statement, 
+        string[] *assembly, 
+        string[] *variable_names, 
+        long func_return_type
+    ) {
+    process_expression_by_type(
+        assembly, 
+        statement.syntax_tree, 
+        variable_names,
+        statement.func_name
+    );
+    *assembly ~= "iPUSHc";
+    *assembly ~= "1";
+    *assembly ~= "iJUMPNEQ";
+    if(statement.alt_branch_name !is null && statement.alt_branch_name != "") {
         *assembly ~= statement.alt_branch_name;        
     } else {
         *assembly ~= statement.end_branch_name;
     }
     write_out_statements(assembly, statement.stmts, variable_names, func_return_type);
     *assembly ~= "JUMP";
-    *assembly ~= statement.end_branch_name;
+    *assembly ~= statement.stmt_name;
+}
+
+void write_out_continue_statement(Statement* statement, string[] *assembly, string[] *variable_names) {
+    Statement* parent = statement.parent;
+    while(parent !is null) {
+        if(parent.stmt_type == StatementTypes.while_statement) {
+            *assembly ~= "JUMP";
+            *assembly ~= parent.stmt_name;
+            break;
+        } else {
+            parent = parent.parent;
+        }
+    }
+    if(parent is null) {
+       throw new Exception("AST to ASM ERROR: no parent while statement found.");
+    }
+}
+
+void write_out_break_statement(Statement* statement, string[] *assembly, string[] *variable_names) {
+    Statement* parent = statement.parent;
+    while(parent !is null) {
+        if(parent.stmt_type == StatementTypes.while_statement) {
+            *assembly ~= "JUMP";
+            *assembly ~= parent.alt_branch_name;
+            break;
+        } else {
+            parent = parent.parent;
+        }
+    }
+    if(parent is null) {
+       throw new Exception("AST to ASM ERROR: no parent while statement found.");
+    }
 }

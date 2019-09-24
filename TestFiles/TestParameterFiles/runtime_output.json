@@ -1,0 +1,10 @@
+{
+    "exe": "./nerf ",
+    "dir": "./TestFiles/runtime_output/",
+    "preamble": "Running tests for nerf runtime...",
+    "postamble": "Tests for nerf runtime successful!",
+    "tests":
+    [
+        ""
+    ]
+}

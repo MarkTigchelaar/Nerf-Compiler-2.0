@@ -15,11 +15,37 @@ class Function {
     }
 
     public Variable*[] get_arguments() {
-        return arguments;
+        Variable*[] temp;
+        foreach(Variable* candidate; arguments) {
+            bool duplicate = false;
+            foreach(Variable* sendable_arg; temp) {
+                if(candidate.name == sendable_arg.name) {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if(!duplicate) {
+                temp ~= candidate;
+            }
+        }
+        return temp;
     }
 
     public Variable*[] get_local_variables() {
-        return locals;
+        Variable*[] temp;
+        foreach(Variable* candidate; locals) {
+            bool duplicate = false;
+            foreach(Variable* sendable_arg; temp) {
+                if(candidate.name == sendable_arg.name) {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if(!duplicate) {
+                temp ~= candidate;
+            }
+        }
+        return temp;
     }
 
     public void add_argument(Variable* argument) {

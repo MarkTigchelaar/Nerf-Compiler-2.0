@@ -1,0 +1,6 @@
+fn main() int {
+    if(1 < 2) {
+        int p := 0;
+    }
+    return 0;
+}
