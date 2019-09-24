@@ -342,9 +342,14 @@ class ByteCodeVM {
     }
 
     private void iexp() {
+        import std.math: pow;
         inst_ptr++;
         long exponent = ipop();
-        ipush(ipop() ^ exponent);
+        if(exponent < 0) {
+            ipush(0);
+        } else {
+            ipush(pow(ipop(), exponent));
+        }
     }
 
     private void imod() {

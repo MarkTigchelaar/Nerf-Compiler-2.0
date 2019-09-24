@@ -1,0 +1,4 @@
+fn main() int {
+    print(10 % 8);
+    return 0;
+}

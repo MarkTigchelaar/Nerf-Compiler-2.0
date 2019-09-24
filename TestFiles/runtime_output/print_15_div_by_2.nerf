@@ -1,0 +1,4 @@
+fn main() int {
+    print(15 / 2);
+    return 0;
+}

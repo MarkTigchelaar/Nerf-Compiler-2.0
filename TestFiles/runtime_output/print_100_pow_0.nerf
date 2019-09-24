@@ -1,0 +1,4 @@
+fn main() int {
+    print(100 ^ 0);
+    return 0;
+}

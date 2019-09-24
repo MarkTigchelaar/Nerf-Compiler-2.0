@@ -11,6 +11,91 @@
             [
                 "10"
             ]
+        },
+        {
+            "test_file_name": "print_ints.nerf",
+            "expected_output_per_line": 
+            [
+                "-9223372036854775808",
+                "9223372036854775807"
+            ]
+        },
+        {
+            "test_file_name": "print_1_plus_2.nerf",
+            "expected_output_per_line": 
+            [
+                "3"
+            ]
+        },
+        {
+            "test_file_name": "print_1_minus_2.nerf",
+            "expected_output_per_line": 
+            [
+                "-1"
+            ]
+        },
+        {
+            "test_file_name": "print_2_times_2.nerf",
+            "expected_output_per_line": 
+            [
+                "4"
+            ]
+        },
+        {
+            "test_file_name": "print_1_div_by_2.nerf",
+            "expected_output_per_line": 
+            [
+                "0"
+            ]
+        },
+        {
+            "test_file_name": "print_1_mod_2.nerf",
+            "expected_output_per_line": 
+            [
+                "1"
+            ]
+        },
+        {
+            "test_file_name": "print_10_mod_8.nerf",
+            "expected_output_per_line": 
+            [
+                "2"
+            ]
+        },
+        {
+            "test_file_name": "print_2_times_15.nerf",
+            "expected_output_per_line": 
+            [
+                "30"
+            ]
+        },
+        {
+            "test_file_name": "print_15_div_by_2.nerf",
+            "expected_output_per_line": 
+            [
+                "7"
+            ]
+        },
+        {
+            "test_file_name": "print_2_pow_5.nerf",
+            "expected_output_per_line": 
+            [
+                "32"
+            ]
+        },
+        {
+            "test_file_name": "print_100_neg_pow_2.nerf",
+            "expected_output_per_line": 
+            [
+                "0"
+            ]
+        },
+        {
+            "test_file_name": "print_100_pow_0.nerf",
+            "expected_output_per_line": 
+            [
+                "1"
+            ]
         }
     ]
 }

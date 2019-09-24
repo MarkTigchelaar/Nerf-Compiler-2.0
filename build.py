@@ -19,6 +19,9 @@ Useage:
     -useage :
         Displays this useage message.
 
+    -runtime :
+        runs through runtime tests.
+
     default :
         builds optimized interpreter.
 """
@@ -56,6 +59,8 @@ def build():
         build_assembler(test)
     elif arg == '-test':
         build_asm_out()
+    elif arg == '-runtime':
+        build_runtime_test()
     else:
         build_release()
     
@@ -143,6 +148,10 @@ def build_assembler(test):
         test_system(['asm'])
         os.system('rm ClunkASM ClunkASM.o')
 
-
+def build_runtime_test():
+    build_unittest()
+    test_system(['runtime_output'])
+    os.system('rm nerf nerf.o')
+    
 if __name__ == '__main__':
     build()
