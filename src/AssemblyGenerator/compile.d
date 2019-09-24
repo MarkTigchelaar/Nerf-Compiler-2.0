@@ -29,12 +29,9 @@ class IdGenerator {
 string[] compile(Function[] program) {
     string[] assembly;
     Function fn_main;
-    //for(long i = 0; i < program.length; i++) {
     for(long i = program.length - 1; i >= 0;  i--) { 
         name_every_statement_uniquely(program[i]);
-        //link_branching_with_alternate_branches(program[i].get_statements());
         link_statements_with_alterative_execution_paths(program[i].get_statements());
-        //link_branching_with_alternate_branches(program[i].get_statements());
         if(program[i].get_name() == "main") {
             fn_main = program[i];
         }
@@ -51,7 +48,6 @@ string[] compile(Function[] program) {
         if(func.get_name() == "main") {
             continue;
         }
-        ////stderr.writeln("Should not reach this if only func is main.");
         assembly ~= "`" ~ func.get_name();
         write_out_args(&assembly, func);
         write_out_locals(&assembly, func);
@@ -146,9 +142,6 @@ string get_var_type(Statement* statement) {
     return "ch";
 }
 
-/*
-    revisit this for handling edge cases.
-*/
 string get_var_type_for_expression(Expression* expression) {
     if(expression.left is null && expression.right is null) {
         if(expression.var_type == PrimitiveTypes.Integer) {
@@ -184,15 +177,10 @@ void write_out_statements(
                 break;
             case StatementTypes.if_statement:
             case StatementTypes.else_if_statement:
-                //bool next_stmt_not_branch = next_is_branch(all_statements, i);
                 write_out_branch_logic(statement, assembly, &variable_names, func_return_type);
                 break;
             case StatementTypes.else_statement:
                 write_out_statements(assembly, statement.stmts, &variable_names, func_return_type);
-                //if(i < all_statements.length - 1) {
-                //    *assembly ~= "JUMP";
-                 //   *assembly ~= statement.end_branch_name;
-                //}
                 break;
             case StatementTypes.while_statement:
                 write_out_loop_logic(statement, assembly, &variable_names, func_return_type);
