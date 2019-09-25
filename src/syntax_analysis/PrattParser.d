@@ -56,7 +56,7 @@ public:
             return null;
         }
         check_last_index(rvalues);
-        int index = 0;
+        int index = 0; // terrible, but I'm leaving it for now.
         return build_ast(rvalues, 0, &index);
     }
 
@@ -157,7 +157,9 @@ private:
         current.var_type = vartype;
         Expression* right = build_ast(exptokens, rank - rank_reduce, index);
         if(current.var_name == right.var_name) {
-            multiple_minus_signs();
+            if(current.var_name != "^") {
+                multiple_minus_signs();
+            }
         }
         current.right = right;
         current.left = left;

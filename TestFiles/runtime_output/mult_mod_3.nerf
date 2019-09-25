@@ -1,0 +1,5 @@
+fn main() int {
+    int a := 11 * 11 % -2;
+    print(a);
+    return 0;
+}

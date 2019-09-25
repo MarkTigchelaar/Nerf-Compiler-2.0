@@ -180,6 +180,90 @@
             [
                 "11"
             ]
+        },
+        {
+            "test_file_name": "mult_mod_3.nerf",
+            "expected_output_per_line": 
+            [
+                "1"
+            ]
+        },
+        {
+            "test_file_name": "mult_mod_4.nerf",
+            "expected_output_per_line": 
+            [
+                "11"
+            ]
+        },
+        {
+            "test_file_name": "mult_plus_1.nerf",
+            "expected_output_per_line": 
+            [
+                "123"
+            ]
+        },
+        {
+            "test_file_name": "plus_exp_1.nerf",
+            "expected_output_per_line": 
+            [
+                "132"
+            ]
+        },
+        {
+            "test_file_name": "mult_exp_1.nerf",
+            "expected_output_per_line": 
+            [
+                "1210"
+            ]
+        },
+        {
+            "test_file_name": "mult_exp_2.nerf",
+            "expected_output_per_line": 
+            [
+                "-270"
+            ]
+        },
+        {
+            "test_file_name": "plus_exp_2.nerf",
+            "expected_output_per_line": 
+            [
+                "-17"
+            ]
+        },
+        {
+            "test_file_name": "plus_exp_3.nerf",
+            "expected_output_per_line": 
+            [
+                "7"
+            ]
+        },
+        {
+            "test_file_name": "exp_exp_1.nerf",
+            "expected_output_per_line": 
+            [
+                "256"
+            ]
+        },
+        {
+            "test_file_name": "exp_exp_2.nerf",
+            "expected_output_per_line": 
+            [
+                "81"
+            ]
+        },
+        {
+            "test_file_name": "exp_exp_3.nerf",
+            "expected_output_per_line": 
+            [
+                "18"
+            ]
+        },
+        {
+            "test_file_name": "more_exp_1.nerf",
+            "expected_output_per_line": 
+            [
+                "21"
+            ]
         }
     ]
 }
