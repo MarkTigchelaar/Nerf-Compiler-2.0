@@ -70,10 +70,24 @@
             ]
         },
         {
+            "test_file_name": "print_neg_2_mult_neg_2.nerf",
+            "expected_output_per_line": 
+            [
+                "4"
+            ]
+        },
+        {
             "test_file_name": "print_15_div_by_2.nerf",
             "expected_output_per_line": 
             [
                 "7"
+            ]
+        },
+        {
+            "test_file_name": "print_neg_2_div_neg_2.nerf",
+            "expected_output_per_line": 
+            [
+                "1"
             ]
         },
         {
@@ -95,6 +109,76 @@
             "expected_output_per_line": 
             [
                 "1"
+            ]
+        },
+        {
+            "test_file_name": "plus_minus_1.nerf",
+            "expected_output_per_line": 
+            [
+                "7"
+            ]
+        },
+        {
+            "test_file_name": "plus_mult_1.nerf",
+            "expected_output_per_line": 
+            [
+                "20"
+            ]
+        },
+        {
+            "test_file_name": "plus_mult_2.nerf",
+            "expected_output_per_line": 
+            [
+                "25"
+            ]
+        },
+        {
+            "test_file_name": "plus_mult_3.nerf",
+            "expected_output_per_line": 
+            [
+                "0"
+            ]
+        },
+        {
+            "test_file_name": "plus_mult_4.nerf",
+            "expected_output_per_line": 
+            [
+                "0"
+            ]
+        },
+        {
+            "test_file_name": "mult_div_1.nerf",
+            "expected_output_per_line": 
+            [
+                "4"
+            ]
+        },
+        {
+            "test_file_name": "plus_mod_1.nerf",
+            "expected_output_per_line": 
+            [
+                "10"
+            ]
+        },
+        {
+            "test_file_name": "plus_mod_2.nerf",
+            "expected_output_per_line": 
+            [
+                "0"
+            ]
+        },
+        {
+            "test_file_name": "mult_mod_1.nerf",
+            "expected_output_per_line": 
+            [
+                "1"
+            ]
+        },
+        {
+            "test_file_name": "mult_mod_2.nerf",
+            "expected_output_per_line": 
+            [
+                "11"
             ]
         }
     ]

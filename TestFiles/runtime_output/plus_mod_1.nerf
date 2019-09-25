@@ -1,0 +1,5 @@
+fn main() int {
+    int a := 10 + 10 % 2;
+    print(a);
+    return 0;
+}
