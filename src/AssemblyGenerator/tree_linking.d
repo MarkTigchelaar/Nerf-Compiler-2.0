@@ -20,6 +20,9 @@ void link_statements_on_this_level(Statement*[] statements) {
             statements[last].alt_branch_name = statements[last].stmt_name; // this is causing the issue, next recursive call overwrites end branch
             statements[last].end_branch_name = statements[last].stmt_name;
         }
+    } else if(is_assignment(statements[last])) {
+        statements[last].alt_branch_name = statements[last].stmt_name;
+        statements[last].end_branch_name = statements[last].stmt_name;
     }
     for(long i = 0; i < last; i++) {
         statements[i].alt_branch_name = statements[i + 1].stmt_name;
@@ -51,10 +54,12 @@ void link_end_of_scope_jump_destination(long index, Statement*[] statements) {
     if(index == last) {
         index = last - 1;
     }
-    if(index == last - 1) {
+    if(index == last - 1 && index > current + 1) {
         statements[current].end_branch_name = statements[index].end_branch_name;
     } else if(index > current + 1) {
         statements[current].end_branch_name = statements[index].stmt_name;
+    } else if(index == current + 1) {
+        statements[current].end_branch_name = null;
     }
 }
 
@@ -129,4 +134,14 @@ void generate_parent_for_first_level(Statement*[] statements) {
         statement.parent = _parent;
     }
     _parent.stmts = statements;
+}
+
+bool is_assignment(Statement* statement) {
+    if(statement.stmt_type == StatementTypes.assign_statement) {
+        return true;
+    }
+    if(statement.stmt_type == StatementTypes.re_assign_statement) {
+        return true;
+    }
+    return false;
 }
