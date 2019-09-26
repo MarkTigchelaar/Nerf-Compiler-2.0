@@ -359,6 +359,55 @@
                 "13",
                 "14"
             ]
+        },
+        {
+            "test_file_name": "while_loop_if_elseif_else_1.nerf",
+            "expected_output_per_line": 
+            [
+                "1",
+                "25",
+                "103",
+                "25",
+                "105"
+            ]
+        },
+        {
+            "test_file_name": "while_loop_with_continue.nerf",
+            "expected_output_per_line": 
+            [
+                "0",
+                "2",
+                "4",
+                "6",
+                "8"
+            ]
+        },
+        {
+            "test_file_name": "while_loop_with_break.nerf",
+            "expected_output_per_line": 
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4"
+            ]
+        },
+        {
+            "test_file_name": "while_loop_with_break_and_continue.nerf",
+            "expected_output_per_line": 
+            [
+                "1",
+                "3"
+            ]
+        },
+        {
+            "test_file_name": "nested_while_loops.nerf",
+            "expected_output_per_line": 
+            [
+                "4",
+                "1"
+            ]
         }
     ]
 }

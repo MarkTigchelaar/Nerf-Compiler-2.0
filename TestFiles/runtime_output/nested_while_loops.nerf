@@ -1,0 +1,24 @@
+fn main() int {
+    int a := 1;
+    int b := a + 1;
+    while(a <= 3) {
+        if(a == 2) {
+            a := 1 + a;
+            continue;
+        }
+        while(b > 0) {
+            if(a == 3) {
+                break;
+            } else if(b == 2) {
+                b := 4;
+            } else if(b == 3) {
+                b := 1;
+                continue;
+            }
+            print(b);
+            b := b - 1;
+        }
+        a := 1 + a;
+    }
+    return 0;
+}
