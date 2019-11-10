@@ -392,7 +392,7 @@ string get_close_match(string sep) {
     }
     return match;    
 }
-
+// Will add arrays to language soon
 string[] key_words() {
         string[] kw = [
             "fn",
@@ -400,9 +400,9 @@ string[] key_words() {
             "char",
             "bool",
             //float,
-            "int[]",
-            "char[]",
-            "bool[]",
+            //"int[]",
+            //"char[]",
+            //"bool[]",
             //float[],
             "True",
             "False",

@@ -251,6 +251,9 @@ class StatementParser {
         print_statement.func_name = func.get_name();
         lexer.set_init_token_type_for_collection(open_paren);
         string[] printable_stuff = lexer.collect_scoped_tokens();
+        if(printable_stuff.length < 1) {
+            empty_print();
+        }
         print_statement.built_in_args = exp_parser.parse_func_call_arg_expressions(printable_stuff);
         if(!lexer.has_tokens()) {
             invalid_statement();

@@ -31,7 +31,7 @@ string[] compile(Function[] program) {
     Function fn_main;
     for(long i = program.length - 1; i >= 0;  i--) { 
         name_every_statement_uniquely(program[i]);
-        link_statements_with_alterative_execution_paths(program[i].get_statements());
+        link_statements_with_alterative_execution_paths(program[i].get_statements(), program[i].get_name());
         if(program[i].get_name() == "main") {
             fn_main = program[i];
         }
@@ -62,13 +62,15 @@ string[] compile(Function[] program) {
     for(long i = 0; i < assembly.length; i++) {
         assembly[i] = chomp(assembly[i]);
     }
+    assembly = remove_redundant_jumps(assembly);
     return assembly;
 }
 
 
-void link_statements_with_alterative_execution_paths(Statement*[] statements) {
-    generate_parent_for_first_level(statements);
-    link_ast_branches(statements);
+void link_statements_with_alterative_execution_paths(Statement*[] statements, string fn_name) {
+    Statement* parent = generate_parent_for_first_level(statements);
+    parent.func_name = fn_name;
+    link_ast_branches(parent);
 }
 
 string[] remove_dups(string[] variables) {
@@ -385,7 +387,9 @@ void process_expression_by_type(
     string[] *variable_names,
     string func_name
 ) {
-    if(is_prefix(root)) {
+    if(root is null) {
+        return;
+    } else if(is_prefix(root)) {
         write_out_prefix_expression(
             assembly, 
             root, 
@@ -641,10 +645,8 @@ void write_out_branch_logic (
     *assembly ~= "iJUMPNEQ";
     *assembly ~= statement.alt_branch_name;
     write_out_statements(assembly, statement.stmts, variable_names, func_return_type);
-    if((*assembly)[assembly.length-2] != "JUMP" && statement.end_branch_name !is null) {
-        *assembly ~= "JUMP";
-        *assembly ~= statement.end_branch_name;
-    }
+    *assembly ~= "JUMP";
+    *assembly ~= statement.end_branch_name;
 }
 
 void write_out_loop_logic(
@@ -702,4 +704,34 @@ void write_out_break_statement(Statement* statement, string[] *assembly, string[
     if(parent is null) {
        throw new Exception("AST to ASM ERROR: no parent while statement found.");
     }
+}
+
+string[] remove_redundant_jumps(string[] assembly) {
+    string[] reduced_asm;
+    string[] label_and_inst = null;
+    string label = null;
+    for(long i = assembly.length - 1; i >= 2; i--) {
+        reduced_asm ~= assembly[i];
+        if(startsWith(assembly[i], ">")) {
+            label_and_inst = split(assembly[i], ":");
+            label = label_and_inst[0][1..$];
+            while(i >= 2) {
+                if(assembly[i-1] == label && assembly[i-2] == "JUMP") {
+                    i -= 2;
+                } else {
+                    break;
+                } 
+            }
+        }
+    }
+    reduced_asm ~= assembly[1];
+    reduced_asm ~= assembly[0];
+    for(long i = 0; i < reduced_asm.length / 2; i++) {
+        long other_location = reduced_asm.length - i - 1;
+        string temp = null;
+        temp = reduced_asm[i];
+        reduced_asm[i] = reduced_asm[other_location];
+        reduced_asm[other_location] = temp;
+    }
+    return reduced_asm;
 }

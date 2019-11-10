@@ -77,7 +77,7 @@ class ByteCodeVM {
         import std.stdio: write, writeln;
         writeln("stack length: ", stack.length);
         writeln("Stack:");
-        for(long i = 0; i < 1000; i++) {
+        for(long i = 0; i < 200; i++) {
             ubyte bt = stack[i];
             if(i == stk_ptr) {
                 write('(');
@@ -102,6 +102,10 @@ class ByteCodeVM {
                 write("| ");
             } else {
                 write(", ");
+            }
+
+            if(i % 31 == 0 && i > 0) {
+                writeln();
             }
         }
         writeln('\n');
@@ -794,7 +798,7 @@ class ByteCodeVM {
         dec_func_depth();
         long i_ret_val = ipop();
         ulong func_size = cast(ulong) ipop();
-        ulong temp_stk_ptr = (inst_ptr + 17) - func_size - 1;
+        ulong temp_stk_ptr = inst_ptr- func_size;
         inst_ptr = cast(ulong) ipop();
         stk_ptr = temp_stk_ptr;
         ipush(i_ret_val);
@@ -803,7 +807,7 @@ class ByteCodeVM {
     private void chreturn() {
         ubyte ch_ret_val = pop();
         ulong func_size = cast(ulong) ipop();
-        ulong temp_stk_ptr = (inst_ptr + 17) - func_size - 1;
+        ulong temp_stk_ptr = inst_ptr- func_size;
         inst_ptr = cast(ulong) ipop();
         stk_ptr = temp_stk_ptr;
         push(ch_ret_val);

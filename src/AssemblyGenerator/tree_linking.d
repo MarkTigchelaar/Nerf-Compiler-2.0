@@ -3,145 +3,178 @@ module tree_linking;
 import structures: Variable, Statement, Expression, StatementTypes;
 import std.stdio;
 
-void link_ast_branches(Statement*[] statements) {
-    if(statements is null) { return; }
-    link_statements_on_this_level(statements);
-    link_last_sub_statement_for_each_statement(statements);
-    //link_loop_shortcuts_to_while_loop(statements);
-    foreach(Statement* statement; statements) {
-        link_ast_branches(statement.stmts);
-    }
-}
-
-void link_statements_on_this_level(Statement*[] statements) {
-    long last = statements.length - 1;
-    if(statements[last].alt_branch_name is null) {
-        if(statements[last].end_branch_name is null) {
-            statements[last].alt_branch_name = statements[last].stmt_name; // this is causing the issue, next recursive call overwrites end branch
-            statements[last].end_branch_name = statements[last].stmt_name;
-        }
-    } else if(is_assignment(statements[last])) {
-        statements[last].alt_branch_name = statements[last].stmt_name;
-        statements[last].end_branch_name = statements[last].stmt_name;
-    }
-    for(long i = 0; i < last; i++) {
-        statements[i].alt_branch_name = statements[i + 1].stmt_name;
-        if(statements[i].stmt_type == StatementTypes.while_statement) {
-            statements[i].end_branch_name = statements[i].stmt_name;
-        } else if(statements[i].stmt_type == StatementTypes.else_statement) {
-            statements[i].end_branch_name = statements[i + 1].stmt_name;
-        } else {
-            link_end_of_scope_jump_destination(i, statements);
-        }
-    }
-}
-
-void link_end_of_scope_jump_destination(long index, Statement*[] statements) {
-    if(!is_branching_logic(statements[index])
-       ) { 
-           return; 
-    }
-    long last = statements.length;
-    long current = index;
-    index++;
-    while(index < last) {
-        if(is_alt_branching_logic(statements[index])) {
-            index++;
-        } else {
-            break;
-        }
-    }
-    if(index == last) {
-        index = last - 1;
-    }
-    if(index == last - 1 && index > current + 1) {
-        statements[current].end_branch_name = statements[index].end_branch_name;
-    } else if(index > current + 1) {
-        statements[current].end_branch_name = statements[index].stmt_name;
-    } else if(index == current + 1) {
-        statements[current].end_branch_name = null;
-    }
-}
-
-bool is_branching_logic(Statement* statement) {
-    int type = statement.stmt_type;
-    return (type == StatementTypes.if_statement || type == StatementTypes.else_if_statement);
-}
-
-bool is_alt_branching_logic(Statement* statement) {
-    int type = statement.stmt_type;
-    return (type == StatementTypes.else_statement || type == StatementTypes.else_if_statement);
-}
-
-bool should_stop(Statement* statement) {
-    bool stop;
-    if(is_branching_logic(statement)) {
-        stop = false;
-    } else if(statement.stmt_type == StatementTypes.else_statement) {
-        stop = false;
-    } else {
-        stop = true;
-    }
-    return stop;
-}
-
-void link_last_sub_statement_for_each_statement(Statement*[] statements) {
-    if(statements is null || statements.length < 1) { return; }
-    for(long i = 0; i < statements.length; i++) {
-        Statement* statement = statements[i];
-        if(statement.stmts is null) { continue; }
-        Statement* last = statement.stmts[statement.stmts.length - 1];
-
-        if(statement.stmt_type == StatementTypes.while_statement) {
-            last.end_branch_name = statement.stmt_name;
-            last.alt_branch_name = statement.stmt_name;
-        } else if(statement.end_branch_name !is null && statement.end_branch_name != "") {
-            last.alt_branch_name = statement.end_branch_name;
-            last.end_branch_name = statement.end_branch_name;
-        } else {
-            Statement* next_stmt = get_parents_next_statement(statement);
-           last.alt_branch_name = next_stmt.end_branch_name;
-            last.end_branch_name = next_stmt.end_branch_name;
-        }
-    }
-}
-
-Statement* get_parents_next_statement(Statement* statement) {
-    if(statement.stmt_name == "top") {
-        throw new Exception("INTERNAL ERROR: Hit top statement inside parent retrieval function.");
-    }
-    while(last_statement_in_scope(statement)) {
-        statement = statement.parent;
-    }
-    return statement;
-}
-
-bool last_statement_in_scope(Statement* statement) {
-    if(statement.stmt_name == "top") {
-        return false;
-    }
-    Statement* prt = statement.parent;
-    if(prt.stmts[prt.stmts.length-1] == statement) {
-        return true;
-    }
-    return false;
-}
-
-void generate_parent_for_first_level(Statement*[] statements) {
+/*
+    The branching logic needs to know where to jump to under any condition.
+    This module is for stringing together the branching logic in the AST.
+    This is used by the compiler to convert the tree structure into assembly.
+*/
+Statement* generate_parent_for_first_level(Statement*[] statements) {
     Statement* _parent = new Statement();
     _parent.stmt_name = "top";
     foreach(Statement* statement; statements) {
         statement.parent = _parent;
     }
     _parent.stmts = statements;
+    _parent.alt_branch_name = statements[statements.length - 1].stmt_name;
+    _parent.end_branch_name = statements[statements.length - 1].stmt_name;
+
+    return _parent;
 }
 
-bool is_assignment(Statement* statement) {
-    if(statement.stmt_type == StatementTypes.assign_statement) {
-        return true;
+void link_ast_branches(Statement* parent) {
+    if(parent is null) { return; }
+    link_statements_on_this_level(parent);
+    foreach_reverse(Statement* statement; parent.stmts) {
+        link_ast_branches(statement);
     }
-    if(statement.stmt_type == StatementTypes.re_assign_statement) {
-        return true;
+}
+
+void link_statements_on_this_level(Statement* parent) {
+    if(parent.stmts is null) {
+        return;
     }
-    return false;
+    Statement* last = parent.stmts[parent.stmts.length - 1];
+    last.func_name = parent.func_name;
+    link_to_stmt_after_parent(last);
+    
+    for(long i = parent.stmts.length - 2; i >= 0; i--) {
+        Statement* current = parent.stmts[i];
+        current.func_name = parent.func_name;
+        link_while_statement(current, parent.stmts[i+1]);
+        link_else_statement(current, parent.stmts[i+1]);
+        link_assign_statement(current, parent.stmts[i+1]);
+        link_if_statement(current, parent.stmts[i+1]);
+        link_else_if_statement(current, parent.stmts[i+1]);
+        link_built_in_statement(current, parent.stmts[i+1]);
+        link_return_statement(current);
+        link_break_statement(current);
+        link_continue_statement(current);
+    }
+}
+
+void link_to_stmt_after_parent(Statement* current) {
+    Statement* original = current;
+    Statement* compare = null;
+    if(current.parent.stmt_type == StatementTypes.while_statement) {
+        current.alt_branch_name = current.parent.stmt_name;
+        current.end_branch_name = current.parent.stmt_name;
+    } else {
+        current.alt_branch_name = current.parent.end_branch_name;
+        current.end_branch_name = current.parent.end_branch_name;
+    }
+}
+
+Statement* get_next_statement(Statement* compare, Statement*[] statements) {
+    for(long i = 0; i < statements.length; i++) {
+        if(statements[i] == compare) {
+            if(i+1 < statements.length) {
+                return statements[i+1];
+            } else {
+                return null;
+            }
+        }
+    }
+    assert(0);
+}
+
+void link_while_statement(Statement* current, Statement* next) {
+    if(current.stmt_type != StatementTypes.while_statement) {
+        return;
+    }
+    current.end_branch_name = next.stmt_name;
+    current.alt_branch_name = next.stmt_name;
+}
+
+void link_else_statement(Statement* current, Statement* next) {
+    if(current.stmt_type != StatementTypes.else_statement) {
+        return;
+    }
+    current.end_branch_name = next.stmt_name;
+    current.alt_branch_name = next.stmt_name;
+}
+
+void link_assign_statement(Statement* current, Statement* next) {
+    if(current.stmt_type != StatementTypes.assign_statement) {
+        if(current.stmt_type != StatementTypes.re_assign_statement) {
+            return;
+        }
+    }
+    current.end_branch_name = next.stmt_name;
+    current.alt_branch_name = next.stmt_name;
+}
+
+void link_if_statement(Statement* current, Statement* next) {
+    if(current.stmt_type != StatementTypes.if_statement) {
+        return;
+    }
+    if(next.stmt_type == StatementTypes.else_if_statement) {
+        current.end_branch_name = next.end_branch_name;
+    } else if(next.stmt_type == StatementTypes.else_statement) {
+        current.end_branch_name = next.end_branch_name;
+    } else {
+        current.end_branch_name = next.stmt_name;
+    }
+    current.alt_branch_name = next.stmt_name;
+}
+
+void link_else_if_statement(Statement* current, Statement* next) {
+    if(current.stmt_type != StatementTypes.else_if_statement) {
+        return;
+    }
+    if(next.stmt_type == StatementTypes.else_if_statement) {
+        current.end_branch_name = next.end_branch_name;
+    } else if(next.stmt_type == StatementTypes.else_statement) {
+        current.end_branch_name = next.end_branch_name;
+    } else {
+        current.end_branch_name = next.stmt_name;
+    }
+    current.alt_branch_name = next.stmt_name;
+}
+
+void link_built_in_statement(Statement* current, Statement* next) {
+    if(current.stmt_type < 10) {
+        return;
+    }
+    current.end_branch_name = next.stmt_name;
+    current.alt_branch_name = next.stmt_name;
+}
+
+void link_return_statement(Statement* current) {
+    if(current.stmt_type != StatementTypes.return_statement) {
+        return;
+    }
+    current.end_branch_name = "return_" ~ current.func_name;
+    current.alt_branch_name = "return_" ~ current.func_name;
+}
+
+void link_break_statement(Statement* current) {
+    if(current.stmt_type != StatementTypes.break_statement) {
+        return;
+    }
+    Statement* parent = current.parent;
+    while(parent.parent !is null) {
+        if(parent.stmt_type == StatementTypes.while_statement) {
+            current.end_branch_name = parent.end_branch_name;
+            current.alt_branch_name = parent.end_branch_name;
+            return;
+        }
+        parent = parent.parent;
+    }
+    assert(0);
+}
+
+void link_continue_statement(Statement* current) {
+    if(current.stmt_type != StatementTypes.continue_statement) {
+        return;
+    }
+    Statement* parent = current.parent;
+    while(parent.parent !is null) {
+        if(parent.stmt_type == StatementTypes.while_statement) {
+            current.end_branch_name = parent.stmt_name;
+            current.alt_branch_name = parent.stmt_name;
+            return;
+        }
+        parent = parent.parent;
+    }
+    assert(0);
 }

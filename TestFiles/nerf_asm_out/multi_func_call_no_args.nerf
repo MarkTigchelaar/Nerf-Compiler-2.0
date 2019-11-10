@@ -1,0 +1,12 @@
+fn main() int {
+    int K := second();
+    return 0;
+}
+
+fn second() int {
+    return 2 + third();
+}
+
+fn third() int {
+    return 3;
+}

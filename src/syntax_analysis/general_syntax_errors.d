@@ -11,3 +11,8 @@ void statement_not_terminated() {
     writeln("ERROR: Statement is not terminated.");
     exit(1);
 }
+
+void empty_print() {
+    writeln("ERROR: Print statement contains no arguments.");
+    exit(1);
+}

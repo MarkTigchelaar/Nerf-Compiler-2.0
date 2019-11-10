@@ -25,7 +25,6 @@ void main(string[] arguments) {
 
     SemanticAnalyzer analyzer = new SemanticAnalyzer();
     analyzer.semantic_analysis(program);
-
     string[] assembly = compile(program);
     if(_asm) {
         display_asm(assembly);

@@ -153,6 +153,7 @@ class SemanticAnalyzer {
         if(statement.var_type != ast_value_type) {
             expressions_have_mismatching_types();
         }
+        statement.syntax_tree.var_type = ast_value_type;
     }
 
     void check_loop_escape_statement(Statement* statement, bool in_loop) {
@@ -214,6 +215,7 @@ class SemanticAnalyzer {
             if(!is_leaf(root)) {
                 throw new Exception("INTERNAL ERROR: Function call not a leaf node.");
             }
+            root.exp_type = ExpTypes.FnCall;
             return resolve_function_call_values(root, statement);
         }
         
