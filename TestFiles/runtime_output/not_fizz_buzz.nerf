@@ -1,0 +1,31 @@
+fn main() int {
+    int index := 0;
+    while(index < 200000) {
+        if(index % 15 == 0) {
+            print(25);
+        } else if(index % 3 == 0) {
+            print(10);
+        } else if(index % 5 == 0) {
+            print(callMe(index));
+        }
+        index := index + 1;
+        if(index >= 20) {
+            break;
+        }
+    }
+    return 0;
+}
+
+fn callMe(int someNum) int {
+    return someNum + 3000 + thatOtherFunction(someNum);
+}
+
+fn thatOtherFunction(int AInteger) int {
+    if(AInteger > 5) {
+        return 2;
+    } else if(AInteger == 15) {
+        return AInteger - 6 * 3;
+    } else {
+        return 1;
+    }
+}

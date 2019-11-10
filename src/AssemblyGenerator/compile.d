@@ -25,17 +25,38 @@ class IdGenerator {
     }
 }
 
+class FuncRegistry {
+    private int[string] return_types;
+
+    this() {}
+    public void set_return_type(string fnName, int rType) {
+        return_types[fnName] = rType;
+    }
+
+    public int get_return_type(string fnName) {
+        if(fnName !in return_types) {
+            return -1;
+        }
+        return return_types[fnName];
+    }
+}
+
+FuncRegistry func_registry;
 
 string[] compile(Function[] program) {
     string[] assembly;
     Function fn_main;
+    FuncRegistry reg = new FuncRegistry();
+
     for(long i = program.length - 1; i >= 0;  i--) { 
         name_every_statement_uniquely(program[i]);
         link_statements_with_alterative_execution_paths(program[i].get_statements(), program[i].get_name());
         if(program[i].get_name() == "main") {
             fn_main = program[i];
         }
+        reg.set_return_type(program[i].get_name(), program[i].get_return_type());
     }
+    func_registry = reg;
     write_out_locals(&assembly, fn_main);
     Statement*[] main_statements = fn_main.get_statements();
     foreach(Statement* s; main_statements) {
@@ -154,7 +175,13 @@ string get_var_type_for_expression(Expression* expression) {
             return "i";
         }
     }
-    if(expression.right.var_type == PrimitiveTypes.Integer &&
+    if(expression.exp_type == ExpTypes.FnCall) {
+        if(func_registry.get_return_type(expression.var_name) ==
+            PrimitiveTypes.Integer
+        ) {
+            return "i";
+        }
+    } else if(expression.right.var_type == PrimitiveTypes.Integer &&
        expression.left.var_type == PrimitiveTypes.Integer    
     ) {
         return "i";
@@ -360,16 +387,18 @@ void write_out_expression(
         variable_names, 
         func_name
     );
-    if((root.args !is null && root.args.length > 0) || 
-        root.exp_type == ExpTypes.FnCall) {
-        foreach(Expression* arg; root.args) {
-            process_expression_by_type(
-                assembly, 
-                arg, 
-                variable_names, 
-                func_name
-            );
+    if(root.exp_type == ExpTypes.FnCall) {
+        if(root.args !is null && root.args.length > 0) {
+            foreach(Expression* arg; root.args) {
+                process_expression_by_type(
+                    assembly, 
+                    arg, 
+                    variable_names, 
+                    func_name
+                );
+            }
         }
+
         *assembly ~= "CALL";
         *assembly ~= root.var_name;
     }
