@@ -14,12 +14,10 @@ class Parser {
     private Lexer lexer;
     private Function func;
     private Stack!string seperators;
-    private int scope_depth;
     private StatementParser statements;
 
     this(Lexer lexer) {
         this.lexer = lexer;
-        scope_depth = 0;
         seperators = new Stack!string;
         this.statements = new StatementParser(lexer);
     }

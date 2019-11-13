@@ -23,8 +23,8 @@ class PrattParser {
 
 
 public:
-    Expression*[] parse_func_call_arg_expressions(string[] rvalues) {
-        Expression*[] func_args;
+    Expression[] parse_func_call_arg_expressions(string[] rvalues) {
+        Expression[] func_args;
         string[] expressions;
         for(int i = 0; i < rvalues.length; i++) {
             if(is_open_paren(rvalues[i])) {
@@ -35,7 +35,7 @@ public:
                 } else if(expressions.length == 0) {
                     missing_arg_from_call();
                 }
-                Expression* result = parse_expressions(expressions.dup);
+                Expression result = parse_expressions(expressions.dup);
                 if(result !is null) {
                     func_args ~= result;
                 }
@@ -44,14 +44,14 @@ public:
                 expressions ~= rvalues[i];
             }
         }
-        Expression* result = parse_expressions(expressions.dup);
+        Expression result = parse_expressions(expressions.dup);
         if(result !is null) {
             func_args ~= result;
         }
         return func_args;
     }
 
-    Expression* parse_expressions(string[] rvalues) {
+    Expression parse_expressions(string[] rvalues) {
         if(rvalues is null || rvalues.length == 0) {
             return null;
         }
@@ -65,8 +65,8 @@ public:
     }
 
 private: 
-    Expression* build_ast(string[] exptokens, int rank, int* index) {
-        Expression* left = prefix_func_switchboard(exptokens, index);
+    Expression build_ast(string[] exptokens, int rank, int* index) {
+        Expression left = prefix_func_switchboard(exptokens, index);
         while(rank < precedenceOfNextToken(exptokens, index)) {
             left = infix_func_switchboard(left, exptokens, index);
         }   return left;
@@ -84,8 +84,8 @@ private:
         return token_precedence(current_token(exptokens, index));
     }
 
-    Expression* prefix_func_switchboard(string[] exptokens, int* index) {
-        Expression* prefix;
+    Expression prefix_func_switchboard(string[] exptokens, int* index) {
+        Expression prefix;
         if(is_open_paren(current_token(exptokens, index))) {
             prefix = paren_parser(exptokens, index);
         } else if(is_prefix(current_token(exptokens, index))) {
@@ -105,7 +105,7 @@ private:
     }
 
 
-    Expression* paren_parser(string[] exptokens, int* index) {
+    Expression paren_parser(string[] exptokens, int* index) {
         string[] sub_expression = collect_scoped_tokens(exptokens, index);
         if(sub_expression.length < 1) {
             empty_parens();
@@ -114,12 +114,12 @@ private:
         return build_ast(sub_expression, 0, &new_index);
     }
 
-    Expression* prefix_ops_parser(string[] exptokens, int* index) {
-        Expression* current = new Expression(current_token(exptokens, index));
+    Expression prefix_ops_parser(string[] exptokens, int* index) {
+        Expression current = new Expression(current_token(exptokens, index), func.get_name());
         int rank = prefix_precedence(get_token(exptokens, index));
-        Expression* right = build_ast(exptokens, rank, index);
-        if(is_minus(current.var_name) &&
-        is_minus(right.var_name) &&
+        Expression right = build_ast(exptokens, rank, index);
+        if(is_minus(current.get_var_name()) &&
+        is_minus(right.get_var_name()) &&
         right.left is null) {
             multiple_minus_signs();
         }
@@ -127,8 +127,8 @@ private:
         return current;
     }
 
-    Expression* infix_func_switchboard(Expression* left, string[] exptokens, int* index) {
-        Expression* infix;
+    Expression infix_func_switchboard(Expression left, string[] exptokens, int* index) {
+        Expression infix;
         int var_type;
         if(is_math_op(current_token(exptokens, index))) {
             var_type = PrimitiveTypes.Integer;
@@ -147,17 +147,17 @@ private:
         return infix;
     }
 
-    Expression* operator_parser(Expression* left, string[] exptokens, int* index, int vartype) {
+    Expression operator_parser(Expression left, string[] exptokens, int* index, int vartype) {
         int rank_reduce = 0;
         if(is_right_associative(current_token(exptokens,index))) {
             rank_reduce = 1;
         }
         int rank = token_precedence(current_token(exptokens,index));
-        Expression* current = new Expression(get_token(exptokens,index));
-        current.var_type = vartype;
-        Expression* right = build_ast(exptokens, rank - rank_reduce, index);
-        if(current.var_name == right.var_name) {
-            if(current.var_name != "^") {
+        Expression current = new Expression(get_token(exptokens,index), func.get_name());
+        current.set_type(vartype);
+        Expression right = build_ast(exptokens, rank - rank_reduce, index);
+        if(current.get_var_name() == right.get_var_name()) {
+            if(current.get_var_name() != "^") {
                 multiple_minus_signs();
             }
         }
@@ -166,16 +166,16 @@ private:
         return current;
     }
 
-    Expression* func_call_parser(Expression* left, string[] exptokens, int* index) {
+    Expression func_call_parser(Expression left, string[] exptokens, int* index) {
         string[] call_args = collect_scoped_tokens(exptokens, index);
         left.args = parse_func_call_arg_expressions(call_args);
         return left;
     }
 
-    Expression* variable_or_const_parser(string[] exptokens, int* index) {
+    Expression variable_or_const_parser(string[] exptokens, int* index) {
         string current = get_token(exptokens, index);
-        Expression* exp = new Expression(current);
-        exp.var_type = func.get_variable_type(current);
+        Expression exp = new Expression(current, func.get_name());
+        exp.set_type(func.get_variable_type(current));
         exp.exp_type = ExpTypes.Variable;
         return exp;
     }
@@ -245,178 +245,178 @@ unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["True"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.left is null);
     assert(result.right is null);
-    assert(result.var_name == "True");
+    assert(result.get_var_name() == "True");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["False"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.left is null);
     assert(result.right is null);
-    assert(result.var_name == "False");
+    assert(result.get_var_name() == "False");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["3.8"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.left is null);
     assert(result.right is null);
-    assert(result.var_name == "3.8");
+    assert(result.get_var_name() == "3.8");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["38"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.left is null);
     assert(result.right is null);
-    assert(result.var_name == "38");
+    assert(result.get_var_name() == "38");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["(", "38", ")"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.left is null);
     assert(result.right is null);
-    assert(result.var_name == "38");
+    assert(result.get_var_name() == "38");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["-", "38"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.left is null);
     assert(result.right !is null);
-    assert(result.var_name == "-");
-    assert(result.right.var_name == "38");
+    assert(result.get_var_name() == "-");
+    assert(result.right.get_var_name() == "38");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["(", "-", "38", ")"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.left is null);
     assert(result.right !is null);
-    assert(result.var_name == "-");
-    assert(result.right.var_name == "38");
+    assert(result.get_var_name() == "-");
+    assert(result.right.get_var_name() == "38");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["-", "(", "38", ")"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.left is null);
     assert(result.right !is null);
-    assert(result.var_name == "-");
-    assert(result.right.var_name == "38");
+    assert(result.get_var_name() == "-");
+    assert(result.right.get_var_name() == "38");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["a", "+", "b"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
-    assert(result.var_name == "+");
+    assert(result.get_var_name() == "+");
     assert(result.left !is null);
     assert(result.right !is null);
-    assert(result.right.var_name == "b");
-    assert(result.left.var_name == "a");
+    assert(result.right.get_var_name() == "b");
+    assert(result.left.get_var_name() == "a");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["a", "+", "b", "==", "c"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
-    assert(result.var_name == "==");
+    assert(result.get_var_name() == "==");
     assert(result.left !is null);
     assert(result.right !is null);
-    assert(result.right.var_name == "c");
-    assert(result.left.var_name == "+");
-    Expression* leftexp = result.left;
+    assert(result.right.get_var_name() == "c");
+    assert(result.left.get_var_name() == "+");
+    Expression leftexp = result.left;
     assert(leftexp.left !is null);
     assert(leftexp.right !is null);
-    assert(leftexp.right.var_name == "b");
-    assert(leftexp.left.var_name == "a");
+    assert(leftexp.right.get_var_name() == "b");
+    assert(leftexp.left.get_var_name() == "a");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["a", "^", "b"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
-    assert(result.var_name == "^");
+    assert(result.get_var_name() == "^");
     assert(result.left !is null);
     assert(result.right !is null);
-    assert(result.right.var_name == "b");
-    assert(result.left.var_name == "a");
+    assert(result.right.get_var_name() == "b");
+    assert(result.left.get_var_name() == "a");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["a", "+", "b", "^", "c"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
-    assert(result.var_name == "+");
+    assert(result.get_var_name() == "+");
     assert(result.left !is null);
     assert(result.right !is null);
-    assert(result.right.var_name == "^");
-    assert(result.left.var_name == "a");
-    Expression* rightexp = result.right;
+    assert(result.right.get_var_name() == "^");
+    assert(result.left.get_var_name() == "a");
+    Expression rightexp = result.right;
     assert(rightexp.left !is null);
     assert(rightexp.right !is null);
-    assert(rightexp.right.var_name == "c");
-    assert(rightexp.left.var_name == "b");
+    assert(rightexp.right.get_var_name() == "c");
+    assert(rightexp.left.get_var_name() == "b");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["(", "a", "+", "b", ")", "^", "c"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
-    assert(result.var_name == "^");
+    assert(result.get_var_name() == "^");
     assert(result.left !is null);
     assert(result.right !is null);
-    assert(result.right.var_name == "c");
-    assert(result.left.var_name == "+");
-    Expression* leftexp = result.left;
+    assert(result.right.get_var_name() == "c");
+    assert(result.left.get_var_name() == "+");
+    Expression leftexp = result.left;
     assert(leftexp.left !is null);
     assert(leftexp.right !is null);
-    assert(leftexp.right.var_name == "b");
-    assert(leftexp.left.var_name == "a");
+    assert(leftexp.right.get_var_name() == "b");
+    assert(leftexp.left.get_var_name() == "a");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["-", "a", "+", "b", "*", "c", "-", "d"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     /* Resulting syntax tree:
             <+>
         ->              <->
@@ -424,128 +424,128 @@ unittest {
                 b        c
     */
     assert(result !is null);
-    assert(result.var_name == "+");
+    assert(result.get_var_name() == "+");
     assert(result.left !is null);
     assert(result.right !is null);
-    assert(result.right.var_name == "-");
-    assert(result.left.var_name == "-");
-    Expression* leftexp = result.left;
+    assert(result.right.get_var_name() == "-");
+    assert(result.left.get_var_name() == "-");
+    Expression leftexp = result.left;
     assert(leftexp.left is null);
     assert(leftexp.right !is null);
-    assert(leftexp.right.var_name == "a");
-    Expression* rightexp = result.right;
+    assert(leftexp.right.get_var_name() == "a");
+    Expression rightexp = result.right;
     assert(rightexp.left !is null);
     assert(rightexp.right !is null);
-    assert(rightexp.right.var_name == "d");
-    assert(rightexp.left.var_name == "*");
-    Expression* right_leftexp = rightexp.left;
+    assert(rightexp.right.get_var_name() == "d");
+    assert(rightexp.left.get_var_name() == "*");
+    Expression right_leftexp = rightexp.left;
     assert(right_leftexp !is null);
     assert(right_leftexp.left !is null);
     assert(right_leftexp.right !is null);
-    assert(right_leftexp.right.var_name == "c");
-    assert(right_leftexp.left.var_name == "b");
+    assert(right_leftexp.right.get_var_name() == "c");
+    assert(right_leftexp.left.get_var_name() == "b");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["-", "a", "+", "b", "^", "c", "-", "d"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
-    assert(result.var_name == "+");
+    assert(result.get_var_name() == "+");
     assert(result.left !is null);
     assert(result.right !is null);
-    assert(result.right.var_name == "-");
-    assert(result.left.var_name == "-");
-    Expression* leftexp = result.left;
+    assert(result.right.get_var_name() == "-");
+    assert(result.left.get_var_name() == "-");
+    Expression leftexp = result.left;
     assert(leftexp.left is null);
     assert(leftexp.right !is null);
-    assert(leftexp.right.var_name == "a");
-    Expression* rightexp = result.right;
+    assert(leftexp.right.get_var_name() == "a");
+    Expression rightexp = result.right;
     assert(rightexp.left !is null);
     assert(rightexp.right !is null);
-    assert(rightexp.right.var_name == "d");
-    assert(rightexp.left.var_name == "^");
-    Expression* right_leftexp = rightexp.left;
+    assert(rightexp.right.get_var_name() == "d");
+    assert(rightexp.left.get_var_name() == "^");
+    Expression right_leftexp = rightexp.left;
     assert(right_leftexp !is null);
     assert(right_leftexp.left !is null);
     assert(right_leftexp.right !is null);
-    assert(right_leftexp.right.var_name == "c");
-    assert(right_leftexp.left.var_name == "b");
+    assert(right_leftexp.right.get_var_name() == "c");
+    assert(right_leftexp.left.get_var_name() == "b");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["a", "+", "b", "-", "c"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
-    assert(result.var_name == "+");
+    assert(result.get_var_name() == "+");
     assert(result.left !is null);
     assert(result.right !is null);
-    assert(result.left.var_name == "a");
-    assert(result.right.var_name == "-");
-    Expression* rightexp = result.right;
+    assert(result.left.get_var_name() == "a");
+    assert(result.right.get_var_name() == "-");
+    Expression rightexp = result.right;
     assert(rightexp.left !is null);
     assert(rightexp.right !is null);
-    assert(rightexp.left.var_name == "b");
-    assert(rightexp.right.var_name == "c");
+    assert(rightexp.left.get_var_name() == "b");
+    assert(rightexp.right.get_var_name() == "c");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["a", "+", "b", "==", "c"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
-    assert(result.var_name == "==");
+    assert(result.get_var_name() == "==");
     assert(result.left !is null);
     assert(result.right !is null);
-    assert(result.left.var_name == "+");
-    assert(result.right.var_name == "c");
-    Expression* leftexp = result.left;
+    assert(result.left.get_var_name() == "+");
+    assert(result.right.get_var_name() == "c");
+    Expression leftexp = result.left;
     assert(leftexp.left !is null);
     assert(leftexp.right !is null);
-    assert(leftexp.left.var_name == "a");
-    assert(leftexp.right.var_name == "b");
+    assert(leftexp.left.get_var_name() == "a");
+    assert(leftexp.right.get_var_name() == "b");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["a", "+", "b", ",", "b", "/", "c"];
-    Expression*[] resultlist = pratt.parse_func_call_arg_expressions(expression);
+    Expression[] resultlist = pratt.parse_func_call_arg_expressions(expression);
     assert(resultlist !is null);
     assert(resultlist.length == 2);
-    Expression* result0 = resultlist[0];
-    Expression* result1 = resultlist[1];
+    Expression result0 = resultlist[0];
+    Expression result1 = resultlist[1];
     assert(result0 !is null);
     assert(result1 !is null);
-    assert(result0.var_name == "+");
-    assert(result1.var_name == "/");
+    assert(result0.get_var_name() == "+");
+    assert(result1.get_var_name() == "/");
     assert(result0.left !is null);
     assert(result0.right !is null);
     assert(result1.left !is null);
     assert(result1.right !is null);
-    assert(result0.left.var_name == "a");
-    assert(result0.right.var_name == "b");
-    assert(result1.left.var_name == "b");
-    assert(result1.right.var_name == "c");
+    assert(result0.left.get_var_name() == "a");
+    assert(result0.right.get_var_name() == "b");
+    assert(result1.left.get_var_name() == "b");
+    assert(result1.right.get_var_name() == "c");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["a", "+", "-", "b"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
-    assert(result.var_name == "+");
+    assert(result.get_var_name() == "+");
     assert(result.left !is null);
-    assert(result.left.var_name == "a");
+    assert(result.left.get_var_name() == "a");
     assert(result.right !is null);
-    assert(result.right.var_name == "-"); 
+    assert(result.right.get_var_name() == "-"); 
     assert(result.right.right !is null);
-    assert(result.right.right.var_name == "b");
+    assert(result.right.right.get_var_name() == "b");
     assert(result.right.left is null);
 }
 
@@ -553,18 +553,18 @@ unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["(", "(","a", "+", "(","b", ")", ")", "==", "c", ")"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
-    assert(result.var_name == "==");
+    assert(result.get_var_name() == "==");
     assert(result.left !is null);
     assert(result.right !is null);
-    assert(result.left.var_name == "+");
-    assert(result.right.var_name == "c");
-    Expression* leftexp = result.left;
+    assert(result.left.get_var_name() == "+");
+    assert(result.right.get_var_name() == "c");
+    Expression leftexp = result.left;
     assert(leftexp.left !is null);
     assert(leftexp.right !is null);
-    assert(leftexp.left.var_name == "a");
-    assert(leftexp.right.var_name == "b");
+    assert(leftexp.left.get_var_name() == "a");
+    assert(leftexp.right.get_var_name() == "b");
 }
 
 unittest {
@@ -572,28 +572,28 @@ unittest {
     pratt.set_function(new Function("test"));
     string[] expression = ["(", "(","-", "a", ")", "+", "(", "(",
                            "b", "^", "c", ")", "-", "d", ")", ")"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
-    assert(result.var_name == "+");
+    assert(result.get_var_name() == "+");
     assert(result.left !is null);
     assert(result.right !is null);
-    assert(result.right.var_name == "-");
-    assert(result.left.var_name == "-");
-    Expression* leftexp = result.left;
+    assert(result.right.get_var_name() == "-");
+    assert(result.left.get_var_name() == "-");
+    Expression leftexp = result.left;
     assert(leftexp.left is null);
     assert(leftexp.right !is null);
-    assert(leftexp.right.var_name == "a");
-    Expression* rightexp = result.right;
+    assert(leftexp.right.get_var_name() == "a");
+    Expression rightexp = result.right;
     assert(rightexp.left !is null);
     assert(rightexp.right !is null);
-    assert(rightexp.right.var_name == "d");
-    assert(rightexp.left.var_name == "^");
-    Expression* right_leftexp = rightexp.left;
+    assert(rightexp.right.get_var_name() == "d");
+    assert(rightexp.left.get_var_name() == "^");
+    Expression right_leftexp = rightexp.left;
     assert(right_leftexp !is null);
     assert(right_leftexp.left !is null);
     assert(right_leftexp.right !is null);
-    assert(right_leftexp.right.var_name == "c");
-    assert(right_leftexp.left.var_name == "b");
+    assert(right_leftexp.right.get_var_name() == "c");
+    assert(right_leftexp.left.get_var_name() == "b");
 }
 
 unittest {
@@ -601,40 +601,40 @@ unittest {
     pratt.set_function(new Function("test"));
     string[] expression = ["-", "(", "(", "(","-", "1", ")", "+", "(",
                            "13", "^", "6", ")", ")", "-", "8", ")"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
-    assert(result.var_name == "-");
+    assert(result.get_var_name() == "-");
     assert(result.left is null);
     assert(result.right !is null);
-    assert(result.right.var_name == "-");
+    assert(result.right.get_var_name() == "-");
     assert(result.right.right !is null);
-    assert(result.right.right.var_name == "8");
-    assert(result.right.left.var_name !is null);
-    assert(result.right.left.var_name == "+");
-    Expression* right_subtree = result.right.left.right;
-    Expression* left_subtree = result.right.left.left;
+    assert(result.right.right.get_var_name() == "8");
+    assert(result.right.left.get_var_name() !is null);
+    assert(result.right.left.get_var_name() == "+");
+    Expression right_subtree = result.right.left.right;
+    Expression left_subtree = result.right.left.left;
     assert(left_subtree !is null);
     assert(right_subtree !is null);
-    assert(left_subtree.var_name == "-");
-    assert(right_subtree.var_name == "^");
+    assert(left_subtree.get_var_name() == "-");
+    assert(right_subtree.get_var_name() == "^");
     assert(left_subtree.left is null);
     assert(left_subtree.right !is null);
-    assert(left_subtree.right.var_name == "1");
+    assert(left_subtree.right.get_var_name() == "1");
     assert(right_subtree.left !is null);
-    assert(right_subtree.left.var_name == "13");
+    assert(right_subtree.left.get_var_name() == "13");
     assert(right_subtree.right !is null);
-    assert(right_subtree.right.var_name == "6");
+    assert(right_subtree.right.get_var_name() == "6");
 }
 
 unittest {
     PrattParser pratt = new PrattParser();
     pratt.set_function(new Function("test"));
     string[] expression = ["func", "(", "True", ")"];
-    Expression* result = pratt.parse_expressions(expression);
+    Expression result = pratt.parse_expressions(expression);
     assert(result !is null);
     assert(result.args !is null);
     assert(result.args.length == 1);
-    assert(result.args[0].var_name == "True");
+    assert(result.args[0].get_var_name() == "True");
 }
 
 unittest {
@@ -647,43 +647,43 @@ unittest {
       "-", "(", "(", "(","-", "1", ")", "+", "(", "13", "^", "6", ")", ")","-", "8", ")",
     ")"
     ];
-    Expression* func = pratt.parse_expressions(expression);
+    Expression func = pratt.parse_expressions(expression);
     assert(func !is null);
     assert(func.args !is null);
     assert(func.args.length == 2);
-    Expression* args0 = func.args[0];
-    Expression* args1 = func.args[1];
+    Expression args0 = func.args[0];
+    Expression args1 = func.args[1];
     assert(args0 !is null);
-    assert(args0.var_name == "+");
+    assert(args0.get_var_name() == "+");
     assert(args0.left !is null);
-    assert(args0.left.var_name == "a");
+    assert(args0.left.get_var_name() == "a");
     assert(args0.right !is null);
-    assert(args0.right.var_name == "-"); 
+    assert(args0.right.get_var_name() == "-"); 
     assert(args0.right.right !is null);
-    assert(args0.right.right.var_name == "b");
+    assert(args0.right.right.get_var_name() == "b");
     assert(args0.right.left is null);
     assert(args1 !is null);
-    assert(args1.var_name == "-");
+    assert(args1.get_var_name() == "-");
     assert(args1.left is null);
     assert(args1.right !is null);
-    assert(args1.right.var_name == "-");
+    assert(args1.right.get_var_name() == "-");
     assert(args1.right.right !is null);
-    assert(args1.right.right.var_name == "8");
-    assert(args1.right.left.var_name !is null);
-    assert(args1.right.left.var_name == "+");
-    Expression* right_subtree = args1.right.left.right;
-    Expression* left_subtree = args1.right.left.left;
+    assert(args1.right.right.get_var_name() == "8");
+    assert(args1.right.left.get_var_name() !is null);
+    assert(args1.right.left.get_var_name() == "+");
+    Expression right_subtree = args1.right.left.right;
+    Expression left_subtree = args1.right.left.left;
     assert(left_subtree !is null);
     assert(right_subtree !is null);
-    assert(left_subtree.var_name == "-");
-    assert(right_subtree.var_name == "^");
+    assert(left_subtree.get_var_name() == "-");
+    assert(right_subtree.get_var_name() == "^");
     assert(left_subtree.left is null);
     assert(left_subtree.right !is null);
-    assert(left_subtree.right.var_name == "1");
+    assert(left_subtree.right.get_var_name() == "1");
     assert(right_subtree.left !is null);
-    assert(right_subtree.left.var_name == "13");
+    assert(right_subtree.left.get_var_name() == "13");
     assert(right_subtree.right !is null);
-    assert(right_subtree.right.var_name == "6");
+    assert(right_subtree.right.get_var_name() == "6");
 }
 
 unittest {
@@ -700,11 +700,11 @@ unittest {
     b.type = PrimitiveTypes.Integer;
     test.add_local(b);
     string[] exp = ["(", "a", "+", "b", ")", "<", "5"];
-    Expression* result = pratt.parse_expressions(exp);
+    Expression result = pratt.parse_expressions(exp);
     assert(result !is null);
-    assert(result.var_name == "<");
+    assert(result.get_var_name() == "<");
     assert(result.exp_type == ExpTypes.Operator);
-    assert(result.var_type == PrimitiveTypes.Bool);
+    assert(result.get_type() == PrimitiveTypes.Bool);
     assert(result.right !is null);
     assert(result.left !is null);
 }
@@ -719,10 +719,10 @@ unittest {
     y.type = PrimitiveTypes.Integer;
     test.add_local(y);
     string[] exp = ["-", "y", "-", "4"];
-    Expression* result = pratt.parse_expressions(exp);
+    Expression result = pratt.parse_expressions(exp);
     assert(result !is null);
-    assert(result.var_name == "-");
-    assert(result.left.var_name == "-");
-    assert(result.left.right.var_name == "y");
-    assert(result.right.var_name == "4");
+    assert(result.get_var_name() == "-");
+    assert(result.left.get_var_name() == "-");
+    assert(result.left.right.get_var_name() == "y");
+    assert(result.right.get_var_name() == "4");
 }

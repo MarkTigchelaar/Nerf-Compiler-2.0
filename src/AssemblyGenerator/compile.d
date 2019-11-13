@@ -1,7 +1,7 @@
 module compile;
 
 import functions: Function;
-import structures: Variable, Statement, Expression, StatementTypes, PrimitiveTypes, ExpTypes;
+import structures: Variable, Statement, Expression, StatementTypes, PrimitiveTypes, ExpTypes, FuncRegistry;
 import std.conv: to;
 import std.stdio;
 import std.string: chomp, split;
@@ -22,22 +22,6 @@ class IdGenerator {
         string id_num = to!string(id);
         id++;
         return id_num;
-    }
-}
-
-class FuncRegistry {
-    private int[string] return_types;
-
-    this() {}
-    public void set_return_type(string fnName, int rType) {
-        return_types[fnName] = rType;
-    }
-
-    public int get_return_type(string fnName) {
-        if(fnName !in return_types) {
-            return -1;
-        }
-        return return_types[fnName];
     }
 }
 
@@ -141,48 +125,37 @@ void write_out_locals(string[] *assembly, Function func) {
 }
 
 string get_offset(Variable* variable) {
-    string offset = "";
-    switch(variable.type) {
-        case PrimitiveTypes.Integer:
-        case PrimitiveTypes.IntArray:
-        case PrimitiveTypes.BoolArray:
-        case PrimitiveTypes.CharArray:
-        case PrimitiveTypes.Float:
-        case PrimitiveTypes.FloatArray:
-            offset =  ":8";
-            break;
-        default:
-            offset = ":1";
-            break;
+    if(variable.type == PrimitiveTypes.Character) {
+        return ":1";
     }
-    return offset;
+    return ":8";
 }
 
 string get_var_type(Statement* statement) {
-    if(statement.syntax_tree.var_type == PrimitiveTypes.Integer) {
+    if(statement.syntax_tree.get_type() == PrimitiveTypes.Integer) {
         return "i";
     }
     return "ch";
 }
 
-string get_var_type_for_expression(Expression* expression) {
+string get_var_type_for_expression(Expression expression) {
     if(expression.left is null && expression.right is null) {
-        if(expression.var_type == PrimitiveTypes.Integer) {
+        if(expression.get_type() == PrimitiveTypes.Integer) {
             return "i";
         }
     } else if(is_prefix(expression)) {
-        if(expression.right.var_type == PrimitiveTypes.Integer) {
+        if(expression.right.get_type() == PrimitiveTypes.Integer) {
             return "i";
         }
     }
     if(expression.exp_type == ExpTypes.FnCall) {
-        if(func_registry.get_return_type(expression.var_name) ==
+        if(func_registry.get_return_type(expression.get_var_name()) ==
             PrimitiveTypes.Integer
         ) {
             return "i";
         }
-    } else if(expression.right.var_type == PrimitiveTypes.Integer &&
-       expression.left.var_type == PrimitiveTypes.Integer    
+    } else if(expression.right.get_type() == PrimitiveTypes.Integer &&
+       expression.left.get_type() == PrimitiveTypes.Integer    
     ) {
         return "i";
     }
@@ -258,7 +231,7 @@ void process_return_expressions (
     string[] *variable_names, 
     string func_name
 ) {
-    if(statement.syntax_tree.var_name == "-" && 
+    if(statement.syntax_tree.get_var_name() == "-" && 
         is_prefix(statement.syntax_tree)
     ) {
         write_out_prefix_expression(
@@ -282,7 +255,7 @@ void process_return_expressions (
     }
 }
 
-bool is_prefix(Expression* root) {
+bool is_prefix(Expression root) {
     if(root is null) {
         return false;
     }
@@ -318,7 +291,7 @@ void write_out_print_statement(
     string[] *assembly, 
     string[] *variable_names
 ) {
-    foreach(Expression* arg; statement.built_in_args) {
+    foreach(Expression arg; statement.built_in_args) {
         if(is_prefix(arg)) {
             write_out_prefix_expression(
                 assembly, 
@@ -340,13 +313,13 @@ void write_out_print_statement(
 
 void write_out_prefix_expression(
     string[] *assembly, 
-    Expression* root, 
+    Expression root, 
     string[] *variable_names, 
     string func_name
 ) {
     import NewSymbolTable: is_variable_integer;
-    if(is_variable_integer(root.right.var_name)) {
-        root.right.var_name = "-" ~ root.right.var_name;
+    if(is_variable_integer(root.right.get_var_name())) {
+        root.right.set_var_name("-" ~ root.right.get_var_name());
         write_out_expression(
             assembly, 
             root.right, 
@@ -368,7 +341,7 @@ void write_out_prefix_expression(
 
 void write_out_expression(
     string[] *assembly,
-    Expression* root, 
+    Expression root, 
     string[] *variable_names, 
     string func_name
 ) {
@@ -389,7 +362,7 @@ void write_out_expression(
     );
     if(root.exp_type == ExpTypes.FnCall) {
         if(root.args !is null && root.args.length > 0) {
-            foreach(Expression* arg; root.args) {
+            foreach(Expression arg; root.args) {
                 process_expression_by_type(
                     assembly, 
                     arg, 
@@ -400,7 +373,7 @@ void write_out_expression(
         }
 
         *assembly ~= "CALL";
-        *assembly ~= root.var_name;
+        *assembly ~= root.get_var_name();
     }
     append_current_expression(
         assembly, 
@@ -412,7 +385,7 @@ void write_out_expression(
 
 void process_expression_by_type(
     string[] *assembly, 
-    Expression* root, 
+    Expression root, 
     string[] *variable_names,
     string func_name
 ) {
@@ -437,26 +410,26 @@ void process_expression_by_type(
 
 void append_current_expression(
     string[] *assembly, 
-    Expression* root, 
+    Expression root, 
     string[] *variable_names, 
     string func_name
 ) {
     import NewSymbolTable;
-    if(is_variable_integer(root.var_name)) {
+    if(is_variable_integer(root.get_var_name())) {
         *assembly ~= "iPUSHc";
-        *assembly ~= root.var_name;
-    } else if(startsWith(root.var_name, "-") && 
-              is_variable_integer(root.var_name[1 .. $])
+        *assembly ~= root.get_var_name();
+    } else if(startsWith(root.get_var_name(), "-") && 
+              is_variable_integer(root.get_var_name()[1 .. $])
       ) {        
         *assembly ~= "iPUSHc";
-        *assembly ~= root.var_name;
+        *assembly ~= root.get_var_name();
     }
-    string var = get_operator_string(root.var_name);
+    string var = get_operator_string(root.get_var_name());
     if(var != "no_var") {
         *assembly ~= var;
-    } else if(is_variable(root.var_name, variable_names)) {
+    } else if(is_variable(root.get_var_name(), variable_names)) {
         *assembly ~= "iPUSHv";
-        *assembly ~= func_name ~ "_" ~ root.var_name;
+        *assembly ~= func_name ~ "_" ~ root.get_var_name();
     }
 }
 

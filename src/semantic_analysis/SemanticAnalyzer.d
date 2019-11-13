@@ -12,6 +12,8 @@ class SemanticAnalyzer {
     private Function[] program;
 
     public void semantic_analysis(Function[] program) {
+        FuncRegistry reg = new FuncRegistry();
+
         this.program = program;
         int count_main = 0;
         string[] func_names;
@@ -28,6 +30,15 @@ class SemanticAnalyzer {
             missing_or_extra_mains();
         }
         check_for_duplicate_funcs(func_names);
+        foreach(Function func; program) {
+            reg.set_return_type(func.get_name(), func.get_return_type());
+            reg.set_args(func.get_name(), func.get_arguments());
+        }
+        reg.lock();
+        foreach(Function func; program) {
+            func.set_registry(reg.clone());
+        }
+        
     }
     private:
     void analyze() {
@@ -153,7 +164,7 @@ class SemanticAnalyzer {
         if(statement.var_type != ast_value_type) {
             expressions_have_mismatching_types();
         }
-        statement.syntax_tree.var_type = ast_value_type;
+        statement.syntax_tree.set_type(ast_value_type);
     }
 
     void check_loop_escape_statement(Statement* statement, bool in_loop) {
@@ -201,17 +212,17 @@ class SemanticAnalyzer {
         if(statement.built_in_args is null) {
             return;
         } else if(statement.built_in_args.length > 0) {
-            foreach(Expression* arg_tree; statement.built_in_args) {
+            foreach(Expression arg_tree; statement.built_in_args) {
                 resolve_ast_value_type(arg_tree, statement);
             }
         }
     }
 
-    int resolve_ast_value_type(Expression* root, Statement* statement) {
+    int resolve_ast_value_type(Expression root, Statement* statement) {
         string current_type = null;
         if(root is null) {
             return -1;
-        } else if(is_function_name(root.var_name)) {
+        } else if(is_function_name(root.get_var_name())) {
             if(!is_leaf(root)) {
                 throw new Exception("INTERNAL ERROR: Function call not a leaf node.");
             }
@@ -221,15 +232,15 @@ class SemanticAnalyzer {
         
         if(root.args !is null) {
             call_to_non_existant_function();
-        } else if(!func.is_declared_variable(root.var_name)) {
-            if(!is_number(root.var_name)   &&
-               !is_operator(root.var_name) &&
-               !is_boolean(root.var_name)) {
+        } else if(!func.is_declared_variable(root.get_var_name())) {
+            if(!is_number(root.get_var_name())   &&
+               !is_operator(root.get_var_name()) &&
+               !is_boolean(root.get_var_name())) {
                 undeclared_variables_in_expression();
             }
-        } else if(is_variable_float(root.var_name)) {
+        } else if(is_variable_float(root.get_var_name())) {
             unsupported_type();
-        } else if(!is_valid_variable(root.var_name)) {
+        } else if(!is_valid_variable(root.get_var_name())) {
             invalid_variable_in_expression();
         } else if(func.variable_in_expression_out_of_scope(root, statement)) {
             variable_in_expression_out_of_scope();
@@ -239,21 +250,21 @@ class SemanticAnalyzer {
         int right_type = resolve_ast_value_type(root.right, statement);
 
         if(is_prefix_tree(root)) {
-            check_expression_subtree_types(root.var_type, right_type);
+            check_expression_subtree_types(root.get_type(), right_type);
         } else if(is_subtree(root)) {
             check_expression_subtree_types(left_type, right_type);
-            return root.var_type;
+            return root.get_type();
         } else if(is_leaf(root)) {
-            return root.var_type;
+            return root.get_type();
         } else {
             throw new Exception("INTERNAL ERROR: Right is null, but not left.");
         }
-        return root.var_type;
+        return root.get_type();
     }
 
-    bool is_subtree(Expression* current) {
+    bool is_subtree(Expression current) {
         if(current.left !is null && current.right !is null) {
-            if(!is_operator(current.var_name)) {
+            if(!is_operator(current.get_var_name())) {
                 throw new Exception("Non root node is not operator.");
             }
             return true;
@@ -261,13 +272,13 @@ class SemanticAnalyzer {
         return false;
     }
 
-    bool is_leaf(Expression* current) {
+    bool is_leaf(Expression current) {
         return current.left is null && current.right is null;
     }
 
-    bool is_prefix_tree(Expression* current) {
+    bool is_prefix_tree(Expression current) {
         if(current.left is null && current.right !is null) {
-            if(!is_prefix(current.var_name)) {
+            if(!is_prefix(current.get_var_name())) {
                 throw new Exception("prefix node isn't a prefix.");
             }
             return true;
@@ -282,8 +293,8 @@ class SemanticAnalyzer {
         expressions_have_mismatching_types();
     }
 
-    int resolve_function_call_values(Expression* func_call, Statement* statement) {
-        string fn_name = func_call.var_name;
+    int resolve_function_call_values(Expression func_call, Statement* statement) {
+        string fn_name = func_call.get_var_name();
         if(is_program_entry_point(fn_name)) {
             calling_main();
         }

@@ -14,12 +14,10 @@ import PrattParser;
 class StatementParser {
     private Lexer lexer;
     private Function func;
-    private int scope_depth;
     private PrattParser exp_parser;
 
     this(Lexer lexer) {
         this.lexer = lexer;
-        scope_depth = 0;
         exp_parser = new PrattParser(lexer);
     }
 
@@ -87,13 +85,11 @@ class StatementParser {
         check_for_assignment_operator();
         string[] rvalues     = lexer.collect_until_match(";");
         Statement* statement = new Statement(StatementTypes.assign_statement);
-        statement.depth      = scope_depth;
         statement.var_type   = set_type_code(type);
         statement.name       = current;
         Variable* var        = new Variable;
         var.name             = current;
         var.type             = statement.var_type;
-        var.scope_depth      = scope_depth;
         var.declaration      = true;
         var.belongs_to       = statement;
 
@@ -110,13 +106,11 @@ class StatementParser {
         check_for_assignment_operator();
         string[] rvalues     = lexer.collect_until_match(";");
         Statement* statement = new Statement(StatementTypes.re_assign_statement);
-        statement.depth      = scope_depth;
         statement.var_type   = func.get_variable_type(current);
         statement.name       = current;
         Variable* var        = new Variable;
         var.name             = current;
         var.type             = statement.var_type;
-        var.scope_depth      = scope_depth;
         var.declaration      = false;
         var.belongs_to       = statement;
         if(rvalues !is null) {
@@ -224,13 +218,13 @@ class StatementParser {
         if(!is_terminator(lexer.next_token())) {
             statement_not_terminated();
         }
-        return new Statement(type, scope_depth, cast(int) null, current_token, func.get_name());
+        return new Statement(type, cast(int) null, current_token, func.get_name());
     }
 
     Statement* parse_return_statement(string current_token) {
         string[] return_results = lexer.collect_until_match(";");
         auto ret_statement = new Statement(StatementTypes.return_statement);
-        ret_statement.depth = scope_depth;
+
         ret_statement.var_type = cast(int) null;
         ret_statement.name = current_token;
         ret_statement.func_name = func.get_name();
@@ -246,7 +240,6 @@ class StatementParser {
         }
         string open_paren = lexer.next_token();
         Statement* print_statement = new Statement(StatementTypes.print_statement);
-        print_statement.depth = scope_depth;
         print_statement.name = current_token;
         print_statement.func_name = func.get_name();
         lexer.set_init_token_type_for_collection(open_paren);

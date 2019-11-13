@@ -1,6 +1,6 @@
 module functions;
 
-import structures: Variable, Statement, Expression, PrimitiveTypes;
+import structures: Variable, Statement, Expression, PrimitiveTypes, FuncRegistry;
 
 class Function {
     private string name;
@@ -8,10 +8,29 @@ class Function {
     private Variable*[] locals;
     private int return_type;
     private Statement*[] func_statements;
+    private FuncRegistry reg;
 
     this(string name) {
         this.name = name;
         this.return_type = -1;
+    }
+
+    public void set_registry(FuncRegistry reg) {
+        this.reg = reg;
+        foreach(Statement* stmt; this.func_statements) {
+            set_reg(stmt);
+        }
+    }
+
+    private void set_reg(Statement* stmt) {
+        if(stmt.syntax_tree !is null) {
+            stmt.syntax_tree.set_func_registry(this.reg);
+        }
+        if(stmt.built_in_args !is null) {
+            foreach(Expression exp; stmt.built_in_args) {
+                exp.set_func_registry(this.reg);
+            }
+        }
     }
 
     public Variable*[] get_arguments() {
@@ -175,13 +194,13 @@ class Function {
         return false;
     }
 
-    public bool variable_in_expression_out_of_scope(Expression* var_in_exp, Statement* statement) {
+    public bool variable_in_expression_out_of_scope(Expression var_in_exp, Statement* statement) {
         Variable*[] declarations = get_declarations();
         Variable* to_find = new Variable();
-        to_find.name = var_in_exp.var_name;
+        to_find.name = var_in_exp.get_var_name();
         to_find.belongs_to = statement;
         foreach(Variable* local; declarations) {
-            if(local.name == var_in_exp.var_name) {
+            if(local.name == var_in_exp.get_var_name()) {
                 if(check_declarations(local, to_find)) {
                     return false;
                 }
