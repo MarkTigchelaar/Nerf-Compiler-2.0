@@ -23,3 +23,33 @@ Had everything been encapsulated, I believe that this project would be hundreds 
 
 I did make an attempt to refactor, but I chose to instead design a similar language as a project in the future.
 
+## Source code example
+
+fn main() int {
+
+    int a := 0;
+    while(a < 10) {
+        print(a);
+        a := a + 1;
+    }
+    a := second(a);
+    return 0;
+}
+
+fn second(int a_variable) int {
+    if(a_variable == 100) {
+        return 2;
+    } else if(2 != 2) {
+        return 56 * a_variable;
+    } else {
+        return 5 * a_variable;
+    }
+}
+
+All functions must return a variable, including main.
+the int is the only type the front end supports currently.
+The bytecode machine does support characters also.
+plans for arrays, as well as booleans and floating point numbers have been scrapped for the next language.
+
+The next language will take the virtual machine, and all of the algorithms used.
+
