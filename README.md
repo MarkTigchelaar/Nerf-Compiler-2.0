@@ -55,3 +55,13 @@ plans for arrays, as well as booleans and floating point numbers have been scrap
 
 The next language will take the virtual machine, and all of the algorithms used.
 
+
+## Known Bugs
+
+There is a scoping issue where the Symantic Analysis sees a instantiation outside of it's scope, which incorrectly triggers an error.
+
+The expression parser has a bug / defect that causes the expression to evaluate in a different order that a identical expression in Python.
+Since python was being used as a reference, this is a issue.
+
+The expression parser also throws a compiler error for certain expression that have several - signs, and ().
+It is possible to trick the parser to thinking that the expression is malformed with these tokens.
