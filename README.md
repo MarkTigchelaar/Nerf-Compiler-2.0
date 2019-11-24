@@ -48,20 +48,21 @@ fn second(int a_variable) int {
 }
 ```
 
+There must be a main function.
 All functions must return a variable, including main.
-the int is the only type the front end supports currently.
-The bytecode machine does support characters also.
-plans for arrays, as well as booleans and floating point numbers have been scrapped for the next language.
+The int type is the only type the front end supports currently.
+The bytecode machine does support floating point numbers, and characters as well.
+Plans for arrays, as well as booleans and floating point numbers have been scrapped for the next language.
 
 The next language will take the virtual machine, and all of the algorithms used.
 
 
 ## Known Bugs
 
-There is a scoping issue where the Symantic Analysis sees a instantiation outside of it's scope, which incorrectly triggers an error.
+There is a scoping issue where the Semantic Analyzer sees a instantiation outside of another instantiations scope, which incorrectly triggers an compile error.
 
-The expression parser has a bug / defect that causes the expression to evaluate in a different order that a identical expression in Python.
-Since python was being used as a reference, this is a issue.
+The expression parser has a bug / defect that causes complex expressions to evaluate in a different order that a identical expression in Python.
+Since Python was being used as a reference, this is a issue.
 
 The expression parser also throws a compiler error for certain expression that have several - signs, and ().
 It is possible to trick the parser to thinking that the expression is malformed with these tokens.
