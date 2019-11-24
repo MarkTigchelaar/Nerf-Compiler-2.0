@@ -25,6 +25,7 @@ I did make an attempt to refactor, but I chose to instead design a similar langu
 
 ## Source code example
 
+```
 fn main() int {
 
     int a := 0;
@@ -45,6 +46,7 @@ fn second(int a_variable) int {
         return 5 * a_variable;
     }
 }
+```
 
 All functions must return a variable, including main.
 the int is the only type the front end supports currently.
